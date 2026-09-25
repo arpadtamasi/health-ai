@@ -134,3 +134,137 @@ If any of these fails, we learn it now, not after two weeks of building.
 - You said "mcp butea. - igen, az api-t képezné le - aztán csomagolnék használat szerint": you separated the platform from the product layer before any code existed.
 - When I asked about wrist vibration you answered "nem kritikus" and moved on instead of letting a hardware limit stall the idea.
 - "először magamnak meg tesztelőknek, aztán meglátjuk": you scoped for learning first, not for a launch.
+
+<!-- gstack:office-hours:concerns:start -->
+## Reviewer Concerns
+
+Disposition: CONCERNS_RECORDED
+
+Stop: CONVERGENCE
+
+### R2-1 — feasibility
+
+**Problem**
+
+> The schedule cannot work as written. A week has 7 nights, so if Friday and Saturday always form one pair and every other night is paired with its consecutive neighbor, one night per week has no partner (with Sun-Mon and Tue-Wed pairs, Thursday is left over every week). The document handles only a single leftover night at the start ('run-in night'), so a 7-pair run of consecutive nights is impossible for any start_date, and '7 pairs (14 nights)' cannot hold.
+
+**Remedy**
+
+> Define the pairing over a full week: e.g. pairs Sat-Sun or Fri-Sat plus a fixed weekly unpaired night (assigned, not analyzed), or non-adjacent pairs within a week. State how many calendar nights a 7-pair run takes, and add a fixture test that checks every night for every start weekday.
+
+### R2-2 — consistency
+
+**Problem**
+
+> The primary analysis is called 'by assignment', but a pair with any excluded night is dropped, and the exclusions include `no_dinner_logged`. Whether dinner was logged is post-randomization behavior tied to adherence (e.g. logging lapses on social late-eating nights), so dropping those pairs from the primary analysis brings back the selection that intention-to-treat was chosen to avoid. The outcome (deep sleep) does not need a meal log.
+
+**Remedy**
+
+> Separate the exclusions by analysis: the primary by-assignment analysis excludes only nights with missing outcome, travel, and pre-registered flags or skips; `no_dinner_logged` only removes a pair from the per-protocol analysis (adherence unknown). Update the valid-pair count used by the minimum and the auto-extension to match.
+
+### R2-3 — consistency
+
+**Problem**
+
+> Main sleep must last at least 3 hours, and a night without main sleep presumably becomes `no_sleep_data`. The outcome can drive that exclusion: if a late dinner causes badly fragmented or short sleep (sessions under 3 h), the night that shows the harm is dropped. This biases toward 'no clear effect' and conflicts with premise 3.
+
+**Remedy**
+
+> Define how a night whose sessions are all shorter than 3 h is handled: e.g. keep it and use the longest or combined overnight sessions as the outcome, and reserve `no_sleep_data` for missing tracker data. At minimum, report such nights separately in the readout.
+
+### R2-4 — consistency
+
+**Problem**
+
+> State is said to hold 'no sleep values, no derived gaps', but the stored `planned_bedtime` defaults to the median sleep onset of the last 14 nights, which is a derived sleep value. It also contradicts the constraint 'no health values ... in experiment state'.
+
+**Remedy**
+
+> Either accept planned bedtime as a stored derived value and say so in the constraints and state list, or store only a user-confirmed bedtime (the skill proposes the median, the user confirms it).
+
+### R2-5 — completeness
+
+**Problem**
+
+> With one active experiment per user, and lab_create_experiment failing while an experiment is active, there is no way to stop, cancel or abandon a run (illness, lost tracker, a tester quitting). An auto-extended run can last up to 28 nights. A user who wants out is stuck.
+
+**Remedy**
+
+> Add a lab_stop/lab_cancel operation (or an abandon status) and say whether an abandoned run can still be analyzed and how the readout marks early stopping.
+
+### R2-6 — completeness
+
+**Problem**
+
+> The planned_bedtime default needs 14 prior nights of sleep data. A new tester or a newly worn tracker may have few or none, and the behavior in that case is undefined.
+
+**Remedy**
+
+> Specify the fallback: e.g. use the median of the available nights when there are at least N, otherwise require the user to give a planned bedtime (and the skill asks for it).
+
+### R2-7 — completeness
+
+**Problem**
+
+> `travel` (time zone changed by more than 1 hour) is an exclusion code, but lab_flag_night accepts only `user_flag` and `skipped`, and no automatic detection is described. Nothing records a travel exclusion, and 'time zone changed' has no data source (profile time zone? device offset? relative to what baseline?).
+
+**Remedy**
+
+> State how `travel` is set: detected automatically from a named data source compared with the experiment's start time zone, or recorded by the user through lab_flag_night (then add it as a code and subject it to the flag timing rule).
+
+### R2-8 — clarity
+
+**Problem**
+
+> The behavior of lab_analyze before the run is finished is not specified. If it returns interim verdicts, the user can peek and stop or skip nights based on results (optional stopping), which undermines the fixed CI and premise 3.
+
+**Remedy**
+
+> Define lab_analyze during an active run: e.g. it refuses with 'experiment still running' (lab_status shows only counts, never outcomes), or returns an interim result that is clearly labeled and does not change the final verdict rules.
+
+### R2-9 — clarity
+
+**Problem**
+
+> Auto-extension is checked 'on the last scheduled night', but that night's validity is known only after its main sleep has ended and synced the next morning. It is also undefined how an added pair keeps the Friday/Saturday alignment, and when lab_today learns the new nights' arms.
+
+**Remedy**
+
+> Define when the extension check runs (e.g. the first lab_today/lab_status call after the last night's sleep data is available, with a stated sync-delay rule), and state that extension pairs follow the same weekly alignment and seeded arm order.
+
+### R2-10 — clarity
+
+**Problem**
+
+> The rule for asking the eaten-at time ('more than 20 minutes after "now" might apply') is hard to implement: the skill cannot know when the user ate, so it cannot tell whether a log is 20 minutes late. A missed question silently misclassifies adherence.
+
+**Remedy**
+
+> Use a rule the skill can apply: e.g. always confirm the eaten-at time for entries logged after 15:00, with 'now' as the one-tap default, and record the entry at the confirmed time.
+
+### R2-11 — clarity
+
+**Problem**
+
+> An experiment night runs from local noon to the next local noon, but the document does not say which calendar date identifies a night. lab_flag_night(date, ...), the schedule 'date to arm' map, and 'Friday and Saturday' nights all depend on it, and a flag given after midnight is ambiguous.
+
+**Remedy**
+
+> State that a night is identified by the date of its starting noon (so the 'Friday night' starts Friday at 12:00), and that lab_flag_night uses this date.
+
+### R2-12 — feasibility
+
+**Problem**
+
+> 'Last intake' counts caloric drinks over 50 kcal, which needs calorie values on nutrition entries. Chat or photo logs may not carry calories, and the layer-1 spike checks only the eaten-at time, not calories.
+
+**Remedy**
+
+> Either add a spike check that nutrition entries written by the MCP carry calories, or define the fallback (e.g. every drink logged in the window counts unless the user marks it zero-calorie).
+
+### Prior finding evidence
+
+**R1-6 → R2-1 (persisting)**
+
+> Schedule now defines pairs, Fri/Sat weekend and a stored seed, but the algorithm guaranteeing a well-defined balanced schedule for any start_date still fails: pairing consecutive nights with Fri/Sat fixed leaves one unpaired night every week, which only the start-of-run case handles.
+<!-- gstack:office-hours:concerns:end -->
