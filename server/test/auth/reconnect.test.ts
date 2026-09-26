@@ -7,8 +7,8 @@ describe("Google access and reconnect", () => {
   it("refreshes and caches the Google access token", async () => {
     const t = makeTestApp();
     await signIn(t);
-    expect(await t.googleAccess.accessToken("sub-owner")).toBe("google-at-1");
-    expect(await t.googleAccess.accessToken("sub-owner")).toBe("google-at-1");
+    expect(await t.googleAccess.accessToken("sub-owner")).toBe("google-at-1-for-google-refresh-owner");
+    expect(await t.googleAccess.accessToken("sub-owner")).toBe("google-at-1-for-google-refresh-owner");
     expect(t.google.refreshCalls).toBe(1);
   });
 

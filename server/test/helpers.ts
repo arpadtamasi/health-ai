@@ -54,10 +54,11 @@ export class FakeGoogle implements GoogleOAuth {
     if (!r) throw new Error("unknown fake code");
     return r;
   }
-  async refresh(_rt: string): Promise<GoogleAccessResult> {
+  async refresh(rt: string): Promise<GoogleAccessResult> {
     this.refreshCalls++;
     if (this.refreshBehavior === "invalid_grant") throw new GoogleInvalidGrantError();
-    return { accessToken: `google-at-${this.refreshCalls}`, expiresIn: 3600 };
+    // The access token names the refresh token it came from, so tests can tell users apart.
+    return { accessToken: `google-at-${this.refreshCalls}-for-${rt}`, expiresIn: 3600 };
   }
   async revoke(token: string): Promise<void> {
     this.revoked.push(token);

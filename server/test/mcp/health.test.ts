@@ -1,13 +1,14 @@
 // Tasks 4.2–4.6 and part of 4.8 · BR-01m3eb1f9dyg49jbzkw0ke8k6d (Resource-oriented tool set),
 // BR-01m3eb1fm9kjbng60zvjgc34yn (Thin mapping without domain logic), BR-01m3eb1c4j4hc489jbay9ncwhx (Actionable tool errors),
-// BR-01m3eb1hj8n8qg0q5kevtqnda8 (Tool annotations), IF-01m3eb1fytpbacz2b3vfnsjrjw (list_data_types tool),
+// BR-01m3eb1hj8n8qg0q5kevtqnda8 (Tool annotations), BR-01m3eb1btydhctabx4d1c6zyat (Per-user data isolation),
+// BR-01m3eb1d1eddbp6nd8cm0nnjtm (No health data in logs), IF-01m3eb1fytpbacz2b3vfnsjrjw (list_data_types tool),
 // IF-01m3eb1g9r4bt0fvmyf568svj5 (read_data tool), IF-01m3eb1gm40cg5a4wsfgzrb0xb (aggregate_data tool),
 // IF-01m3eb1gy6aa3z553154dgycdd (write_data, update_data and delete_data tools), IF-01m3eb1h8hhcepg1fkb4kk5chw (get_profile and list_devices tools)
 //
 // The Health API answers below follow the discovery document's schemas; real recorded responses replace
 // them once task 1.2 has run against the owner's account.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { connectMcp, makeTestApp, READ_SCOPES, signIn, type TestApp } from "../helpers.js";
+import { connectMcp, makeTestApp, READ_SCOPES, signIn, TESTER, type TestApp } from "../helpers.js";
 
 const conns: Awaited<ReturnType<typeof connectMcp>>[] = [];
 afterEach(async () => {
@@ -110,6 +111,22 @@ describe("read_data (4.3)", () => {
       expect(r.text).toMatch(message);
     }
     expect(t.health.requests).toHaveLength(0);
+  });
+});
+
+describe("per-user isolation", () => {
+  it("two users reading the same type each use only their own Google credentials", async () => {
+    const t = makeTestApp();
+    const owner = await connect(t);
+    const { token } = await signIn(t, "g-tester", TESTER);
+    const tester = await connectMcp(t, token.body.access_token);
+    conns.push(tester);
+    const args = { data_type: "steps", start: "2026-09-25", end: "2026-09-26" };
+    await owner.call("read_data", args);
+    expect(t.health.last().auth).toMatch(/-for-google-refresh-owner$/);
+    await tester.call("read_data", { ...args, user: "sub-owner", userId: "sub-owner" });
+    expect(t.health.last().auth).toMatch(/-for-google-refresh-tester$/);
+    expect(t.health.requests.every((r) => r.url.pathname.startsWith("/v4/users/me/"))).toBe(true);
   });
 });
 
