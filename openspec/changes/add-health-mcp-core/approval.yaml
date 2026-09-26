@@ -1,0 +1,196 @@
+change: add-health-mcp-core
+approved_by: Arpad Tamasi
+approved_at: 2026-09-26T08:22:54.421Z
+approval_basis: sha256:9336adc1357e48c4bcafdb34f404c04440fa4a6f6e445b27a00c5798db274c8d
+approved:
+  added:
+    - id: A-01m3eb1kqkzfqzy7jwdanwgedx
+      title: AI chat client
+    - id: A-01m3eb1kceqrt9s4dt82k0bs42
+      title: Health AI user
+    - id: A-01m3ec2gg5chbg5jx626bj8mj9
+      title: Owner
+    - id: BR-01m3eb1cehbhtykqpwpgqnygxe
+      title: Access restricted to allow-listed users
+    - id: BR-01m3eb1c4j4hc489jbay9ncwhx
+      title: Actionable tool errors
+    - id: BR-01m3ecxdq6nqjjejph3j93jws4
+      title: Agents are asked to report friction
+    - id: BR-01m3eb1hxc1z2rfzkd2jcgeae2
+      title: Connected screen before returning to the client
+    - id: BR-01m3eb1bh5h0gad7vmdj01xfc6
+      title: Every MCP request is authenticated
+    - id: BR-01m3ec2jjaqp80zks6pseeh1xg
+      title: Every tool call states its intent
+    - id: BR-01m3eb1e9vvvzkdcxwyjjjqbhd
+      title: Google credentials are protected
+    - id: BR-01m3ec2jxj4979r5rs0ttmqgc8
+      title: Insight records are protected
+    - id: BR-01m3eb1emh9rysqjsxn62b3rsw
+      title: MCP token lifecycle
+    - id: BR-01m3eb1d1eddbp6nd8cm0nnjtm
+      title: No health data in logs
+    - id: BR-01m3eb1btydhctabx4d1c6zyat
+      title: Per-user data isolation
+    - id: BR-01m3eb1eyq4j8yawgs12rtmjkp
+      title: Re-authentication when Google access is lost
+    - id: BR-01m3eb1f9dyg49jbzkw0ke8k6d
+      title: Resource-oriented tool set
+    - id: BR-01m3eb1dz1bqrx534g1g403fqw
+      title: Single sign-in grants identity and Google Health access
+    - id: BR-01m3eb1fm9kjbng60zvjgc34yn
+      title: Thin mapping without domain logic
+    - id: BR-01m3eb1hj8n8qg0q5kevtqnda8
+      title: Tool annotations
+    - id: EX-01m3eb1wkjmhqsbe6w66s0e3h5
+      title: Access token refresh
+    - id: EX-01m3ec2kk6cwghqz3ptbc4bp2g
+      title: Agent reports a problem on its own
+    - id: EX-01m3ecxe2df2x94481ea0t1rz0
+      title: Agent reports too many calls
+    - id: EX-01m3ec2m8ejx5wh3rxj9ar70hk
+      title: Call with intent
+    - id: EX-01m3ec2mkw7xwr505yhqzezkb2
+      title: Call without intent
+    - id: EX-01m3eb21re0wn1zfqb4vadc7s7
+      title: Check Fitbit sync
+    - id: EX-01m3eb1nfx704zqappm6tghz6p
+      title: Client connects to the endpoint
+    - id: EX-01m3eb1sp9sne6j5h0vd6kb15p
+      title: Client discovers authorization server
+    - id: EX-01m3eb1t0k64serv3rs59che6k
+      title: Client fetches authorization server metadata
+    - id: EX-01m3eb222yw71v5nmdhtbk4tkq
+      title: Client inspects annotations
+    - id: EX-01m3eb1tbjbvwancpdz3vffbq1
+      title: Client registers
+    - id: EX-01m3eb22dbzdy5e977dsvrm263
+      title: Connected screen after sign-in
+    - id: EX-01m3eb20safrq94nny4ft2nh8b
+      title: Correct a logged meal
+    - id: EX-01m3eb2056zah2kf04yj0sc8kg
+      title: Daily steps for a week
+    - id: EX-01m3eb213ds7ze4r9bjmfe8nbe
+      title: Delete a record
+    - id: EX-01m3eb1yghvbss4975xp7w76w1
+      title: Discover writable types
+    - id: EX-01m3ec2kxb44y018ty82ncyebs
+      title: Empty feedback
+    - id: EX-01m3eb1pfz22y9ty9enkya4ev1
+      title: Expired or revoked token
+    - id: EX-01m3eb1x7bh01r43ymew64hqar
+      title: Google refresh token expired
+    - id: EX-01m3ec2nbbdf6wsk926kvhr8zc
+      title: Insight deleted with the user's data
+    - id: EX-01m3ec2nq6neht0r8jpfsarqpr
+      title: Insight records expire after 90 days
+    - id: EX-01m3ecxegcxqbnt1zr4d2wk9j4
+      title: Instructions ask for friction reports
+    - id: EX-01m3ec2mz952zx1s69hkq04hzk
+      title: Intent and feedback are not in the logs
+    - id: EX-01m3eb1zv0re7jx490bz4afqy6
+      title: Invalid range
+    - id: EX-01m3eb1tnzz8f6zqqbyq602afh
+      title: Invalid redirect URI
+    - id: EX-01m3eb1zgsfk0q8mgmrhjnh6fz
+      title: Large result
+    - id: EX-01m3eb20eeatc1kj35ezbxg3e9
+      title: Log a meal
+    - id: EX-01m3eb1s0h17mbcekh556ffxqm
+      title: Missing confirmation
+    - id: EX-01m3eb1p5j70avfs5q1bbqkj6h
+      title: Missing token
+    - id: EX-01m3eb1r96cb5rgarvxr2jw14b
+      title: Non-listed account tries to connect
+    - id: EX-01m3ecxewd4jc3wbpa4gkxsyb8
+      title: Owner reads insight records
+    - id: EX-01m3ec2p2pq6yxcnqys4jqk52k
+      title: Owner reviews feedback
+    - id: EX-01m3ec2pdny2reppbc89390vr2
+      title: Owner reviews usage
+    - id: EX-01m3eb1vptckdx1n9wr41be3xy
+      title: Partial scope grant
+    - id: EX-01m3eb1ntvnh3526fdmbb46682
+      title: Plain HTTP is rejected
+    - id: EX-01m3eb1z65zkeecg0gabc1dd52
+      title: Read last night's sleep
+    - id: EX-01m3eb1xgetmpadw5jg1bed39f
+      title: Reconnect keeps the user
+    - id: EX-01m3eb1wxepg3kcw77ey9drkxa
+      title: Refresh token reuse
+    - id: EX-01m3eb1ytk8gqp58eedgppxrmf
+      title: Scope not granted
+    - id: EX-01m3eb1w00xbvxe1kvzc16fdqq
+      title: Stored token inspection
+    - id: EX-01m3eb1sbk8namvgk4tap0n85p
+      title: Successful read is logged
+    - id: EX-01m3ec2pr5c61v9fcjcrrsskef
+      title: Tester cannot see insight tools
+    - id: EX-01m3eb1w9tcfmhw9gndxdee89k
+      title: Token response to client
+    - id: EX-01m3eb1q5hyq4nncya2r7tkzs3
+      title: Tool arguments cannot select another user
+    - id: EX-01m3eb1xv1bzrb9hezyn6t78gm
+      title: Tool listing
+    - id: EX-01m3eb1pv34f4axfc3b15xg9sx
+      title: Two users call the same tool
+    - id: EX-01m3eb1qjz1162wf2qd3464p19
+      title: Upstream API rejects a request
+    - id: EX-01m3eb1qy1h6g9wcsrzpt0qqtx
+      title: Upstream rate limit
+    - id: EX-01m3ec2k8pvjmha9dy7tvbskh4
+      title: User asks the agent to pass on feedback
+    - id: EX-01m3eb1rp3f9tjjr6gqmt1eeky
+      title: User deletes their data
+    - id: EX-01m3eb1vc36ywe6vgsy0szshkj
+      title: User denies Google Health scopes
+    - id: EX-01m3eb1v17e7rjqvbqgb70dbmd
+      title: User grants all requested scopes
+    - id: EX-01m3eb21ed63bedndprkjydekr
+      title: Write to read-only type
+    - id: EX-01m3eb1y60zk5vagdr4kn854kp
+      title: Writing a record
+    - id: G-01m3eb1jjs0c8ng53y9hk232sh
+      title: Connect with one sign-in
+    - id: G-01m3ec2gtq0nnneh96gv3vcrwq
+      title: Feedback comes from real use
+    - id: G-01m3eb1j8jfv3wqp0rye2ne6tn
+      title: Reach my own health data from any AI chat
+    - id: G-01m3eb1k0f2ts07bx8phb8aypr
+      title: Read and log health data from a conversation
+    - id: IF-01m3eb1gm40cg5a4wsfgzrb0xb
+      title: aggregate_data tool
+    - id: IF-01m3eb1dn2x3v6146zd227h8br
+      title: Client registration endpoint
+    - id: IF-01m3eb1cqb3yah1ydzbas3hvar
+      title: delete_my_data tool
+    - id: IF-01m3eb1h8hhcepg1fkb4kk5chw
+      title: get_profile and list_devices tools
+    - id: IF-01m3eb1fytpbacz2b3vfnsjrjw
+      title: list_data_types tool
+    - id: IF-01m3ec2j6wkazgfenh95w6mn4b
+      title: list_feedback and usage_summary tools
+    - id: IF-01m3eb1b7edb7e1dh0rft2dq63
+      title: MCP endpoint
+    - id: IF-01m3eb1dc1ps80f3fbg3ve5dv3
+      title: OAuth discovery metadata
+    - id: IF-01m3eb1g9r4bt0fvmyf568svj5
+      title: read_data tool
+    - id: IF-01m3ec2hvdh0e2j8fs6n0xrgst
+      title: send_feedback tool
+    - id: IF-01m3eb1gy6aa3z553154dgycdd
+      title: write_data, update_data and delete_data tools
+    - id: UC-01m3eb1m382wdbntqfffats3ds
+      title: Connect an AI client to Health AI
+    - id: UC-01m3eb1n59mc158c59xxp6ft9j
+      title: Delete my data
+    - id: UC-01m3ec2h5aesz6dj5w4c6e5ape
+      title: Give feedback on the service
+    - id: UC-01m3eb1mtkgbt7bzs7nt9tx2qw
+      title: Read and log health data from chat
+    - id: UC-01m3eb1mg1k3kcp56xtqzn6dnn
+      title: Reconnect after Google access expires
+    - id: UC-01m3ec2hg1t08j7m3b6e97x7p3
+      title: Review feedback and usage
+  changed: []
+  removed: []
