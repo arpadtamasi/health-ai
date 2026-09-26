@@ -1,8 +1,8 @@
 ---
 change: add-health-mcp-core
-generated_at: 2026-09-26T07:49:45.309Z
-delta_hash: sha256:f32ca84ce491ed14986ce892b70e4128c56f0b1243381d68e428be58001be7b6
-ready_for_approval: false
+generated_at: 2026-09-26T07:59:01.795Z
+delta_hash: sha256:a0e007a6d82c8418e22677ca65c8109fa3c96855408b161972dfe8f02807d721
+ready_for_approval: true
 ---
 
 # Planning: add-health-mcp-core
@@ -103,15 +103,13 @@ No accepted node shares an edge with, is named by, or contrasts with the delta.
 The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:
 
 <!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
-- judged: *Connected screen before returning to the client* adds a confirmation screen between the Google callback and the redirect; the narrative requirement *Single sign-in grants identity and Google Health access* (scenario *User grants all requested scopes*) and `design.md` D3 describe a direct redirect to the client. The rule is newer (conversation J2); the narrative and design do not mention it yet.
+- judged: *Connected screen before returning to the client* adds a confirmation screen between the Google callback and the redirect. The narrative (*Single sign-in grants identity and Google Health access*) and `design.md` D3 described a direct redirect; the owner chose to keep the screen (2026-09-26), and the narrative, `design.md` and `tasks.md` were aligned to the rule.
 - judged: The accepted model is empty, so no accepted node is contradicted; every comparison above is between this delta and its own narrative.
 <!-- /kotta:judged -->
 
 ## (d) Silences
 
-- Open: Connect with one sign-in (G-9hk232sh) G-9hk232sh/Q1 — What target shows this goal is reached (for example a number of weekly uses, testers connected, or a time to connect)? (openspec/changes/add-health-mcp-core/model/goals/connect-with-one-sign-in-9hk232sh.md:30)
-- Open: Reach my own health data from any AI chat (G-ye2ne6tn) G-ye2ne6tn/Q1 — What target shows this goal is reached (for example a number of weekly uses, testers connected, or a time to connect)? (openspec/changes/add-health-mcp-core/model/goals/reach-my-own-health-data-from-any-ai-chat-ye2ne6tn.md:30)
-- Open: Read and log health data from a conversation (G-phb8aypr) G-phb8aypr/Q1 — What target shows this goal is reached (for example a number of weekly uses, testers connected, or a time to connect)? (openspec/changes/add-health-mcp-core/model/goals/read-and-log-health-data-from-a-conversation-phb8aypr.md:30)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 

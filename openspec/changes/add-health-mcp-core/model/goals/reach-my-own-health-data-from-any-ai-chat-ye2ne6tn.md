@@ -9,7 +9,7 @@ provenance:
   decided_by: human
   sources: ["openspec/changes/add-health-mcp-core/conversation.md · SZ1", "openspec/changes/add-health-mcp-core/conversation.md · SZ2", "openspec/changes/add-health-mcp-core/proposal.md · Why"]
   quote: "ai-ból nézném a fitbitet / meg mondjuk fotóznék kaját / rendes távoli mcp"
-  inferred: "Outcome wording is the agent's summary of the owner's words; no target was stated."
+  inferred: "Outcome wording is the agent's summary of the owner's words. The target was chosen by the owner from options the agent offered in chat on 2026-09-26."
 ---
 # Reach my own health data from any AI chat
 
@@ -25,6 +25,5 @@ The Fitbit Web API shuts down on 2026-09-30; the server is built on the Google H
 
 Baseline: no such tool exists for the owner today.
 
-## Open decisions
+Target: I use Health AI in at least 3 conversations a week that use my own data, for 4 consecutive weeks.
 
-- What target shows this goal is reached (for example a number of weekly uses, testers connected, or a time to connect)?

@@ -34,7 +34,7 @@ Run the MCP endpoint in stateless mode (no server-side session affinity; each re
 - Alternative: Cloud Functions for Firebase. Rejected: less control over HTTP routing and long requests; Cloud Run is the same underlying platform.
 
 ### D3. The server is its own OAuth authorization server, federating to Google
-The MCP server implements `/authorize`, `/token`, `/register` and the metadata endpoints. `/authorize` stores the client's PKCE request, redirects to Google with `openid email` plus Google Health scopes, `access_type=offline` and `prompt=consent`; the Google callback stores the encrypted Google refresh token and then completes the MCP authorization code flow. MCP tokens are the server's own.
+The MCP server implements `/authorize`, `/token`, `/register` and the metadata endpoints. `/authorize` stores the client's PKCE request, redirects to Google with `openid email` plus Google Health scopes, `access_type=offline` and `prompt=consent`; the Google callback stores the encrypted Google refresh token, shows a short Connected screen (1–2 s, with a button to continue at once), and then completes the MCP authorization code flow by redirecting to the client. The sign-in pages follow `docs/designs/signin-flow-brief.md` (plain Material Design 3). MCP tokens are the server's own.
 - Alternative: pass Google access tokens straight through to the client (Google as the MCP authorization server). Rejected: Google does not support dynamic client registration, and it would expose Google tokens to clients.
 - Alternative: Firebase Auth as identity provider. Rejected for now: adds a second identity layer; Google sign-in already yields a stable user id (`sub`).
 
@@ -63,7 +63,7 @@ Eight generic tools plus `delete_my_data` (see `health-data-tools`). A small dat
 Upstream errors are mapped to MCP tool errors with readable messages. `invalid_grant` on Google refresh marks the user `needs_reconnect` and returns a signed, single-use reconnect link that restarts Google sign-in for that user.
 
 ### D8. Deployment and configuration
-Container built from the repo, deployed with a script/CI to Cloud Run; secrets from Secret Manager; a dedicated service account with only Firestore, KMS decrypt/encrypt and Secret Manager access. Allow list managed as Firestore documents.
+Container built from the repo, deployed with a script/CI to Cloud Run. Firebase Hosting serves the static sign-in pages and rewrites `/authorize`, `/callback`, `/token`, `/register`, `/.well-known/*` and `/mcp` to the Cloud Run service, so pages and authorization server share one origin; secrets from Secret Manager; a dedicated service account with only Firestore, KMS decrypt/encrypt and Secret Manager access. Allow list managed as Firestore documents.
 
 ## Risks / Trade-offs
 

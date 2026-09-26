@@ -19,7 +19,8 @@
 - [ ] 3.4 Implement `/token` for authorization code (PKCE) and rotating refresh tokens with reuse detection; verify tests for code exchange, rotation, and grant revocation on reuse
 - [ ] 3.5 Implement bearer token validation middleware returning 401 with `WWW-Authenticate` resource metadata; verify tests for missing, expired and revoked tokens
 - [ ] 3.6 Implement Google access token refresh with `invalid_grant` handling and signed single-use reconnect links; verify tests that a tool call after `invalid_grant` returns the reconnect error and that reconnecting keeps the user record
-- [ ] 3.7 Document the auth flow and operator allow-list management in `docs/auth.md`; verify the documented steps add a tester who can then sign in
+- [ ] 3.7 Build the sign-in pages (start, connected, access expired, not invited, permissions missing, error) per `docs/designs/signin-flow-brief.md` in plain Material Design 3; verify the Connected screen continues to the client after 1–2 s and its button returns immediately
+- [ ] 3.8 Document the auth flow and operator allow-list management in `docs/auth.md`; verify the documented steps add a tester who can then sign in
 
 ## 4. MCP server and health data tools (`mcp-server`, `health-data-tools`)
 
@@ -35,7 +36,7 @@
 
 ## 5. Deployment
 
-- [ ] 5.1 Add a deploy script/CI job that builds the container and deploys to Cloud Run with the service account and secrets; verify a deployed revision serves the metadata endpoints over HTTPS
+- [ ] 5.1 Add a deploy script/CI job that builds the container and deploys to Cloud Run with the service account and secrets, plus Firebase Hosting with rewrites to Cloud Run; verify the metadata endpoints and sign-in pages are served over HTTPS from one origin
 - [ ] 5.2 Document deploy and rollback in `docs/deploy.md`; verify rollback to the previous revision works as documented
 
 ## 6. End-to-end verification

@@ -33,7 +33,7 @@ The system SHALL, during the MCP authorization flow, redirect the user to Google
 
 #### Scenario: User grants all requested scopes
 - **WHEN** the user signs in with an allow-listed Google account and grants the requested scopes
-- **THEN** the server stores the Google refresh token for that user, redirects back to the MCP client with an authorization code, and the client can exchange it for an MCP access token
+- **THEN** the server stores the Google refresh token for that user, shows the Connected screen, redirects back to the MCP client with an authorization code, and the client can exchange it for an MCP access token
 
 #### Scenario: User denies Google Health scopes
 - **WHEN** the user signs in but does not grant the Google Health scopes
@@ -42,6 +42,14 @@ The system SHALL, during the MCP authorization flow, redirect the user to Google
 #### Scenario: Partial scope grant
 - **WHEN** the user grants read scopes but not write scopes
 - **THEN** MCP tokens are issued, read tools work, and write tools return an error stating that write permission was not granted and how to grant it
+
+### Requirement: Connected screen before returning to the client
+<!-- kotta: BR-01m3eb1hxc1z2rfzkd2jcgeae2 -->
+After a successful Google callback the server SHALL show a Connected screen before redirecting to the MCP client's redirect URI, SHALL continue automatically after a short delay of one to two seconds, and SHALL let the user continue immediately.
+
+#### Scenario: Connected screen after sign-in
+- **WHEN** the Google callback succeeds for an allow-listed user
+- **THEN** the Connected screen is shown, continues to the client's redirect URI after one to two seconds, and a button returns immediately
 
 ### Requirement: Google credentials are protected
 The system MUST store Google refresh tokens encrypted at rest with a key managed outside the database, and MUST NOT return Google tokens to the MCP client.
