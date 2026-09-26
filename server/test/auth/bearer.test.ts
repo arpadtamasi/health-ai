@@ -15,7 +15,7 @@ describe("bearer authentication on /mcp", () => {
     const t = makeTestApp();
     const { token } = await signIn(t);
     const res = await t.http.post("/mcp").set("authorization", `Bearer ${token.body.access_token}`);
-    expect(res.status).toBe(501);
+    expect(res.status).not.toBe(401);
   });
 
   it("expired token: 401", async () => {

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { AesGcmSealer } from "../src/crypto/sealer.js";
@@ -125,3 +126,34 @@ export async function signIn(t: TestApp, googleCode = "g-code", over: Parameters
   });
   return { clientId, token, back };
 }
+
+/** Starts the app on a free port and connects a real MCP client with the given access token. */
+export async function connectMcp(t: TestApp, accessToken: string) {
+  const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+  const { StreamableHTTPClientTransport } = await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
+  const listener = t.app.listen(0);
+  await new Promise<void>((resolve) => listener.once("listening", () => resolve()));
+  const address = listener.address();
+  const port = typeof address === "object" && address ? address.port : 0;
+  const client = new Client({ name: "test-client", version: "1.0.0" });
+  const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`), {
+    requestInit: { headers: { authorization: `Bearer ${accessToken}` } },
+  });
+  // The cast bridges the SDK's own optional-property types under exactOptionalPropertyTypes.
+  await client.connect(transport as Transport);
+  return {
+    client,
+    /** Calls a tool and returns its first text block and error flag. */
+    async call(name: string, args: Record<string, unknown> = {}) {
+      const r = await client.callTool({ name, arguments: args });
+      const content = r.content as { type: string; text?: string }[];
+      return { text: content[0]?.text ?? "", isError: r.isError === true };
+    },
+    async close() {
+      await client.close();
+      await new Promise<void>((resolve) => listener.close(() => resolve()));
+    },
+  };
+}
+
+export const TESTER = { sub: "sub-tester", email: "tester@example.com", refreshToken: "google-refresh-tester" };

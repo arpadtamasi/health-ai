@@ -161,7 +161,7 @@ export class HealthOAuthProvider implements OAuthServerProvider {
 
   private async issue(grantId: string, userId: string, clientId: string, scopes: string[]): Promise<OAuthTokens> {
     const refresh = randomToken();
-    await this.deps.store.putRefreshToken({ tokenHash: sha256(refresh), grantId, createdAt: this.now() });
+    await this.deps.store.putRefreshToken({ tokenHash: sha256(refresh), grantId, userId, createdAt: this.now() });
     return {
       access_token: await this.deps.tokens.sign({ userId, clientId, grantId, scopes }),
       token_type: "Bearer",

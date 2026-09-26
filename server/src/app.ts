@@ -1,6 +1,8 @@
 import express, { type Express } from "express";
 import { mcpAuthRouter, getOAuthProtectedResourceMetadataUrl } from "@modelcontextprotocol/sdk/server/auth/router.js";
 import { requireBearerAuth } from "@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { Sealer } from "./crypto/sealer.js";
 import type { GoogleOAuth } from "./google/oauth.js";
 import type { Store } from "./store/types.js";
@@ -11,6 +13,8 @@ import { ReconnectLinks } from "./auth/reconnect.js";
 import { authRoutes } from "./auth/routes.js";
 import { MCP_SCOPES } from "./auth/scopes.js";
 import { AccessTokens } from "./auth/tokens.js";
+import { logEvent, pseudonym } from "./log.js";
+import { buildMcpServer } from "./mcp/server.js";
 
 export interface AppDeps {
   publicUrl: URL;
@@ -70,9 +74,46 @@ export function createApp(deps: AppDeps): App {
 
   // BR-01m3eb1bh5h0gad7vmdj01xfc6: every MCP request carries a valid access token.
   const bearer = requireBearerAuth({ verifier: provider, resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(mcpUrl) });
+  const pseudonymOf = (userId: string) => pseudonym(deps.jwtSecret, userId);
+
+  // IF-01m3eb1b7edb7e1dh0rft2dq63 (MCP endpoint): stateless Streamable HTTP, one server per request (design D2).
+  app.post("/mcp", bearer, express.json({ limit: "1mb" }), async (req, res, next) => {
+    try {
+      // BR-01m3eb1btydhctabx4d1c6zyat: the user comes from the verified token, never from tool arguments.
+      const userId = String(req.auth?.extra?.["userId"] ?? "");
+      const user = await deps.store.getUser(userId);
+      if (!user) {
+        res.status(401).json({ error: "invalid_token" });
+        return;
+      }
+      const allow = await deps.store.getAllowEntry(user.email);
+      const server = buildMcpServer(
+        {
+          userId,
+          userRef: pseudonymOf(userId),
+          pseudonymOf,
+          isOwner: allow?.owner === true,
+          scopes: req.auth?.scopes ?? [],
+          store: deps.store,
+          now,
+        },
+        { sealer: deps.sealer, google: deps.google, googleAccess },
+      );
+      const transport = new StreamableHTTPServerTransport({ enableJsonResponse: true });
+      res.on("close", () => {
+        void transport.close();
+        void server.close();
+      });
+      // No sessionIdGenerator: stateless mode. The cast bridges the SDK's own optional-property types.
+      await server.connect(transport as Transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (err) {
+      next(err);
+    }
+  });
+  // Stateless: no server-initiated streams and no sessions to end.
   app.all("/mcp", bearer, (_req, res) => {
-    // The MCP transport is wired in task 4.1.
-    res.status(501).json({ error: "not_implemented" });
+    res.status(405).set("allow", "POST").json({ jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed." }, id: null });
   });
 
   app.use((_req, res) => {
@@ -80,7 +121,7 @@ export function createApp(deps: AppDeps): App {
   });
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     // BR-01m3eb1d1eddbp6nd8cm0nnjtm: log the failure class only, never tokens or health values.
-    console.error(JSON.stringify({ msg: "unhandled_error", name: err instanceof Error ? err.name : "unknown" }));
+    logEvent({ msg: "unhandled_error", name: err instanceof Error ? err.name : "unknown" });
     res.status(500).type("html").send(errorPage("Please try again in a moment."));
   });
 

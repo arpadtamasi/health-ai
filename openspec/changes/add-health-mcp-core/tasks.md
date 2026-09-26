@@ -24,22 +24,22 @@
 
 ## 4. MCP server and health data tools (`mcp-server`, `health-data-tools`)
 
-- [ ] 4.1 Wire the stateless Streamable HTTP MCP endpoint behind the auth middleware; verify an MCP client test can `initialize` and `tools/list` with a valid token
+- [x] 4.1 Wire the stateless Streamable HTTP MCP endpoint behind the auth middleware; verify an MCP client test can `initialize` and `tools/list` with a valid token
 - [ ] 4.2 Implement the data-type registry from the 1.1 findings and `list_data_types` with per-user readable/writable flags from granted scopes; verify unit tests including a type without write scope
 - [ ] 4.3 Implement `read_data` with time-zone handling, pagination and argument validation; verify tests with recorded Google Health API responses
 - [ ] 4.4 Implement `aggregate_data` (hour/day/week buckets); verify a seven-day daily steps test returns seven buckets
 - [ ] 4.5 Implement `write_data`, `update_data`, `delete_data` for writable types (nutrition log, hydration) with pass-through values and returned upstream ids; verify tests including the read-only type rejection
 - [ ] 4.6 Implement `get_profile` and `list_devices`; verify tests with recorded responses
-- [ ] 4.7 Implement `delete_my_data` (confirmation, Google revoke, record deletion, token invalidation); verify a test that the previous access token then gets 401
+- [x] 4.7 Implement `delete_my_data` (confirmation, Google revoke, record deletion, token invalidation); verify a test that the previous access token then gets 401
 - [ ] 4.8 Add tool annotations, upstream error mapping (validation, rate limit) and log redaction; verify tests that error results are readable and logs contain no health values or tokens
 - [ ] 4.9 Document the tools with example calls in `docs/tools.md`; verify each example matches the tool's input schema via a schema test
 
 ## 4b. Service insight (`service-insight`)
 
-- [ ] 4b.1 Add the `intent` argument to every tool schema and a shared wrapper that records intents (including missing ones) in Firestore; verify tests for a call with intent, without intent, and that the log contains no intent text
-- [ ] 4b.2 Implement `send_feedback` with user/agent source, kind and involved tools, and write the server instructions and tool description asking agents to report friction (e.g. too many calls); verify tests for both sources, the `too_many_calls` kind, the instructions text, and the empty-message refusal
-- [ ] 4b.3 Implement owner-only `list_feedback` and `usage_summary`, hidden from `tools/list` for other accounts; verify tests for the owner, a tester listing tools, and a tester calling the tool
-- [ ] 4b.4 Include feedback and intents in `delete_my_data` and set 90-day Firestore TTL on both collections; verify a deletion test and the TTL configuration in the setup script
+- [x] 4b.1 Add the `intent` argument to every tool schema and a shared wrapper that records intents (including missing ones) in Firestore; verify tests for a call with intent, without intent, and that the log contains no intent text
+- [x] 4b.2 Implement `send_feedback` with user/agent source, kind and involved tools, and write the server instructions and tool description asking agents to report friction (e.g. too many calls); verify tests for both sources, the `too_many_calls` kind, the instructions text, and the empty-message refusal
+- [x] 4b.3 Implement owner-only `list_feedback` and `usage_summary`, hidden from `tools/list` for other accounts; verify tests for the owner, a tester listing tools, and a tester calling the tool
+- [ ] 4b.4 Include feedback and intents in `delete_my_data` and set 90-day Firestore TTL on both collections; verify a deletion test and the TTL configuration in the setup script (deletion and the `expireAt` TTL field are done; the TTL policy lands with the 2.2 setup script)
 
 ## 5. Deployment
 

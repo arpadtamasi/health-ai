@@ -41,6 +41,7 @@ export interface Grant {
 export interface RefreshToken {
   tokenHash: string;
   grantId: string;
+  userId: string;
   createdAt: number;
   usedAt?: number;
 }
@@ -67,6 +68,39 @@ export interface ReconnectNonce {
   userId: string;
   createdAt: number;
   usedAt?: number;
+}
+
+export const FEEDBACK_SOURCES = ["user", "agent"] as const;
+export const FEEDBACK_KINDS = ["bug", "confusing", "too_many_calls", "missing_capability", "other"] as const;
+
+/** Feedback about the service, readable only by the owner (design D6b). */
+export interface FeedbackRecord {
+  id: string;
+  userId: string;
+  source: (typeof FEEDBACK_SOURCES)[number];
+  kind: (typeof FEEDBACK_KINDS)[number];
+  tools: string[];
+  message: string;
+  createdAt: number;
+  /** Firestore TTL field: 90 days after `createdAt`. */
+  expireAt: number;
+}
+
+/** Why a tool was called; `intent` is null when the agent sent none. */
+export interface IntentRecord {
+  id: string;
+  userId: string;
+  tool: string;
+  intent: string | null;
+  createdAt: number;
+  /** Firestore TTL field: 90 days after `createdAt`. */
+  expireAt: number;
+}
+
+/** A half-open time range [from, to) in epoch milliseconds. */
+export interface TimeRange {
+  from: number;
+  to: number;
 }
 
 /**
@@ -100,4 +134,17 @@ export interface Store {
 
   putReconnectNonce(nonce: ReconnectNonce): Promise<void>;
   consumeReconnectNonce(nonce: string, at: number): Promise<ReconnectNonce | undefined>;
+
+  putFeedback(record: FeedbackRecord): Promise<void>;
+  /** All users' feedback in the range, newest first. Owner tools only. */
+  listFeedback(range: TimeRange, limit: number): Promise<FeedbackRecord[]>;
+  putIntent(record: IntentRecord): Promise<void>;
+  /** All users' intent records in the range, newest first. Owner tools only. */
+  listIntents(range: TimeRange): Promise<IntentRecord[]>;
+
+  /**
+   * Deletes everything stored for the user: the user record, grants, refresh tokens,
+   * authorization codes, reconnect nonces, feedback and intents.
+   */
+  deleteUserData(userId: string): Promise<void>;
 }

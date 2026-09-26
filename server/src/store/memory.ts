@@ -1,5 +1,6 @@
 import type {
-  AllowEntry, AuthCode, AuthRequest, ClientRecord, Grant, ReconnectNonce, RefreshToken, Store, User,
+  AllowEntry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  TimeRange, User,
 } from "./types.js";
 
 /** In-memory store for tests and local development. Single-process only. */
@@ -12,6 +13,8 @@ export class MemoryStore implements Store {
   readonly users = new Map<string, User>();
   readonly allowList = new Map<string, AllowEntry>();
   readonly reconnectNonces = new Map<string, ReconnectNonce>();
+  readonly feedback = new Map<string, FeedbackRecord>();
+  readonly intents = new Map<string, IntentRecord>();
 
   allow(email: string, owner = false): void {
     this.allowList.set(email.toLowerCase(), { email: email.toLowerCase(), owner });
@@ -67,4 +70,32 @@ export class MemoryStore implements Store {
     n.usedAt = at;
     return n;
   }
+
+  async putFeedback(f: FeedbackRecord) { this.feedback.set(f.id, f); }
+  async listFeedback(range: TimeRange, limit: number) {
+    return newestFirst([...this.feedback.values()].filter((f) => inRange(f.createdAt, range))).slice(0, limit);
+  }
+  async putIntent(i: IntentRecord) { this.intents.set(i.id, i); }
+  async listIntents(range: TimeRange) {
+    return newestFirst([...this.intents.values()].filter((i) => inRange(i.createdAt, range)));
+  }
+
+  async deleteUserData(userId: string) {
+    this.users.delete(userId);
+    for (const [k, g] of this.grants) if (g.userId === userId) this.grants.delete(k);
+    for (const [k, t] of this.refreshTokens) if (t.userId === userId) this.refreshTokens.delete(k);
+    for (const [k, c] of this.authCodes) if (c.userId === userId) this.authCodes.delete(k);
+    for (const [k, r] of this.authRequests) if (r.userId === userId) this.authRequests.delete(k);
+    for (const [k, n] of this.reconnectNonces) if (n.userId === userId) this.reconnectNonces.delete(k);
+    for (const [k, f] of this.feedback) if (f.userId === userId) this.feedback.delete(k);
+    for (const [k, i] of this.intents) if (i.userId === userId) this.intents.delete(k);
+  }
+}
+
+function inRange(at: number, range: TimeRange): boolean {
+  return at >= range.from && at < range.to;
+}
+
+function newestFirst<T extends { createdAt: number }>(items: T[]): T[] {
+  return items.sort((a, b) => b.createdAt - a.createdAt);
 }
