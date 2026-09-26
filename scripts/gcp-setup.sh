@@ -23,7 +23,7 @@ gc() { gcloud --project "$PROJECT_ID" --quiet "$@"; }
 step() { printf '\n== %s\n' "$*"; }
 
 step "APIs"
-gc services enable run.googleapis.com firestore.googleapis.com cloudkms.googleapis.com \
+gc services enable health.googleapis.com run.googleapis.com firestore.googleapis.com cloudkms.googleapis.com \
   secretmanager.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com \
   iamcredentials.googleapis.com firebasehosting.googleapis.com
 
