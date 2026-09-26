@@ -1,23 +1,34 @@
 import { createApp } from "./app.js";
 import { loadConfig } from "./config.js";
-import { AesGcmSealer } from "./crypto/sealer.js";
+import { cloudKmsWrapper, EnvelopeSealer } from "./crypto/kms.js";
+import { AesGcmSealer, type Sealer } from "./crypto/sealer.js";
 import { HttpGoogleOAuth } from "./google/oauth.js";
 import { GOOGLE_CALLBACK_PATH } from "./auth/routes.js";
 import { logEvent } from "./log.js";
+import { FirestoreStore } from "./store/firestore.js";
 import { MemoryStore } from "./store/memory.js";
+import type { Store } from "./store/types.js";
 
 const config = loadConfig();
-// The Firestore store and the Cloud KMS sealer replace these in task 2.2.
-const store = new MemoryStore();
-const ownerEmail = (process.env.OWNER_EMAIL ?? "").trim().toLowerCase();
-for (const email of (process.env.ALLOW_LIST ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)) {
-  store.allow(email, email === ownerEmail);
+
+function makeStore(): Store {
+  if (config.store.kind === "firestore") {
+    return FirestoreStore.create(config.store.databaseId ? { databaseId: config.store.databaseId } : {});
+  }
+  // Local development only: records vanish on restart. The allow list comes from ALLOW_LIST.
+  const store = new MemoryStore();
+  for (const email of config.store.allowList) store.allow(email, email === config.store.ownerEmail);
+  return store;
 }
+
+const sealer: Sealer = config.sealer.kind === "kms"
+  ? new EnvelopeSealer(cloudKmsWrapper(config.sealer.keyName))
+  : new AesGcmSealer(config.sealer.key);
 
 const { app } = createApp({
   ...config,
-  store,
-  sealer: new AesGcmSealer(config.sealerKey),
+  store: makeStore(),
+  sealer,
   google: new HttpGoogleOAuth(
     config.googleClientId,
     config.googleClientSecret,
@@ -26,7 +37,7 @@ const { app } = createApp({
 });
 
 const server = app.listen(config.port, () => {
-  logEvent({ msg: "listening", port: config.port });
+  logEvent({ msg: "listening", port: config.port, store: config.store.kind, sealer: config.sealer.kind });
 });
 
 // Cloud Run sends SIGTERM before stopping an instance.

@@ -59,17 +59,16 @@ its feedback and intents, is kept.
 Only allow-listed Google accounts can sign in. One entry may be marked as the owner: the owner also
 gets the `list_feedback` and `usage_summary` tools.
 
-**Now (in-memory store):** the list comes from environment variables, and it is read at start-up.
+**Local development (`STORE=memory`):** the list comes from environment variables, and it is read at start-up.
 
 ```bash
 ALLOW_LIST="owner@gmail.com,tester@gmail.com"   # comma-separated, case-insensitive
 OWNER_EMAIL="owner@gmail.com"
 ```
 
-To add a tester, append their address to `ALLOW_LIST` and redeploy (a new Cloud Run revision picks it
-up). With the in-memory store, a restart also signs everyone out. It is for local development only.
+A restart forgets every user and signs everyone out.
 
-**After task 2.2 (Firestore):** each entry is a document in the `allowList` collection. The document
+**Production (Firestore, the default):** each entry is a document in the `allowList` collection. The document
 id is the lower-cased email and the fields are `{ email, owner }`. To add a tester:
 
 1. Add the account as a test user of the Google OAuth consent screen: Google Cloud console →
@@ -100,6 +99,12 @@ at <https://myaccount.google.com/permissions>.
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | The Google OAuth client (task 2.3) |
 | `GOOGLE_HEALTH_READ_SCOPES` | Required Google Health scopes, space or comma separated |
 | `GOOGLE_HEALTH_WRITE_SCOPES` | Optional scopes for the write tools |
-| `JWT_SECRET` | At least 32 bytes; signs access tokens and reconnect links |
-| `SEALER_KEY` | 32 bytes, base64; the local sealer until Cloud KMS (task 2.2) |
-| `ALLOW_LIST`, `OWNER_EMAIL` | The allow list while the in-memory store is used |
+| `JWT_SECRET` | At least 32 bytes; signs access tokens and reconnect links (secret `health-ai-jwt-secret`) |
+| `STORE` | `firestore` (default) or `memory` (local development only) |
+| `FIRESTORE_DATABASE` | Optional Firestore database id; default `(default)` |
+| `KMS_KEY_NAME` | Cloud KMS key for sealing Google refresh tokens; required with Firestore |
+| `SEALER_KEY` | 32 bytes, base64; the local sealing key, only with `STORE=memory` |
+| `ALLOW_LIST`, `OWNER_EMAIL` | The allow list, only with `STORE=memory` |
+
+`scripts/gcp-setup.sh` creates the Firestore database, TTL policies, KMS key, secrets and service
+account, and prints the values to use.

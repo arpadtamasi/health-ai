@@ -10,8 +10,10 @@ export interface Config {
   healthWriteScopes: string[];
   /** HMAC key for MCP access tokens and reconnect links. */
   jwtSecret: Uint8Array;
-  /** 32-byte key for the local sealer; replaced by Cloud KMS in production. */
-  sealerKey: Buffer;
+  /** Where records live: Firestore in production, memory only for local development. */
+  store: { kind: "firestore"; databaseId?: string } | { kind: "memory"; allowList: string[]; ownerEmail?: string };
+  /** How secrets are sealed: Cloud KMS envelope encryption, or a local key with the memory store. */
+  sealer: { kind: "kms"; keyName: string } | { kind: "local"; key: Buffer };
 }
 
 export function loadPort(env: NodeJS.ProcessEnv = process.env): number {
@@ -34,8 +36,6 @@ function scopes(value: string | undefined): string[] {
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const sealerKey = Buffer.from(required(env, "SEALER_KEY"), "base64");
-  if (sealerKey.length !== 32) throw new Error("SEALER_KEY must be 32 bytes, base64-encoded");
   const jwtSecret = new TextEncoder().encode(required(env, "JWT_SECRET"));
   if (jwtSecret.length < 32) throw new Error("JWT_SECRET must be at least 32 bytes");
   const healthReadScopes = scopes(env.GOOGLE_HEALTH_READ_SCOPES);
@@ -48,6 +48,30 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     healthReadScopes,
     healthWriteScopes: scopes(env.GOOGLE_HEALTH_WRITE_SCOPES),
     jwtSecret,
-    sealerKey,
+    ...storeAndSealer(env),
+  };
+}
+
+function storeAndSealer(env: NodeJS.ProcessEnv): Pick<Config, "store" | "sealer"> {
+  const kind = env.STORE ?? "firestore";
+  if (kind === "firestore") {
+    // Google refresh tokens in Firestore are always sealed with Cloud KMS, never with a local key.
+    const keyName = required(env, "KMS_KEY_NAME");
+    return {
+      store: { kind: "firestore", ...(env.FIRESTORE_DATABASE ? { databaseId: env.FIRESTORE_DATABASE } : {}) },
+      sealer: { kind: "kms", keyName },
+    };
+  }
+  if (kind !== "memory") throw new Error(`STORE must be "firestore" or "memory", got "${kind}"`);
+  const key = Buffer.from(required(env, "SEALER_KEY"), "base64");
+  if (key.length !== 32) throw new Error("SEALER_KEY must be 32 bytes, base64-encoded");
+  const ownerEmail = env.OWNER_EMAIL?.trim().toLowerCase();
+  return {
+    store: {
+      kind: "memory",
+      allowList: (env.ALLOW_LIST ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
+      ...(ownerEmail ? { ownerEmail } : {}),
+    },
+    sealer: { kind: "local", key },
   };
 }
