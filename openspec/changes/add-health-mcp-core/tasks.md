@@ -2,7 +2,7 @@
 
 ## 1. Google Health API spike
 
-- [ ] 1.1 Verify from the official Google Health API v4 docs the data-type catalog, scope names, read/aggregate endpoints, and the nutrition-log and hydration write/update/delete model; record findings in `docs/google-health-api.md` and verify the doc names a concrete endpoint and scope for every tool in `health-data-tools`
+- [x] 1.1 Verify from the official Google Health API v4 docs the data-type catalog, scope names, read/aggregate endpoints, and the nutrition-log and hydration write/update/delete model; record findings in `docs/google-health-api.md` and verify the doc names a concrete endpoint and scope for every tool in `health-data-tools`
 - [ ] 1.2 Make authenticated test calls (OAuth playground or script with the owner's account) for sleep, heart rate, steps read, and one nutrition + one hydration write/delete; verify the written entries appear in and disappear from the Google Health app
 
 ## 2. Project and cloud setup

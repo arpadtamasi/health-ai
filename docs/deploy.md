@@ -26,10 +26,13 @@ share one HTTPS origin (design D8). Plain HTTP is never served: Hosting redirect
 PROJECT_ID=my-project \
 PUBLIC_URL=https://my-project.web.app \
 GOOGLE_CLIENT_ID=….apps.googleusercontent.com \
-GOOGLE_HEALTH_READ_SCOPES="…" \
-GOOGLE_HEALTH_WRITE_SCOPES="…" \
+GOOGLE_HEALTH_READ_SCOPES="$(printf 'https://www.googleapis.com/auth/googlehealth.%s ' sleep.readonly activity_and_fitness.readonly health_metrics_and_measurements.readonly profile.readonly settings.readonly)" \
+GOOGLE_HEALTH_WRITE_SCOPES="https://www.googleapis.com/auth/googlehealth.nutrition.writeonly" \
 scripts/deploy.sh
 ```
+
+The scopes follow `docs/google-health-api.md`. Nutrition (meals and water) has only a write scope, so
+Health AI can read back only the entries it logged itself.
 
 The script:
 
