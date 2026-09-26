@@ -4,8 +4,7 @@
 #
 #   PROJECT_ID=my-project scripts/gcp-setup.sh
 #
-# Needs: gcloud, signed in as a project owner (gcloud auth login), openssl and GNU date
-# (Cloud Shell has all of them).
+# Needs: gcloud, signed in as a project owner (gcloud auth login), and openssl.
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:?set PROJECT_ID}"
@@ -54,7 +53,7 @@ if ! gc kms keyrings describe "$KEY_RING" --location "$REGION" >/dev/null 2>&1; 
 fi
 if ! gc kms keys describe "$KEY_NAME" --keyring "$KEY_RING" --location "$REGION" >/dev/null 2>&1; then
   gc kms keys create "$KEY_NAME" --keyring "$KEY_RING" --location "$REGION" --purpose encryption \
-    --rotation-period 90d --next-rotation-time "$(date -u -d '+90 days' +%Y-%m-%dT%H:%M:%SZ)"
+    --rotation-period 90d --next-rotation-time "$(date -u -d '+90 days' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+90d +%Y-%m-%dT%H:%M:%SZ)"
 fi
 gc kms keys add-iam-policy-binding "$KEY_NAME" --keyring "$KEY_RING" --location "$REGION" \
   --member "serviceAccount:${SA_EMAIL}" --role roles/cloudkms.cryptoKeyEncrypterDecrypter >/dev/null

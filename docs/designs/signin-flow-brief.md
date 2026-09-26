@@ -25,7 +25,7 @@ Product context: `PRODUCT.md`. Server behavior: `openspec/changes/add-health-mcp
 
 - **Plain Material Design 3, played straight** (owner's decision, recorded in `PRODUCT.md`). It should sit naturally next to Google's own account and Google Health surfaces.
 - Roboto Flex; Material Symbols Rounded icons; tonal surfaces; filled buttons; list items with leading icons and trailing assist chips; a thin 3-step progress indicator (Claude, Sign in, Back to chat).
-- Color: an M3 tonal palette generated from one calm green-teal seed (approved sketch used `#2f6b5e`; primary `#226a5c` light / `#8dd5c3` dark). Light and dark schemes follow the system setting.
+- Color: an M3 tonal palette (tonal spot) generated from one calm blue seed, `#3B6EA8`; primary `#39608f` light / `#a3c9fe` dark. The first green-teal seed (`#2f6b5e`) read as too green; the owner chose blue from four variants on 2026-09-26. Light and dark schemes follow the system setting.
 - Mood: balance, confidence, health. Never clinical or illness-like.
 - Reference sketch (approved): https://claude.ai/artifact/CX1FMLLZkqGdosVJGqYmJW (version 5).
 

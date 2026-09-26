@@ -6,6 +6,9 @@ share one HTTPS origin (design D8). Plain HTTP is never served: Hosting redirect
 
 ## Once per project
 
+The quickest way is `scripts/bootstrap.sh`. It walks through every step below, stops where the
+console is needed, and saves the settings in `.health-ai.env` (no secrets). The steps it runs:
+
 1. Create or pick a Google Cloud project, and add Firebase to it (Firebase console → *Add project* →
    choose the existing Cloud project).
 2. Run the resource setup. It is idempotent, so running it again only reports what exists:

@@ -20,19 +20,15 @@ const ICONS: Record<string, string> = {
 
 const STYLE = `
 :root{color-scheme:light dark;
---md-primary:#226a5c;--md-on-primary:#fff;--md-primary-container:#a9f1de;--md-on-primary-container:#002019;
---md-secondary-container:#cde8e0;--md-on-secondary-container:#07201b;
---md-tertiary-container:#ffddb2;--md-on-tertiary-container:#2a1800;
---md-error-container:#ffdad6;--md-on-error-container:#410002;
---md-surface:#f5fbf8;--md-surface-container-low:#eff5f2;--md-surface-container-high:#e3eae6;
---md-on-surface:#171d1b;--md-on-surface-variant:#3f4946;--md-outline-variant:#bfc9c5}
+--md-primary:#39608f;--md-on-primary:#ffffff;--md-primary-container:#d3e4ff;--md-on-primary-container:#1e4875;
+--md-secondary-container:#d7e3f8;--md-on-secondary-container:#3c4758;--md-tertiary-container:#f5d9ff;--md-on-tertiary-container:#533f5e;--md-error-container:#ffdad6;--md-on-error-container:#93000a;
+--md-surface:#f8f9ff;--md-surface-container-low:#f2f3fa;--md-surface-container-high:#e7e8ee;
+--md-on-surface:#191c20;--md-on-surface-variant:#43474e;--md-outline-variant:#c3c6cf}
 @media (prefers-color-scheme:dark){:root{
---md-primary:#8dd5c3;--md-on-primary:#00382e;--md-primary-container:#005144;--md-on-primary-container:#a9f1de;
---md-secondary-container:#334b45;--md-on-secondary-container:#cde8e0;
---md-tertiary-container:#5f411a;--md-on-tertiary-container:#ffddb2;
---md-error-container:#93000a;--md-on-error-container:#ffdad6;
---md-surface:#0f1513;--md-surface-container-low:#171d1b;--md-surface-container-high:#252b29;
---md-on-surface:#dee4e1;--md-on-surface-variant:#bfc9c5;--md-outline-variant:#3f4946}}
+--md-primary:#a3c9fe;--md-on-primary:#00315b;--md-primary-container:#1e4875;--md-on-primary-container:#d3e4ff;
+--md-secondary-container:#3c4758;--md-on-secondary-container:#d7e3f8;--md-tertiary-container:#533f5e;--md-on-tertiary-container:#f5d9ff;--md-error-container:#93000a;--md-on-error-container:#ffdad6;
+--md-surface:#111418;--md-surface-container-low:#191c20;--md-surface-container-high:#272a2f;
+--md-on-surface:#e1e2e8;--md-on-surface-variant:#c3c6cf;--md-outline-variant:#43474e}}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--md-surface);color:var(--md-on-surface)}
 body{font-family:"Roboto Flex",Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;

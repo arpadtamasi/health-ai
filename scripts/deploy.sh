@@ -9,6 +9,15 @@
 # Needs: gcloud (signed in) and npx (for firebase-tools, signed in with `npx firebase-tools login`).
 set -euo pipefail
 
+# scripts/bootstrap.sh saves the settings here; variables set in the environment win.
+ENV_SAVED="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.health-ai.env"
+if [[ -f "$ENV_SAVED" ]]; then
+  while IFS='=' read -r key value; do
+    [[ -z "$key" || "$key" == \#* || -n "${!key:-}" ]] && continue
+    export "$key=$value"
+  done < "$ENV_SAVED"
+fi
+
 PROJECT_ID="${PROJECT_ID:?set PROJECT_ID}"
 PUBLIC_URL="${PUBLIC_URL:?set PUBLIC_URL, the Firebase Hosting origin, e.g. https://${PROJECT_ID}.web.app}"
 GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:?set GOOGLE_CLIENT_ID}"
