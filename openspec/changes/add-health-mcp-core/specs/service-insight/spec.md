@@ -7,7 +7,7 @@ Lets the owner improve Health AI from real use: users and their AI agents can se
 ## ADDED Requirements
 
 ### Requirement: Feedback tool
-The system SHALL provide a `send_feedback` tool that the user's AI agent can call, on the user's request or on its own, with a feedback message, who it comes from (`user` or `agent`) and optionally the tool it concerns, and SHALL store it for the owner with the sender's user id and the time.
+The system SHALL provide a `send_feedback` tool that the user's AI agent can call, on the user's request or on its own, with a feedback message, who it comes from (`user` or `agent`), a kind (`bug`, `confusing`, `too_many_calls`, `missing_capability` or `other`) and optionally the tools it concerns, and SHALL store it for the owner with the sender's user id and the time.
 
 #### Scenario: User asks the agent to pass on feedback
 - **WHEN** the user tells the agent "tell the developer the sleep answer was confusing" and the agent calls `send_feedback` with source `user`
@@ -17,9 +17,20 @@ The system SHALL provide a `send_feedback` tool that the user's AI agent can cal
 - **WHEN** the agent calls `send_feedback` with source `agent` and the related tool `read_data` after a confusing error
 - **THEN** the feedback is stored with source `agent` and the related tool name
 
+#### Scenario: Agent reports too many calls
+- **WHEN** the agent needed `list_data_types`, `read_data` three times and `aggregate_data` to answer one question, and calls `send_feedback` with source `agent`, kind `too_many_calls` and those tools
+- **THEN** the feedback is stored with kind `too_many_calls` and the tools involved, so the owner can see which calls could be merged
+
 #### Scenario: Empty feedback
 - **WHEN** `send_feedback` is called with an empty message
 - **THEN** nothing is stored and the tool result says a message is required
+
+### Requirement: Agents are asked to report friction
+The server instructions and the `send_feedback` tool description SHALL ask the agent to send feedback on its own when using the service took more calls than the task needed, when a result was confusing, or when a capability was missing, without asking the user first.
+
+#### Scenario: Instructions ask for friction reports
+- **WHEN** a client reads the server instructions and the tool list
+- **THEN** both say that the agent should report friction such as too many calls with `send_feedback`, without asking the user
 
 ### Requirement: Every tool call states its intent
 Every tool SHALL accept an `intent` argument, one sentence saying why the call is made, and the system SHALL record the tool name, the intent and the time for the owner. A call without an intent SHALL still be executed, and the missing intent SHALL be recorded.

@@ -1,9 +1,9 @@
 ---
 change: add-health-mcp-core
 generated_by: kotta narrative
-generated_at: "2026-09-26T08:06:16.241Z"
+generated_at: "2026-09-26T08:21:32.230Z"
 since: "2026-09-25T12:19:00.000Z"
-digest: "sha256:6b3a1ae15748c2703ad22c2e0b8638aaad3f5b7f31d4c923c7f49165119cb84b"
+digest: "sha256:0491b87cfcb713a89d9eeb54ed2fae28b0265297e5b7fb885c16a26d67d6a648"
 ---
 # Beszélgetés: add-health-mcp-core
 
@@ -384,11 +384,30 @@ Ahol a válasz sem egyértelmű igen, sem nem, sem választás, vagy egy puszta 
 > Szándék a hívásokhoz
 > A továbbfejlesztéshez a feedbacken kívül jó, ha értjük, mit miért hív.
 
+### P14 · 2026-09-26 08:21 UTC
+
+**Ágens** (08:08 UTC):
+
+> …
+>
+> **Két kérdés maradt nyitva:**
+> 1. **Mi a célértéke az új célnak** (*Improve the service from real use*)? Például „hetente átnézem a visszajelzéseket és a használati összesítőt”, vagy „havonta legalább egy fejlesztés ezekből születik”.
+> 2. **Kapjon-e kivételt a tulajdonosi toolok a *Per-user data isolation* szabály alól?** Ez a szabály azt mondja, hogy minden hívás csak a hívó saját adataihoz nyúlhat. A `list_feedback` és a `usage_summary` viszont minden tesztelő visszajelzését és szándékait olvassa. Két megoldás van:
+>    - A szabályba kerüljön kivétel: „kivéve a tulajdonos betekintő-toolját, és csak a visszajelzés- és szándék-rekordokra”. Én ezt javaslom.
+>    - Vagy a tulajdonos is csak a saját rekordjait lássa. Ekkor viszont a tesztelők visszajelzéseihez nem férsz hozzá.
+>
+> Ha erre a kettőre válaszolsz, beírom a válaszokat, és utána kérem az igent vagy a nemet a teljes deltára.
+
+**Ember** (08:21 UTC):
+
+> 1 nem kell ilyen cél. Jöjjön  feedback a használatból. Olyan is, amit a modell jelez, hogy mondjuk túl sok hívás kellett valamihez, vonjuk össze.
+> 2 kell kivétel nyilván
+
 ## Nyers forrás
 
-- `/root/.claude/projects/-~-health-ai/51f186f3-f782-53d8-b4b8-c18eec7c1a64.jsonl` (Claude Code): 79 üzenet feldolgozva (ember 22, ágens 57); kihagyva: eszközhívás 427, meta-üzenet 11, parancs 2, megszakítás 1, --since előtti 20.
+- `/root/.claude/projects/-~-health-ai/51f186f3-f782-53d8-b4b8-c18eec7c1a64.jsonl` (Claude Code): 85 üzenet feldolgozva (ember 23, ágens 62); kihagyva: eszközhívás 449, meta-üzenet 11, parancs 2, megszakítás 1, --since előtti 20.
 
-Időszak: 2026-09-25 12:19 UTC – 2026-09-26 08:06 UTC. Csak a 2026-09-25 12:19 UTC utáni üzenetek.
+Időszak: 2026-09-25 12:19 UTC – 2026-09-26 08:21 UTC. Csak a 2026-09-25 12:19 UTC utáni üzenetek.
 
 ### Szűrés
 

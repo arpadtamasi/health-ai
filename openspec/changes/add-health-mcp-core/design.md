@@ -51,7 +51,7 @@ authRequests/{id}            pending /authorize state (TTL 10 min)
 authCodes/{hash}             one-time codes (TTL 2 min)
 refreshTokens/{hash}         userId, clientId, grantId, usedAt (TTL)
 allowList/{email}            operator-managed; `owner: true` marks the owner
-feedback/{id}                userId, source (user|agent), tool?, message, createdAt (TTL 90 d)
+feedback/{id}                userId, source (user|agent), kind, tools[], message, createdAt (TTL 90 d)
 intents/{id}                 userId, tool, intent | null, createdAt (TTL 90 d)
 ```
 Firestore TTL policies clean up transient collections. All documents are keyed so that per-user deletion is a query on `userId`/`googleSub`.
@@ -62,7 +62,7 @@ Eight generic tools plus `delete_my_data` (see `health-data-tools`). A small dat
 - Alternative: a single `call_api(method, path, body)` tool. Rejected: no schema guidance for the model and no safe scope checks.
 
 ### D6b. Service insight
-Every tool schema carries an `intent` string; a shared wrapper records `{userId, tool, intent, createdAt}` in `intents` before running the tool, and writes `intent: null` when it is missing instead of refusing the call (owner's choice: intent is expected on every call, but a missing one never blocks the user). `send_feedback` writes to `feedback`. Both collections are outside application logs, read only through the owner-only `list_feedback` and `usage_summary` tools (owner = allow-list entry with `owner: true`; the tools are omitted from `tools/list` for others), included in `delete_my_data`, and expire through Firestore TTL after 90 days.
+Every tool schema carries an `intent` string; a shared wrapper records `{userId, tool, intent, createdAt}` in `intents` before running the tool, and writes `intent: null` when it is missing instead of refusing the call (owner's choice: intent is expected on every call, but a missing one never blocks the user). `send_feedback` writes to `feedback`, with a kind (`bug`, `confusing`, `too_many_calls`, `missing_capability`, `other`) and the tools involved; the server instructions and the tool description ask agents to report friction such as too many calls on their own. The owner tools are the only exception to per-user isolation, limited to feedback and intent records. Both collections are outside application logs, read only through the owner-only `list_feedback` and `usage_summary` tools (owner = allow-list entry with `owner: true`; the tools are omitted from `tools/list` for others), included in `delete_my_data`, and expire through Firestore TTL after 90 days.
 - Alternative: category-only intents (no free text). Rejected by the owner: free text explains more; privacy is handled by access, deletion and retention instead.
 
 ### D7. Errors and reconnect

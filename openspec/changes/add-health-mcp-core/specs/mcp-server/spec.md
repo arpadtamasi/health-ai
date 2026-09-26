@@ -29,11 +29,15 @@ The system MUST reject any MCP request that does not carry a valid, unexpired ac
 - **THEN** the server responds with HTTP 401 and does not execute any tool
 
 ### Requirement: Per-user data isolation
-The system MUST execute every tool call strictly on behalf of the authenticated user, using only that user's Google Health credentials and stored records.
+The system MUST execute every tool call strictly on behalf of the authenticated user, using only that user's Google Health credentials and stored records. The one exception: the owner's `list_feedback` and `usage_summary` tools MAY read the feedback and intent records of all users, and nothing else of theirs.
 
 #### Scenario: Two users call the same tool
 - **WHEN** user A and user B each call `read_data` for the same data type and time range
 - **THEN** each receives only data from their own Google Health account
+
+#### Scenario: Owner reads insight records
+- **WHEN** the owner calls `list_feedback`
+- **THEN** feedback records of all users are returned, but no other user's health data, tokens or other records are read
 
 #### Scenario: Tool arguments cannot select another user
 - **WHEN** a tool call includes an argument that names a different user identifier

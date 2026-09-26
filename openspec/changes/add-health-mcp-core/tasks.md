@@ -37,7 +37,7 @@
 ## 4b. Service insight (`service-insight`)
 
 - [ ] 4b.1 Add the `intent` argument to every tool schema and a shared wrapper that records intents (including missing ones) in Firestore; verify tests for a call with intent, without intent, and that the log contains no intent text
-- [ ] 4b.2 Implement `send_feedback` with user/agent source and optional related tool; verify tests for both sources and the empty-message refusal
+- [ ] 4b.2 Implement `send_feedback` with user/agent source, kind and involved tools, and write the server instructions and tool description asking agents to report friction (e.g. too many calls); verify tests for both sources, the `too_many_calls` kind, the instructions text, and the empty-message refusal
 - [ ] 4b.3 Implement owner-only `list_feedback` and `usage_summary`, hidden from `tools/list` for other accounts; verify tests for the owner, a tester listing tools, and a tester calling the tool
 - [ ] 4b.4 Include feedback and intents in `delete_my_data` and set 90-day Firestore TTL on both collections; verify a deletion test and the TTL configuration in the setup script
 

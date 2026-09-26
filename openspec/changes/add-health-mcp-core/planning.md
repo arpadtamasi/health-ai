@@ -1,8 +1,8 @@
 ---
 change: add-health-mcp-core
-generated_at: 2026-09-26T08:07:34.720Z
-delta_hash: sha256:3200b61ea83faa11f20617d60c57e125ebc0494ed6e873795337ef1bcfcc7595
-ready_for_approval: false
+generated_at: 2026-09-26T08:22:12.093Z
+delta_hash: sha256:9336adc1357e48c4bcafdb34f404c04440fa4a6f6e445b27a00c5798db274c8d
+ready_for_approval: true
 ---
 
 # Planning: add-health-mcp-core
@@ -17,6 +17,7 @@ Added:
 - Owner (A-26bj8mj9) — actor, openspec/changes/add-health-mcp-core/model/actors/owner-26bj8mj9.md
 - Access restricted to allow-listed users (BR-pgqnygxe) — business-rule, openspec/changes/add-health-mcp-core/model/business-rules/access-restricted-to-allow-listed-users-pgqnygxe.md
 - Actionable tool errors (BR-ay9ncwhx) — business-rule, openspec/changes/add-health-mcp-core/model/business-rules/actionable-tool-errors-ay9ncwhx.md
+- Agents are asked to report friction (BR-3j93jws4) — business-rule, openspec/changes/add-health-mcp-core/model/business-rules/agents-are-asked-to-report-friction-3j93jws4.md
 - Connected screen before returning to the client (BR-2jcgeae2) — business-rule, openspec/changes/add-health-mcp-core/model/business-rules/connected-screen-before-returning-to-the-client-2jcgeae2.md
 - Every MCP request is authenticated (BR-dj01xfc6) — business-rule, openspec/changes/add-health-mcp-core/model/business-rules/every-mcp-request-is-authenticated-dj01xfc6.md
 - Every tool call states its intent (BR-pseeh1xg) — business-rule, openspec/changes/add-health-mcp-core/model/business-rules/every-tool-call-states-its-intent-pseeh1xg.md
@@ -32,6 +33,7 @@ Added:
 - Tool annotations (BR-evtqnda8) — business-rule, openspec/changes/add-health-mcp-core/model/business-rules/tool-annotations-evtqnda8.md
 - Access token refresh (EX-66s0e3h5) — example, openspec/changes/add-health-mcp-core/model/examples/access-token-refresh-66s0e3h5.md
 - Agent reports a problem on its own (EX-tbc4bp2g) — example, openspec/changes/add-health-mcp-core/model/examples/agent-reports-a-problem-on-its-own-tbc4bp2g.md
+- Agent reports too many calls (EX-ea0t1rz0) — example, openspec/changes/add-health-mcp-core/model/examples/agent-reports-too-many-calls-ea0t1rz0.md
 - Call with intent (EX-j9ar70hk) — example, openspec/changes/add-health-mcp-core/model/examples/call-with-intent-j9ar70hk.md
 - Call without intent (EX-hqzezkb2) — example, openspec/changes/add-health-mcp-core/model/examples/call-without-intent-hqzezkb2.md
 - Check Fitbit sync (EX-4vadc7s7) — example, openspec/changes/add-health-mcp-core/model/examples/check-fitbit-sync-4vadc7s7.md
@@ -50,6 +52,7 @@ Added:
 - Google refresh token expired (EX-ew64hqar) — example, openspec/changes/add-health-mcp-core/model/examples/google-refresh-token-expired-ew64hqar.md
 - Insight deleted with the user's data (EX-6kvhr8zc) — example, openspec/changes/add-health-mcp-core/model/examples/insight-deleted-with-the-user-s-data-6kvhr8zc.md
 - Insight records expire after 90 days (EX-pfsarqpr) — example, openspec/changes/add-health-mcp-core/model/examples/insight-records-expire-after-90-days-pfsarqpr.md
+- Instructions ask for friction reports (EX-4d2wk9j4) — example, openspec/changes/add-health-mcp-core/model/examples/instructions-ask-for-friction-reports-4d2wk9j4.md
 - Intent and feedback are not in the logs (EX-hkq04hzk) — example, openspec/changes/add-health-mcp-core/model/examples/intent-and-feedback-are-not-in-the-logs-hkq04hzk.md
 - Invalid range (EX-bz4afqy6) — example, openspec/changes/add-health-mcp-core/model/examples/invalid-range-bz4afqy6.md
 - Invalid redirect URI (EX-yq602afh) — example, openspec/changes/add-health-mcp-core/model/examples/invalid-redirect-uri-yq602afh.md
@@ -58,6 +61,7 @@ Added:
 - Missing confirmation (EX-556ffxqm) — example, openspec/changes/add-health-mcp-core/model/examples/missing-confirmation-556ffxqm.md
 - Missing token (EX-1bbqkj6h) — example, openspec/changes/add-health-mcp-core/model/examples/missing-token-1bbqkj6h.md
 - Non-listed account tries to connect (EX-xr2jw14b) — example, openspec/changes/add-health-mcp-core/model/examples/non-listed-account-tries-to-connect-xr2jw14b.md
+- Owner reads insight records (EX-4gkxsyb8) — example, openspec/changes/add-health-mcp-core/model/examples/owner-reads-insight-records-4gkxsyb8.md
 - Owner reviews feedback (EX-s4jqk52k) — example, openspec/changes/add-health-mcp-core/model/examples/owner-reviews-feedback-s4jqk52k.md
 - Owner reviews usage (EX-89390vr2) — example, openspec/changes/add-health-mcp-core/model/examples/owner-reviews-usage-89390vr2.md
 - Partial scope grant (EX-r41be3xy) — example, openspec/changes/add-health-mcp-core/model/examples/partial-scope-grant-r41be3xy.md
@@ -82,7 +86,7 @@ Added:
 - Write to read-only type (EX-rkjydekr) — example, openspec/changes/add-health-mcp-core/model/examples/write-to-read-only-type-rkjydekr.md
 - Writing a record (EX-4kn854kp) — example, openspec/changes/add-health-mcp-core/model/examples/writing-a-record-4kn854kp.md
 - Connect with one sign-in (G-9hk232sh) — goal, openspec/changes/add-health-mcp-core/model/goals/connect-with-one-sign-in-9hk232sh.md
-- Improve the service from real use (G-gv3vcrwq) — goal, openspec/changes/add-health-mcp-core/model/goals/improve-the-service-from-real-use-gv3vcrwq.md
+- Feedback comes from real use (G-gv3vcrwq) — goal, openspec/changes/add-health-mcp-core/model/goals/improve-the-service-from-real-use-gv3vcrwq.md
 - Reach my own health data from any AI chat (G-ye2ne6tn) — goal, openspec/changes/add-health-mcp-core/model/goals/reach-my-own-health-data-from-any-ai-chat-ye2ne6tn.md
 - Read and log health data from a conversation (G-phb8aypr) — goal, openspec/changes/add-health-mcp-core/model/goals/read-and-log-health-data-from-a-conversation-phb8aypr.md
 - aggregate_data tool (IF-fgzrb0xb) — interface, openspec/changes/add-health-mcp-core/model/interfaces/aggregate-data-tool-fgzrb0xb.md
@@ -123,13 +127,13 @@ The machine's candidates are mechanical and narrow. Contradictions the agent fou
 
 <!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
 - judged: *Connected screen before returning to the client* adds a confirmation screen between the Google callback and the redirect. The narrative (*Single sign-in grants identity and Google Health access*) and `design.md` D3 described a direct redirect; the owner chose to keep the screen (2026-09-26), and the narrative, `design.md` and `tasks.md` were aligned to the rule.
-- judged: *Per-user data isolation* says every tool call MUST use only the calling user's own stored records, but *list_feedback and usage_summary tools* let the owner read every user's feedback and intents. One of them needs an explicit exception.
+- judged: *Per-user data isolation* says every tool call MUST use only the calling user's own stored records, but *list_feedback and usage_summary tools* let the owner read every user's feedback and intents. Resolved: the owner decided on an explicit exception (P14), now written into the rule, limited to feedback and intent records.
 - judged: The accepted model is empty, so no accepted node is contradicted; every comparison above is between this delta and its own narrative.
 <!-- /kotta:judged -->
 
 ## (d) Silences
 
-- Open: Improve the service from real use (G-gv3vcrwq) G-gv3vcrwq/Q1 — What target shows this goal is reached (for example: every week I read the feedback and the usage summary, or at least one improvement per month comes from them)? (openspec/changes/add-health-mcp-core/model/goals/improve-the-service-from-real-use-gv3vcrwq.md:30)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 
@@ -137,8 +141,8 @@ No narrative requirement bound to a node says something else than the node.
 
 ## (f) Provenance
 
-90 delta nodes: 27 stated, 63 partly-inferred, 0 inferred.
-Decided by: 14 human, 16 agent-proposed-human-approved, 60 agent-decided.
+94 delta nodes: 27 stated, 67 partly-inferred, 0 inferred.
+Decided by: 15 human, 19 agent-proposed-human-approved, 60 agent-decided.
 
 What the machine decided alone:
 
@@ -147,7 +151,7 @@ What the machine decided alone:
 - Google credentials are protected (BR-yjjjqbhd) — from openspec/changes/add-health-mcp-core/specs/mcp-auth/spec.md · Requirement: Google credentials are protected
 - MCP token lifecycle (BR-n62b3rsw) — from openspec/changes/add-health-mcp-core/specs/mcp-auth/spec.md · Requirement: MCP token lifecycle
 - No health data in logs (BR-cm0nnjtm) — from openspec/changes/add-health-mcp-core/specs/mcp-server/spec.md · Requirement: No health data in logs
-- Per-user data isolation (BR-d1c6zyat) — from openspec/changes/add-health-mcp-core/specs/mcp-server/spec.md · Requirement: Per-user data isolation
+- Per-user data isolation (BR-d1c6zyat) — The base rule is the agent's; the owner-tool exception was decided by the owner on 2026-09-26 ("kell kivétel nyilván").
 - Re-authentication when Google access is lost (BR-12rtmjkp) — from openspec/changes/add-health-mcp-core/specs/mcp-auth/spec.md · Requirement: Re-authentication when Google access is lost
 - Tool annotations (BR-evtqnda8) — from openspec/changes/add-health-mcp-core/specs/health-data-tools/spec.md · Requirement: Tool annotations
 - Access token refresh (EX-66s0e3h5) — Given states the usual precondition (an allow-listed, connected user) that the scenario leaves implicit.
@@ -203,4 +207,4 @@ What the machine decided alone:
 - Reconnect after Google access expires (UC-tqzn6dnn) — The use case sequence is assembled by the agent from the requirements and the design.
 - Review feedback and usage (UC-6e97x7p3) — The use case steps are assembled by the agent from the owner's request and the chosen options.
 
-Conversation: openspec/changes/add-health-mcp-core/conversation.md, cited 52 times. Read it for the why before calling anything inferred.
+Conversation: openspec/changes/add-health-mcp-core/conversation.md, cited 59 times. Read it for the why before calling anything inferred.
