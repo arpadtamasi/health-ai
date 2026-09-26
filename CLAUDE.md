@@ -1,5 +1,17 @@
 # health-ai
 
+## Server (`server/`)
+
+TypeScript on Node.js 22, deployed to Cloud Run. Run from `server/`:
+
+- `npm run check` — typecheck, lint (ESLint + typescript-eslint) and tests (Vitest)
+- `npm run build` — compile to `dist/`; `npm start` runs it (port from `PORT`, default 8080)
+- `docker build -t health-ai-server .` — production image
+
+In the Claude Code cloud sandbox, `docker build` needs the proxy and CA: build a throwaway copy with
+`--network host --build-arg HTTPS_PROXY=$HTTPS_PROXY` and `/root/.ccr/ca-bundle.crt` added via
+`NODE_EXTRA_CA_CERTS` in the build stage only. Never commit the sandbox CA into the real Dockerfile.
+
 ## Tooling
 
 This repo has three AI workflow toolkits committed under `.claude/`.

@@ -7,7 +7,7 @@
 
 ## 2. Project and cloud setup
 
-- [ ] 2.1 Scaffold the TypeScript service (package.json, tsconfig, lint, test runner, Dockerfile) and verify `npm test` and `docker build` succeed on an empty test suite
+- [x] 2.1 Scaffold the TypeScript service (package.json, tsconfig, lint, test runner, Dockerfile) and verify `npm test` and `docker build` succeed on an empty test suite
 - [ ] 2.2 Create the GCP project resources (Cloud Run service account, Firestore in `europe-west1`, KMS key ring/key, Secret Manager secret for the JWT signing key, Firestore TTL policies) via a checked-in script and verify it is idempotent by running it twice
 - [ ] 2.3 Create the Google OAuth client and consent screen in Testing mode with the scopes from 1.1 and add the owner as test user; verify the owner can complete Google sign-in in the OAuth playground with those scopes
 
