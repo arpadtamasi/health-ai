@@ -10,6 +10,19 @@ This repo has three AI workflow toolkits committed under `.claude/`.
 - Workflow: `/opsx:propose` → `/opsx:apply` → `/opsx:archive` (also `/opsx:explore`, `/opsx:update`, `/opsx:sync`).
 - CLI: `npm install -g @fission-ai/openspec` (optional; the skills work without it for most steps).
 
+### Kotta (technical specification)
+
+Kotta keeps the technical model (rules, examples, entities, state machines, use cases,
+stories, interfaces) under `.kotta/spec/`, on top of the OpenSpec changes. Its rules:
+
+@.kotta/AGENTS.md
+
+- CLI: `npm install --global @arpadtamasi/kotta@1.0.0-alpha.1` (needed in every fresh cloud session).
+- Skills are vendored in `.claude/skills/` (plan-change, example-mapping, use-case-modeling, ...).
+  `kotta init`/`kotta sync` install them into `~/.claude/skills`; copy updated skills back into the
+  repo after upgrading Kotta.
+- Base branch is `main` (see `.kotta/config.yaml`).
+
 ### Impeccable (frontend design)
 
 - Skill: `.claude/skills/impeccable/`, agents in `.claude/agents/impeccable-*.md`.
