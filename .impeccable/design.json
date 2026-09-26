@@ -1,0 +1,607 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-26T15:05:00Z",
+  "title": "Design System: Health AI",
+  "extensions": {
+    "source": {
+      "tokens": "server/src/auth/pages.ts (STYLE, :root and prefers-color-scheme: dark)",
+      "landing": "server/src/landing.ts (LANDING_STYLE)",
+      "seed": "#3B6EA8 (docs/designs/signin-flow-brief.md)",
+      "cssPrefix": "--md-"
+    },
+    "schemes": {
+      "light": {
+        "--md-primary": "#39608f",
+        "--md-on-primary": "#ffffff",
+        "--md-primary-container": "#d3e4ff",
+        "--md-on-primary-container": "#1e4875",
+        "--md-secondary-container": "#d7e3f8",
+        "--md-on-secondary-container": "#3c4758",
+        "--md-tertiary-container": "#f5d9ff",
+        "--md-on-tertiary-container": "#533f5e",
+        "--md-error-container": "#ffdad6",
+        "--md-on-error-container": "#93000a",
+        "--md-surface": "#f8f9ff",
+        "--md-surface-container-low": "#f2f3fa",
+        "--md-surface-container-high": "#e7e8ee",
+        "--md-on-surface": "#191c20",
+        "--md-on-surface-variant": "#43474e",
+        "--md-outline-variant": "#c3c6cf"
+      },
+      "dark": {
+        "--md-primary": "#a3c9fe",
+        "--md-on-primary": "#00315b",
+        "--md-primary-container": "#1e4875",
+        "--md-on-primary-container": "#d3e4ff",
+        "--md-secondary-container": "#3c4758",
+        "--md-on-secondary-container": "#d7e3f8",
+        "--md-tertiary-container": "#533f5e",
+        "--md-on-tertiary-container": "#f5d9ff",
+        "--md-error-container": "#93000a",
+        "--md-on-error-container": "#ffdad6",
+        "--md-surface": "#111418",
+        "--md-surface-container-low": "#191c20",
+        "--md-surface-container-high": "#272a2f",
+        "--md-on-surface": "#e1e2e8",
+        "--md-on-surface-variant": "#c3c6cf",
+        "--md-outline-variant": "#43474e"
+      }
+    },
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Seed Blue",
+        "cssVar": "--md-primary",
+        "dark": "#a3c9fe",
+        "tonalRamp": [
+          "#00315b",
+          "#1e4875",
+          "#39608f",
+          "#4c74a4",
+          "#658ec0",
+          "#7ea8dc",
+          "#a3c9fe",
+          "#d3e4ff"
+        ]
+      },
+      "on-primary": {
+        "role": "primary",
+        "displayName": "On Seed Blue",
+        "cssVar": "--md-on-primary",
+        "dark": "#00315b",
+        "tonalRamp": [
+          "#00315b",
+          "#1e4875",
+          "#39608f",
+          "#4c74a4",
+          "#658ec0",
+          "#7ea8dc",
+          "#a3c9fe",
+          "#d3e4ff"
+        ]
+      },
+      "primary-container": {
+        "role": "primary",
+        "displayName": "Sky Container",
+        "cssVar": "--md-primary-container",
+        "dark": "#1e4875",
+        "tonalRamp": [
+          "#00315b",
+          "#1e4875",
+          "#39608f",
+          "#4c74a4",
+          "#658ec0",
+          "#7ea8dc",
+          "#a3c9fe",
+          "#d3e4ff"
+        ]
+      },
+      "on-primary-container": {
+        "role": "primary",
+        "displayName": "On Sky Container",
+        "cssVar": "--md-on-primary-container",
+        "dark": "#d3e4ff",
+        "tonalRamp": [
+          "#00315b",
+          "#1e4875",
+          "#39608f",
+          "#4c74a4",
+          "#658ec0",
+          "#7ea8dc",
+          "#a3c9fe",
+          "#d3e4ff"
+        ]
+      },
+      "secondary-container": {
+        "role": "secondary",
+        "displayName": "Slate Container",
+        "cssVar": "--md-secondary-container",
+        "dark": "#3c4758",
+        "tonalRamp": [
+          "#222c3c",
+          "#3c4758",
+          "#4e5a6c",
+          "#667285",
+          "#7f8c9f",
+          "#99a6ba",
+          "#b9c1cd",
+          "#d7e3f8"
+        ]
+      },
+      "on-secondary-container": {
+        "role": "secondary",
+        "displayName": "On Slate Container",
+        "cssVar": "--md-on-secondary-container",
+        "dark": "#d7e3f8",
+        "tonalRamp": [
+          "#222c3c",
+          "#3c4758",
+          "#4e5a6c",
+          "#667285",
+          "#7f8c9f",
+          "#99a6ba",
+          "#b9c1cd",
+          "#d7e3f8"
+        ]
+      },
+      "tertiary-container": {
+        "role": "tertiary",
+        "displayName": "Lilac Container",
+        "cssVar": "--md-tertiary-container",
+        "dark": "#533f5e",
+        "tonalRamp": [
+          "#362340",
+          "#533f5e",
+          "#645070",
+          "#7d6889",
+          "#9781a4",
+          "#b29bbf",
+          "#c8bad0",
+          "#f5d9ff"
+        ]
+      },
+      "on-tertiary-container": {
+        "role": "tertiary",
+        "displayName": "On Lilac Container",
+        "cssVar": "--md-on-tertiary-container",
+        "dark": "#f5d9ff",
+        "tonalRamp": [
+          "#362340",
+          "#533f5e",
+          "#645070",
+          "#7d6889",
+          "#9781a4",
+          "#b29bbf",
+          "#c8bad0",
+          "#f5d9ff"
+        ]
+      },
+      "error-container": {
+        "role": "error",
+        "displayName": "Rose Container",
+        "cssVar": "--md-error-container",
+        "dark": "#93000a",
+        "tonalRamp": [
+          "#690000",
+          "#860000",
+          "#a31c1b",
+          "#c13d35",
+          "#df594e",
+          "#fe7468",
+          "#fba79c",
+          "#ffdad6"
+        ]
+      },
+      "on-error-container": {
+        "role": "error",
+        "displayName": "On Rose Container",
+        "cssVar": "--md-on-error-container",
+        "dark": "#ffdad6",
+        "tonalRamp": [
+          "#690000",
+          "#860000",
+          "#a31c1b",
+          "#c13d35",
+          "#df594e",
+          "#fe7468",
+          "#fba79c",
+          "#ffdad6"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "cssVar": "--md-surface",
+        "dark": "#111418",
+        "tonalRamp": [
+          "#111418",
+          "#191c20",
+          "#272a2f",
+          "#43474e",
+          "#c3c6cf",
+          "#e1e2e8",
+          "#e7e8ee",
+          "#f8f9ff"
+        ]
+      },
+      "surface-container-low": {
+        "role": "neutral",
+        "displayName": "Surface Container Low",
+        "cssVar": "--md-surface-container-low",
+        "dark": "#191c20",
+        "tonalRamp": [
+          "#111418",
+          "#191c20",
+          "#272a2f",
+          "#43474e",
+          "#c3c6cf",
+          "#e1e2e8",
+          "#e7e8ee",
+          "#f2f3fa"
+        ]
+      },
+      "surface-container-high": {
+        "role": "neutral",
+        "displayName": "Surface Container High",
+        "cssVar": "--md-surface-container-high",
+        "dark": "#272a2f",
+        "tonalRamp": [
+          "#111418",
+          "#191c20",
+          "#272a2f",
+          "#43474e",
+          "#c3c6cf",
+          "#e1e2e8",
+          "#e7e8ee",
+          "#f2f3fa"
+        ]
+      },
+      "on-surface": {
+        "role": "neutral",
+        "displayName": "On Surface",
+        "cssVar": "--md-on-surface",
+        "dark": "#e1e2e8",
+        "tonalRamp": [
+          "#282c32",
+          "#43474e",
+          "#555961",
+          "#6d7279",
+          "#878b93",
+          "#a1a5ae",
+          "#c3c6cf",
+          "#e1e2e8"
+        ]
+      },
+      "on-surface-variant": {
+        "role": "neutral",
+        "displayName": "On Surface Variant",
+        "cssVar": "--md-on-surface-variant",
+        "dark": "#c3c6cf",
+        "tonalRamp": [
+          "#282c32",
+          "#43474e",
+          "#555961",
+          "#6d7279",
+          "#878b93",
+          "#a1a5ae",
+          "#c3c6cf",
+          "#e1e2e8"
+        ]
+      },
+      "outline-variant": {
+        "role": "neutral",
+        "displayName": "Outline Variant",
+        "cssVar": "--md-outline-variant",
+        "dark": "#43474e",
+        "tonalRamp": [
+          "#282c32",
+          "#43474e",
+          "#555961",
+          "#6d7279",
+          "#878b93",
+          "#a1a5ae",
+          "#c3c6cf",
+          "#e1e2e8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The landing headline only; 34px/42px under 900px. text-wrap: balance."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The h1 of every sign-in page. text-wrap: balance."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headings; the app bar's product name is 18px/500."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Conversation bubbles and answer paragraphs; list-item titles at 15px/20px."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Sign-in body copy (max 40ch), step titles, highlight rows, offer line. The landing intro is 17px/26px, max 44ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Status chip, assist chip, notes, captions, footer; 0.3–0.5px tracking. Table headers 11px/500 uppercase, 0.4px."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "The connector URL only; overflow-wrap: anywhere, user-select: all."
+      },
+      "headline-small": {
+        "displayName": "Headline Small",
+        "purpose": "The below-the-fold section heading 'Also in the same conversation'; 22px/28px under 900px."
+      }
+    },
+    "fonts": {
+      "google": "https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500&display=swap",
+      "weights": [
+        400,
+        500
+      ],
+      "accepted": ".impeccable/config.json waives the overused-font rule for Roboto (Material 3 default typeface)"
+    },
+    "shadows": [],
+    "elevation": {
+      "model": "tonal-layering",
+      "ladder": [
+        "--md-surface",
+        "--md-surface-container-low",
+        "--md-surface-container-high"
+      ],
+      "stateLayer": {
+        "hover": 0.08,
+        "active": 0.12,
+        "color": "var(--md-on-primary)",
+        "transition": "opacity .15s",
+        "usedBy": [
+          "button-copy"
+        ]
+      }
+    },
+    "motion": [
+      {
+        "name": "state-layer",
+        "value": "opacity .15s",
+        "purpose": "Copy button hover/active overlay."
+      },
+      {
+        "name": "progress-fill",
+        "value": "fill var(--delay) linear forwards; scaleX(0) → scaleX(1)",
+        "purpose": "Connected page progress bar over the redirect delay; disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "copied-revert",
+        "value": "2000ms",
+        "purpose": "Copy button shows a check and 'Copied' in primary-container, then reverts."
+      }
+    ],
+    "focus": {
+      "value": "outline: 3px solid var(--md-primary); outline-offset: 3px",
+      "usedBy": [
+        "button-filled",
+        "button-text",
+        "button-copy"
+      ]
+    },
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "900px",
+        "purpose": "max-width: hero to one column, table hides 'In bed', shared row stacks, side padding 20px; .more section 32px 0 0 with a one-column 16px-gap grid, heading 22px/28px."
+      }
+    ],
+    "containers": [
+      {
+        "name": "shell",
+        "maxWidth": "480px",
+        "padding": "8px 20px 24px",
+        "purpose": "Sign-in pages."
+      },
+      {
+        "name": "landing",
+        "maxWidth": "1200px",
+        "padding": "0 32px",
+        "purpose": "Landing page; 20px sides under 900px."
+      }
+    ],
+    "icons": {
+      "set": "Material Icons (Apache-2.0), inlined SVG paths in ICONS",
+      "sizes": [
+        "24px",
+        "20px logo",
+        "18px copy/highlight/logged",
+        "16px caption/attachment",
+        "40px badge"
+      ],
+      "fill": "currentColor"
+    },
+    "placeholders": [
+      "Product name 'Health AI'",
+      "Logo tile heart icon"
+    ],
+    "sections": [
+      {
+        "name": "more",
+        "selector": ".more",
+        "padding": "40px 0 8px",
+        "mobilePadding": "32px 0 0",
+        "gap": "16px",
+        "grid": {
+          "columns": "repeat(auto-fit, minmax(min(100%, 440px), 1fr))",
+          "gap": "24px",
+          "alignItems": "stretch",
+          "captionMarginTop": "auto",
+          "mobileColumns": "1fr",
+          "mobileGap": "16px"
+        },
+        "purpose": "Below-the-fold auto-fit grid of further conversation cards (meal, experiment) under a headline-small; cards stretch to share a bottom edge, a lone card takes the full width."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Filled Button",
+      "kind": "button",
+      "refersTo": "button-filled",
+      "description": "The one primary action of a sign-in page; full width in the actions column, optional leading icon.",
+      "html": "<a class=\"ds-btn\" href=\"#\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 7 9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z\"/></svg>Continue with Google</a>",
+      "css": ".ds-btn{min-height:48px;border-radius:24px;background:var(--md-primary,#39608f);color:var(--md-on-primary,#fff);display:flex;align-items:center;justify-content:center;gap:8px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-weight:500;font-size:15px;letter-spacing:.1px;text-decoration:none;padding:0 24px}.ds-btn:hover{filter:brightness(1.06)}.ds-btn:focus-visible{outline:3px solid var(--md-primary,#39608f);outline-offset:3px}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "Text Button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Secondary action under a filled button (Back to Claude).",
+      "html": "<a class=\"ds-btn-text\" href=\"#\">Back to Claude</a>",
+      "css": ".ds-btn-text{min-height:40px;border-radius:24px;background:transparent;color:var(--md-primary,#39608f);display:flex;align-items:center;justify-content:center;gap:8px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-weight:500;font-size:15px;letter-spacing:.1px;text-decoration:none;padding:0 24px}.ds-btn-text:hover{filter:brightness(1.06)}.ds-btn-text:focus-visible{outline:3px solid var(--md-primary,#39608f);outline-offset:3px}"
+    },
+    {
+      "name": "URL Field with Copy",
+      "kind": "input",
+      "refersTo": "url-field",
+      "description": "Read-only connector URL in a surface-container-high strip with the 36px Copy pill; hover/active are an on-primary state layer, Copied swaps to primary-container.",
+      "html": "<div class=\"ds-url\"><code>https://health-ai-hub.web.app/mcp</code><button class=\"ds-copy\" type=\"button\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z\"/></svg>Copy</button></div>",
+      "css": ".ds-url{display:flex;align-items:center;gap:8px;background:var(--md-surface-container-high,#e7e8ee);border-radius:12px;padding:6px 6px 6px 14px}.ds-url code{flex:1;font:13.5px/20px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--md-on-surface,#191c20);overflow-wrap:anywhere;user-select:all}.ds-copy{position:relative;overflow:hidden;min-height:36px;border:0;border-radius:18px;padding:0 14px 0 10px;background:var(--md-primary,#39608f);color:var(--md-on-primary,#fff);font:500 13px/1 \"Roboto Flex\",Roboto,system-ui,sans-serif;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}.ds-copy .ds-ms{width:18px;height:18px}.ds-copy::after{content:\"\";position:absolute;inset:0;background:var(--md-on-primary,#fff);opacity:0;transition:opacity .15s}.ds-copy:hover::after{opacity:.08}.ds-copy:active::after{opacity:.12}.ds-copy:focus-visible{outline:3px solid var(--md-primary,#39608f);outline-offset:3px}.ds-copy.done{background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875)}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "App Bar",
+      "kind": "nav",
+      "refersTo": "appbar",
+      "description": "64px bar on the surface colour: logo tile, product name, and on the landing a status chip at the right. No navigation links.",
+      "html": "<header class=\"ds-appbar\"><span class=\"ds-brand\"><span class=\"ds-logo\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z\"/></svg></span>Health AI</span><span class=\"ds-pill\">Testing · invited accounts</span></header>",
+      "css": ".ds-appbar{height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-size:18px;font-weight:500;background:var(--md-surface,#f8f9ff);color:var(--md-on-surface,#191c20)}.ds-brand{display:flex;align-items:center;gap:12px}.ds-logo{width:32px;height:32px;border-radius:8px;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);display:grid;place-items:center}.ds-logo .ds-ms{width:20px;height:20px}.ds-pill{font-size:12px;font-weight:500;letter-spacing:.3px;padding:6px 12px;border-radius:8px;background:var(--md-secondary-container,#d7e3f8);color:var(--md-on-secondary-container,#3c4758);white-space:nowrap}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "Assist Chip",
+      "kind": "chip",
+      "refersTo": "chip-assist",
+      "description": "Outlined trailing chip on a list item stating access level.",
+      "html": "<span class=\"ds-chip\">Read and write</span>",
+      "css": ".ds-chip{font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-size:12px;font-weight:500;padding:4px 10px;border-radius:8px;border:1px solid var(--md-outline-variant,#c3c6cf);color:var(--md-on-surface-variant,#43474e);white-space:nowrap}"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "Filled secondary-container chip in the landing app bar.",
+      "html": "<span class=\"ds-pill\">Testing · invited accounts</span>",
+      "css": ".ds-pill{font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-size:12px;font-weight:500;letter-spacing:.3px;padding:6px 12px;border-radius:8px;background:var(--md-secondary-container,#d7e3f8);color:var(--md-on-secondary-container,#3c4758);white-space:nowrap}"
+    },
+    {
+      "name": "List with Icon Circles",
+      "kind": "card",
+      "refersTo": "list-container",
+      "description": "The 'what is shared' list: surface-container-low block, 16px radius, items with a 40px secondary-container icon circle, title, supporting line and trailing assist chip, 1px dividers.",
+      "html": "<ul class=\"ds-list\"><li class=\"ds-item\"><span class=\"ds-icon\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12.34 2.02C6.59 1.82 2 6.42 2 12c0 5.52 4.48 10 10 10 3.71 0 6.93-2.02 8.66-5.02-7.51-.25-12.09-8.43-8.32-14.96z\"/></svg></span><div><div class=\"ds-t\">Sleep, heart rate, activity</div><div class=\"ds-s\">From your Google Health account</div></div><span class=\"ds-chip\">Read</span></li><li class=\"ds-item\"><span class=\"ds-icon\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z\"/></svg></span><div><div class=\"ds-t\">Health values stored by us</div><div class=\"ds-s\">Delete your data at any time</div></div><span class=\"ds-chip\">None</span></li></ul>",
+      "css": ".ds-list{list-style:none;margin:0;padding:0;background:var(--md-surface-container-low,#f2f3fa);border-radius:16px;overflow:hidden;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;color:var(--md-on-surface,#191c20)}.ds-item{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:12px 16px;min-height:56px}.ds-item+.ds-item{border-top:1px solid var(--md-outline-variant,#c3c6cf)}.ds-icon{width:40px;height:40px;border-radius:50%;background:var(--md-secondary-container,#d7e3f8);color:var(--md-on-secondary-container,#3c4758);display:grid;place-items:center}.ds-t{font-size:15px;line-height:20px}.ds-s{font-size:12.5px;line-height:16px;color:var(--md-on-surface-variant,#43474e)}.ds-chip{font-size:12px;font-weight:500;padding:4px 10px;border-radius:8px;border:1px solid var(--md-outline-variant,#c3c6cf);color:var(--md-on-surface-variant,#43474e);white-space:nowrap}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "Conversation Card",
+      "kind": "custom",
+      "refersTo": "card-conversation",
+      "description": "The landing's signature: tester bubble in primary-container, answer led by the logo tile, tabular numerals, caption rule. Padding 20px 24px 16px on every card (hero and the .more grid); in the grid the caption sits at margin-top: auto.",
+      "html": "<section class=\"ds-chat\"><p class=\"ds-q\">How did I sleep this week?</p><div class=\"ds-a\"><span class=\"ds-logo\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z\"/></svg></span><div><p>A mixed week: the start and the end were fine, with two weaker nights in the middle. You averaged about 6 h 15 min of sleep a night.</p><table class=\"ds-wk\"><thead><tr><th>Night</th><th>Asleep</th><th>Deep</th></tr></thead><tbody><tr><th>Mon–Tue</th><td><b>7 h 40</b></td><td>58 min</td></tr><tr><th>Tue–Wed</th><td>6 h 40</td><td><b>100 min</b></td></tr></tbody></table></div></div><p class=\"ds-cap\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z\"/></svg>A real answer from one week of the owner's testing.</p></section>",
+      "css": ".ds-chat{background:var(--md-surface-container-low,#f2f3fa);color:var(--md-on-surface,#191c20);border-radius:24px;padding:20px 24px 16px;display:flex;flex-direction:column;gap:14px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-variant-numeric:tabular-nums}.ds-chat p{margin:0}.ds-q{align-self:flex-end;max-width:70%;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);border-radius:20px 20px 4px 20px;padding:10px 16px;font-size:15px;line-height:22px}.ds-a{display:grid;grid-template-columns:32px 1fr;gap:12px}.ds-a p{font-size:15px;line-height:22px}.ds-logo{width:32px;height:32px;margin-top:2px;border-radius:8px;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);display:grid;place-items:center}.ds-logo .ds-ms{width:20px;height:20px}.ds-wk{width:100%;border-collapse:collapse;margin:12px 0 2px;font-size:13px;line-height:18px}.ds-wk th,.ds-wk td{text-align:left;padding:5px 8px 5px 0;font-weight:400;white-space:nowrap}.ds-wk thead th{font-size:11px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;color:var(--md-on-surface-variant,#43474e);border-bottom:1px solid var(--md-outline-variant,#c3c6cf)}.ds-wk tbody th{font-weight:500}.ds-wk td b{font-weight:500;color:var(--md-primary,#39608f)}.ds-wk tbody tr+tr td,.ds-wk tbody tr+tr th{border-top:1px solid color-mix(in srgb,var(--md-outline-variant,#c3c6cf) 45%,transparent)}.ds-cap{font-size:12px;line-height:16px;color:var(--md-on-surface-variant,#43474e);border-top:1px solid var(--md-outline-variant,#c3c6cf);padding-top:12px;display:flex;align-items:center;gap:6px}.ds-cap .ds-ms{width:16px;height:16px}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "Attachment Chip",
+      "kind": "chip",
+      "refersTo": "chip-attachment",
+      "description": "Inset chip for an attached photo inside a tester bubble (meal conversation card).",
+      "html": "<p class=\"ds-q\"><span class=\"ds-attach\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 15.2c1.77 0 3.2-1.43 3.2-3.2S13.77 8.8 12 8.8 8.8 10.23 8.8 12s1.43 3.2 3.2 3.2zM9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z\"/></svg>IMG_2041.jpg</span><br>Lunch.</p>",
+      "css": ".ds-q{display:inline-block;margin:0;max-width:70%;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);border-radius:20px 20px 4px 20px;padding:10px 16px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-size:15px;line-height:22px}.ds-attach{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;background:var(--md-surface,#f8f9ff);color:var(--md-on-surface,#191c20);border-radius:8px;padding:4px 8px 4px 6px;margin-bottom:6px}.ds-attach .ds-ms{width:16px;height:16px}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "Logged Row",
+      "kind": "custom",
+      "refersTo": "logged-row",
+      "description": "Confirmation strip inside an answer (meal conversation card): what was written to Google Health.",
+      "html": "<div class=\"ds-logged\"><span class=\"ds-icon\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z\"/></svg></span><div><div>Lunch · 12:40 · 640 kcal</div><div class=\"ds-s\">Written to Google Health · Nutrition</div></div></div>",
+      "css": ".ds-logged{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:center;background:var(--md-surface,#f8f9ff);color:var(--md-on-surface,#191c20);border-radius:12px;padding:8px 12px 8px 8px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-size:14px;line-height:20px}.ds-icon{width:32px;height:32px;border-radius:50%;background:var(--md-secondary-container,#d7e3f8);color:var(--md-on-secondary-container,#3c4758);display:grid;place-items:center}.ds-icon .ds-ms{width:18px;height:18px}.ds-s{font-size:12.5px;line-height:16px;color:var(--md-on-surface-variant,#43474e)}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "Numbered Step List",
+      "kind": "custom",
+      "refersTo": "step-number",
+      "description": "Three steps with 28px secondary-container counter circles, 500 title and a muted line.",
+      "html": "<ol class=\"ds-how\"><li><div><b>Add the connector.</b><span>Claude → Settings → Connectors → Add custom connector, and paste the URL.</span></div></li><li><div><b>Sign in with Google.</b><span>Keep the Health permissions selected.</span></div></li><li><div><b>Ask Claude.</b><span>Start with “How did I sleep this week?”</span></div></li></ol>",
+      "css": ".ds-how{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:step;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;color:var(--md-on-surface,#191c20)}.ds-how li{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start;font-size:14px;line-height:20px}.ds-how li::before{counter-increment:step;content:counter(step);width:28px;height:28px;border-radius:50%;background:var(--md-secondary-container,#d7e3f8);color:var(--md-on-secondary-container,#3c4758);display:grid;place-items:center;font-size:13px;font-weight:500}.ds-how b{font-weight:500}.ds-how span{display:block;color:var(--md-on-surface-variant,#43474e);font-size:13px;line-height:18px}"
+    },
+    {
+      "name": "Result Badge",
+      "kind": "custom",
+      "refersTo": "badge-ok",
+      "description": "72px tonal circle above a centred headline on sign-in result pages; ok / warn / err variants.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-ok\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z\"/></svg></span><span class=\"ds-badge ds-warn\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z\"/></svg></span><span class=\"ds-badge ds-err\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z\"/></svg></span></div>",
+      "css": ".ds-badges{display:flex;gap:16px}.ds-badge{width:72px;height:72px;border-radius:50%;display:grid;place-items:center}.ds-badge .ds-ms{width:40px;height:40px}.ds-ok{background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875)}.ds-warn{background:var(--md-tertiary-container,#f5d9ff);color:var(--md-on-tertiary-container,#533f5e)}.ds-err{background:var(--md-error-container,#ffdad6);color:var(--md-on-error-container,#93000a)}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+    },
+    {
+      "name": "Step Indicator",
+      "kind": "custom",
+      "refersTo": "list-item",
+      "description": "Three 4px segments; completed ones in primary. Same geometry as the connected page's 120px progress bar.",
+      "html": "<div class=\"ds-steps\"><span class=\"on\"></span><span class=\"on\"></span><span></span></div>",
+      "css": ".ds-steps{display:flex;gap:6px;width:240px}.ds-steps span{height:4px;flex:1;border-radius:2px;background:var(--md-surface-container-high,#e7e8ee)}.ds-steps span.on{background:var(--md-primary,#39608f)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Google's Quiet Neighbour",
+    "overview": "Health AI is plain Material Design 3, played straight, so that its few web pages sit naturally between Claude and Google's own account and Google Health screens. Nothing here is a visual world of its own: one calm blue seed (#3B6EA8, recorded in docs/designs/signin-flow-brief.md) generates the whole tonal palette, Roboto Flex carries every word at two weights, and depth is done with tonal surface containers instead of shadows. The pages are short stops in a redirect flow; the design's job is to be trustworthy, legible and gone.\n\nThe mood is balance, confidence and health: being well, never being a patient. That rules out clinical cues (lab-report tables, medical reds, illness iconography) without needing decoration to replace them. Colour is reserved: primary blue appears on the filled button, the progress fill, a highlighted number and the focus ring; everything else is a soft container tone on a near-white (or near-black) surface. The landing page extends the same materials into a two-column layout with a conversation card, and the conversation card is the closest thing to a signature: a tester bubble in primary-container, an answer led by the logo tile, a weekly table in tabular numerals.\n\nTwo things are placeholders, not decisions: the product name \"Health AI\" and the heart-icon logo tile (both marked unresolved in PRODUCT.md and the surface brief). Roboto (Flex) is an accepted choice: the design detector's overused-font warning is waived for it in .impeccable/config.json because it is the Material 3 default typeface.",
+    "keyCharacteristics": [
+      "Material 3 tonal scheme from one blue seed; light and dark follow prefers-color-scheme, every colour a --md-* custom property.",
+      "Roboto Flex at 400 and 500 only; emphasis is weight 500 or primary colour, never bold.",
+      "Flat: no box-shadow anywhere; depth is surface → surface-container-low → surface-container-high.",
+      "Rounded containers (16px, 24px for the conversation card), full-pill interactive elements, circular icon holders.",
+      "Inline Material Icons SVG (24px, currentColor), never an icon font.",
+      "Dense but airy: 4px rhythm, 12–24px internal padding, 8–16px gaps between siblings."
+    ],
+    "rules": [
+      {
+        "name": "The Container Rule",
+        "body": "Colour arrives as a container pair (*-container + on-*-container), never as a solid fill: primary solid is only for the filled button, the progress fill, a highlighted number and the focus ring.",
+        "section": "colors"
+      },
+      {
+        "name": "The System Scheme Rule",
+        "body": "Every colour is a --md-* custom property declared once for light and once under prefers-color-scheme: dark; no hex value appears outside :root, and no page offers a manual theme toggle.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Weight Rule",
+        "body": "400 for reading, 500 for emphasis and labels. No 300, no 600, no 700; the font request only loads 400 and 500.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Any block that shows measurements (the conversation card) sets font-variant-numeric: tabular-nums so times and durations align in columns.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Shadow Rule",
+        "body": "Surfaces never cast shadows. A new surface picks the next container tone up; if it needs a boundary on the same tone, it gets a 1px outline-variant line.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do take every colour from a --md-* custom property and add new ones in both the light and dark blocks of STYLE in pages.ts.",
+      "Do use a container pair for any coloured seat (icon circle, tile, bubble, badge): *-container background with on-*-container foreground.",
+      "Do keep type to Roboto Flex 400 and 500; emphasise with weight 500 or primary, and set tabular-nums wherever numbers line up.",
+      "Do build new surfaces on the tonal ladder: surface → surface-container-low → surface-container-high, 16px containers, full-pill buttons, 1px outline-variant dividers.",
+      "Do inline Material Icons as SVG through icon() and add paths to ICONS; keep focus rings at 3px solid primary with 3px offset and honour prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't add box-shadow, gradients or a manual dark-mode toggle; the build has none.",
+      "Don't hard-code hex values in component CSS or introduce a second accent; tertiary and error containers are for badges only.",
+      "Don't load an icon font or a third typeface; the only non-Roboto face is the monospace stack for the connector URL.",
+      "Don't use weight 700 or uppercase for emphasis in running text; uppercase exists only in the table header labels.",
+      "Don't show health values outside the one supplied example answer, and don't reach for clinical cues (lab-report styling, medical red as text) anywhere."
+    ]
+  }
+}

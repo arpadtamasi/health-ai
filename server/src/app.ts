@@ -15,6 +15,7 @@ import { MCP_SCOPES } from "./auth/scopes.js";
 import { AccessTokens } from "./auth/tokens.js";
 import { HealthApi, type Fetch } from "./health/api.js";
 import { logEvent, pseudonym } from "./log.js";
+import { landingPage } from "./landing.js";
 import { buildMcpServer } from "./mcp/server.js";
 
 export interface AppDeps {
@@ -50,6 +51,11 @@ export function createApp(deps: AppDeps): App {
   // Cloud Run and Firebase Hosting sit in front of the service.
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
+
+  const landing = landingPage(deps.publicUrl, deps.healthWriteScopes.length > 0);
+  app.get("/", (_req, res) => {
+    res.type("html").send(landing);
+  });
 
   // Cloud Run reserves paths ending in "z", so deployed checks use /health.
   app.get(["/health", "/healthz"], (_req, res) => {

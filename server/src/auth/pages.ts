@@ -1,11 +1,11 @@
 // Server-rendered pages of the sign-in flow, in plain Material Design 3
 // (docs/designs/signin-flow-brief.md). No health values are ever shown here.
 
-const esc = (s: string): string =>
+export const esc = (s: string): string =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 
 // Material Icons paths (Apache-2.0), inlined so pages never depend on an icon font.
-const ICONS: Record<string, string> = {
+export const ICONS: Record<string, string> = {
   favorite: "M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z",
   bedtime: "M12.34 2.02C6.59 1.82 2 6.42 2 12c0 5.52 4.48 10 10 10 3.71 0 6.93-2.02 8.66-5.02-7.51-.25-12.09-8.43-8.32-14.96z",
   restaurant: "M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z",
@@ -15,10 +15,14 @@ const ICONS: Record<string, string> = {
   schedule: "M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z",
   block: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z",
   error: "M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z",
+  content_copy: "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z",
+  chat: "M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z",
+  science: "M13 11.33 18 18H6l5-6.67V6h2m2.96-2H8.04c-.42 0-.65.48-.39.81L9 6.5v4.17L3.2 18.4c-.49.66-.02 1.6.8 1.6h16c.82 0 1.29-.94.8-1.6L15 10.67V6.5l1.35-1.69c.26-.33.03-.81-.39-.81z",
+  photo_camera: "M12 15.2c1.77 0 3.2-1.43 3.2-3.2S13.77 8.8 12 8.8 8.8 10.23 8.8 12s1.43 3.2 3.2 3.2zM9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z",
   lock_open: "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z",
 };
 
-const STYLE = `
+export const STYLE = `
 :root{color-scheme:light dark;
 --md-primary:#39608f;--md-on-primary:#ffffff;--md-primary-container:#d3e4ff;--md-on-primary-container:#1e4875;
 --md-secondary-container:#d7e3f8;--md-on-secondary-container:#3c4758;--md-tertiary-container:#f5d9ff;--md-on-tertiary-container:#533f5e;--md-error-container:#ffdad6;--md-on-error-container:#93000a;
@@ -69,7 +73,7 @@ gap:8px;font-weight:500;font-size:15px;letter-spacing:.1px;text-decoration:none;
 @media (prefers-reduced-motion:reduce){.progress span{animation:none}}
 `;
 
-const FONTS = `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+export const FONTS = `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500&display=swap">`;
 
 function page(title: string, main: string, opts: { center?: boolean; head?: string } = {}): string {
@@ -81,7 +85,7 @@ function page(title: string, main: string, opts: { center?: boolean; head?: stri
 <main${opts.center ? ' class="center"' : ""}>${main}</main></div></body></html>`;
 }
 
-const icon = (name: string): string =>
+export const icon = (name: string): string =>
   `<svg class="ms" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${ICONS[name] ?? ""}"/></svg>`;
 const badge = (kind: "ok" | "warn" | "err", name: string): string => `<span class="badge ${kind}">${icon(name)}</span>`;
 const button = (href: string, label: string, opts: { id?: string; text?: boolean; icon?: string } = {}): string =>
