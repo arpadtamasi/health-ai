@@ -8,8 +8,31 @@ import {
 } from "../src/google/oauth.js";
 import { MemoryStore } from "../src/store/memory.js";
 
-export const READ_SCOPES = ["https://www.googleapis.com/auth/health.read"];
-export const WRITE_SCOPES = ["https://www.googleapis.com/auth/health.write"];
+const GH = "https://www.googleapis.com/auth/googlehealth.";
+export const READ_SCOPES = [`${GH}sleep.readonly`, `${GH}activity_and_fitness.readonly`, `${GH}health_metrics_and_measurements.readonly`];
+export const WRITE_SCOPES = [`${GH}nutrition.writeonly`];
+
+/** A Google Health API stand-in: records requests and answers with the handler's JSON. */
+export class FakeHealth {
+  readonly requests: { method: string; url: URL; body: unknown; auth: string }[] = [];
+  handler: (req: { method: string; url: URL; body: unknown }) => { status?: number; json: unknown } = () => ({ json: {} });
+
+  readonly fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(String(input));
+    const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+    const headers = new Headers(init?.headers);
+    const req = { method: init?.method ?? "GET", url, body };
+    this.requests.push({ ...req, auth: headers.get("authorization") ?? "" });
+    const r = this.handler(req);
+    return new Response(JSON.stringify(r.json), { status: r.status ?? 200, headers: { "content-type": "application/json" } });
+  }) as typeof fetch;
+
+  last() {
+    const r = this.requests.at(-1);
+    if (!r) throw new Error("no Health API request was made");
+    return r;
+  }
+}
 export const PUBLIC_URL = new URL("http://localhost:8080");
 
 /** A Google stand-in: each code maps to the account and scopes the test wants. */
@@ -57,6 +80,7 @@ export function makeTestApp(opts: { now?: () => number } = {}) {
   store.allow("owner@example.com", true);
   store.allow("tester@example.com");
   const google = new FakeGoogle();
+  const health = new FakeHealth();
   const sealer = new AesGcmSealer(randomBytes(32));
   const built = createApp({
     publicUrl: PUBLIC_URL,
@@ -66,9 +90,10 @@ export function makeTestApp(opts: { now?: () => number } = {}) {
     store,
     sealer,
     google,
+    healthFetch: health.fetch,
     ...(opts.now ? { now: opts.now } : {}),
   });
-  return { ...built, store, google, sealer, http: request(built.app) };
+  return { ...built, store, google, health, sealer, http: request(built.app) };
 }
 
 export type TestApp = ReturnType<typeof makeTestApp>;

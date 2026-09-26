@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerDeleteMyData, type AccountDeps } from "./account.js";
+import { registerHealthTools, type HealthContext } from "./health.js";
 import { registerOwnerTools, registerSendFeedback } from "./insight.js";
-import type { CallContext } from "./tool.js";
 
 export const SERVER_INSTRUCTIONS = [
   "Health AI connects you to the user's Google Health data (Fitbit): read sleep, heart rate and activity, and log meals and water.",
@@ -15,11 +15,12 @@ export const SERVER_INSTRUCTIONS = [
  * A fresh MCP server per request (stateless Streamable HTTP, design D2), holding the tools this
  * caller may use. IF-01m3eb1b7edb7e1dh0rft2dq63 (MCP endpoint).
  */
-export function buildMcpServer(ctx: CallContext, deps: AccountDeps): McpServer {
+export function buildMcpServer(ctx: HealthContext, deps: AccountDeps): McpServer {
   const server = new McpServer(
     { name: "health-ai", title: "Health AI", version: "0.1.0" },
     { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
   );
+  registerHealthTools(server, ctx);
   registerSendFeedback(server, ctx);
   registerDeleteMyData(server, ctx, deps);
   registerOwnerTools(server, ctx);

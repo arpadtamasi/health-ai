@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { ReconnectRequiredError } from "../auth/google-access.js";
+import { describeHealthApiError, HealthApiError } from "../health/api.js";
 import { logEvent } from "../log.js";
 import type { Store } from "../store/types.js";
 import { INSIGHT_RETENTION_MS } from "./retention.js";
@@ -65,7 +66,13 @@ export function addTool<S extends z.ZodRawShape>(
     } catch (err) {
       result = toErrorResult(err);
       if (!(err instanceof ReconnectRequiredError)) {
-        logEvent({ msg: "tool_failure", tool: name, user: ctx.userRef, error: err instanceof Error ? err.name : "unknown" });
+        logEvent({
+          msg: "tool_failure",
+          tool: name,
+          user: ctx.userRef,
+          error: err instanceof Error ? err.name : "unknown",
+          ...(err instanceof HealthApiError ? { upstreamStatus: err.status } : {}),
+        });
       }
     }
     logEvent({
@@ -102,5 +109,6 @@ async function recordIntent(ctx: CallContext, tool: string, intent: string | und
 
 function toErrorResult(err: unknown): CallToolResult {
   if (err instanceof ReconnectRequiredError) return errorResult(err.message);
+  if (err instanceof HealthApiError) return errorResult(describeHealthApiError(err));
   return errorResult("Health AI hit an unexpected error. Try again in a moment; if it keeps failing, report it with send_feedback.");
 }

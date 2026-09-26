@@ -13,6 +13,7 @@ import { ReconnectLinks } from "./auth/reconnect.js";
 import { authRoutes } from "./auth/routes.js";
 import { MCP_SCOPES } from "./auth/scopes.js";
 import { AccessTokens } from "./auth/tokens.js";
+import { HealthApi, type Fetch } from "./health/api.js";
 import { logEvent, pseudonym } from "./log.js";
 import { buildMcpServer } from "./mcp/server.js";
 
@@ -25,6 +26,8 @@ export interface AppDeps {
   sealer: Sealer;
   google: GoogleOAuth;
   now?: () => number;
+  /** fetch for Google Health API calls; tests replace it. */
+  healthFetch?: Fetch;
 }
 
 export interface App {
@@ -95,6 +98,8 @@ export function createApp(deps: AppDeps): App {
           pseudonymOf,
           isOwner: allow?.owner === true,
           scopes: req.auth?.scopes ?? [],
+          googleScopes: user.grantedScopes,
+          api: new HealthApi(() => googleAccess.accessToken(userId), deps.healthFetch),
           store: deps.store,
           now,
         },

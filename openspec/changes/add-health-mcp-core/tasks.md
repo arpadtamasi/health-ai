@@ -25,14 +25,14 @@
 ## 4. MCP server and health data tools (`mcp-server`, `health-data-tools`)
 
 - [x] 4.1 Wire the stateless Streamable HTTP MCP endpoint behind the auth middleware; verify an MCP client test can `initialize` and `tools/list` with a valid token
-- [ ] 4.2 Implement the data-type registry from the 1.1 findings and `list_data_types` with per-user readable/writable flags from granted scopes; verify unit tests including a type without write scope
+- [x] 4.2 Implement the data-type registry from the 1.1 findings and `list_data_types` with per-user readable/writable flags from granted scopes; verify unit tests including a type without write scope
 - [ ] 4.3 Implement `read_data` with time-zone handling, pagination and argument validation; verify tests with recorded Google Health API responses
-- [ ] 4.4 Implement `aggregate_data` (hour/day/week buckets); verify a seven-day daily steps test returns seven buckets
-- [ ] 4.5 Implement `write_data`, `update_data`, `delete_data` for writable types (nutrition log, hydration) with pass-through values and returned upstream ids; verify tests including the read-only type rejection
+- [x] 4.4 Implement `aggregate_data` (hour/day/week buckets); verify a seven-day daily steps test returns seven buckets
+- [x] 4.5 Implement `write_data`, `update_data`, `delete_data` for writable types (nutrition log, hydration) with pass-through values and returned upstream ids; verify tests including the read-only type rejection
 - [ ] 4.6 Implement `get_profile` and `list_devices`; verify tests with recorded responses
 - [x] 4.7 Implement `delete_my_data` (confirmation, Google revoke, record deletion, token invalidation); verify a test that the previous access token then gets 401
-- [ ] 4.8 Add tool annotations, upstream error mapping (validation, rate limit) and log redaction; verify tests that error results are readable and logs contain no health values or tokens
-- [ ] 4.9 Document the tools with example calls in `docs/tools.md`; verify each example matches the tool's input schema via a schema test
+- [x] 4.8 Add tool annotations, upstream error mapping (validation, rate limit) and log redaction; verify tests that error results are readable and logs contain no health values or tokens
+- [x] 4.9 Document the tools with example calls in `docs/tools.md`; verify each example matches the tool's input schema via a schema test
 
 ## 4b. Service insight (`service-insight`)
 
