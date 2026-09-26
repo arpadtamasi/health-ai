@@ -3,13 +3,15 @@ import { loadConfig } from "./config.js";
 import { AesGcmSealer } from "./crypto/sealer.js";
 import { HttpGoogleOAuth } from "./google/oauth.js";
 import { GOOGLE_CALLBACK_PATH } from "./auth/routes.js";
+import { logEvent } from "./log.js";
 import { MemoryStore } from "./store/memory.js";
 
 const config = loadConfig();
 // The Firestore store and the Cloud KMS sealer replace these in task 2.2.
 const store = new MemoryStore();
-for (const email of (process.env.ALLOW_LIST ?? "").split(",").map((e) => e.trim()).filter(Boolean)) {
-  store.allow(email, email === process.env.OWNER_EMAIL);
+const ownerEmail = (process.env.OWNER_EMAIL ?? "").trim().toLowerCase();
+for (const email of (process.env.ALLOW_LIST ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)) {
+  store.allow(email, email === ownerEmail);
 }
 
 const { app } = createApp({
@@ -24,7 +26,7 @@ const { app } = createApp({
 });
 
 const server = app.listen(config.port, () => {
-  console.log(JSON.stringify({ msg: "listening", port: config.port }));
+  logEvent({ msg: "listening", port: config.port });
 });
 
 // Cloud Run sends SIGTERM before stopping an instance.
