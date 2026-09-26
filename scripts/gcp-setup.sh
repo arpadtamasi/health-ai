@@ -24,7 +24,8 @@ step() { printf '\n== %s\n' "$*"; }
 
 step "APIs"
 gc services enable run.googleapis.com firestore.googleapis.com cloudkms.googleapis.com \
-  secretmanager.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com
+  secretmanager.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com \
+  iamcredentials.googleapis.com firebasehosting.googleapis.com
 
 step "Service account ${SA_EMAIL}"
 if ! gc iam service-accounts describe "$SA_EMAIL" >/dev/null 2>&1; then

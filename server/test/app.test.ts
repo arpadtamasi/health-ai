@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { makeTestApp } from "./helpers.js";
 
 describe("http app", () => {
-  it("answers the health check", async () => {
-    const res = await makeTestApp().http.get("/healthz");
+  it.each(["/health", "/healthz"])("answers the health check at %s", async (path) => {
+    const res = await makeTestApp().http.get(path);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "ok" });
   });

@@ -48,7 +48,8 @@ export function createApp(deps: AppDeps): App {
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
 
-  app.get("/healthz", (_req, res) => {
+  // Cloud Run reserves paths ending in "z", so deployed checks use /health.
+  app.get(["/health", "/healthz"], (_req, res) => {
     res.json({ status: "ok" });
   });
 
