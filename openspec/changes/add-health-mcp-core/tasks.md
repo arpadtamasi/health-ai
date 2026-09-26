@@ -8,17 +8,17 @@
 ## 2. Project and cloud setup
 
 - [x] 2.1 Scaffold the TypeScript service (package.json, tsconfig, lint, test runner, Dockerfile) and verify `npm test` and `docker build` succeed on an empty test suite
-- [ ] 2.2 Create the GCP project resources (Cloud Run service account, Firestore in `europe-west1`, KMS key ring/key, Secret Manager secret for the JWT signing key, Firestore TTL policies) via a checked-in script and verify it is idempotent by running it twice
+- [ ] 2.2 Create the GCP project resources (Cloud Run service account, Firestore in `europe-west1`, KMS key ring/key, Secret Manager secret for the JWT signing key, Firestore TTL policies) via a checked-in script, and add the Firestore `Store` and the Cloud KMS `Sealer` implementations behind the existing interfaces in `server/src/store` and `server/src/crypto` (the server uses the in-memory store and a local AES key until then); verify the script is idempotent by running it twice
 - [ ] 2.3 Create the Google OAuth client and consent screen in Testing mode with the scopes from 1.1 and add the owner as test user; verify the owner can complete Google sign-in in the OAuth playground with those scopes
 
 ## 3. MCP OAuth authorization server (`mcp-auth`)
 
-- [ ] 3.1 Implement protected resource metadata and authorization server metadata endpoints; verify with tests that the JSON matches the MCP authorization spec (issuer, endpoints, grants, `S256`)
-- [ ] 3.2 Implement dynamic client registration with redirect URI validation; verify tests for accepted HTTPS/loopback and rejected other URIs
-- [ ] 3.3 Implement `/authorize` → Google sign-in → callback, allow-list check, scope check and KMS-encrypted refresh token storage; verify tests for granted, denied, partial-scope and non-allow-listed accounts (Google mocked)
-- [ ] 3.4 Implement `/token` for authorization code (PKCE) and rotating refresh tokens with reuse detection; verify tests for code exchange, rotation, and grant revocation on reuse
-- [ ] 3.5 Implement bearer token validation middleware returning 401 with `WWW-Authenticate` resource metadata; verify tests for missing, expired and revoked tokens
-- [ ] 3.6 Implement Google access token refresh with `invalid_grant` handling and signed single-use reconnect links; verify tests that a tool call after `invalid_grant` returns the reconnect error and that reconnecting keeps the user record
+- [x] 3.1 Implement protected resource metadata and authorization server metadata endpoints; verify with tests that the JSON matches the MCP authorization spec (issuer, endpoints, grants, `S256`)
+- [x] 3.2 Implement dynamic client registration with redirect URI validation; verify tests for accepted HTTPS/loopback and rejected other URIs
+- [x] 3.3 Implement `/authorize` → Google sign-in → callback, allow-list check, scope check and KMS-encrypted refresh token storage; verify tests for granted, denied, partial-scope and non-allow-listed accounts (Google mocked)
+- [x] 3.4 Implement `/token` for authorization code (PKCE) and rotating refresh tokens with reuse detection; verify tests for code exchange, rotation, and grant revocation on reuse
+- [x] 3.5 Implement bearer token validation middleware returning 401 with `WWW-Authenticate` resource metadata; verify tests for missing, expired and revoked tokens
+- [x] 3.6 Implement Google access token refresh with `invalid_grant` handling and signed single-use reconnect links; verify tests that a tool call after `invalid_grant` returns the reconnect error and that reconnecting keeps the user record
 - [ ] 3.7 Build the sign-in pages (start, connected, access expired, not invited, permissions missing, error) per `docs/designs/signin-flow-brief.md` in plain Material Design 3; verify the Connected screen continues to the client after 1–2 s and its button returns immediately
 - [ ] 3.8 Document the auth flow and operator allow-list management in `docs/auth.md`; verify the documented steps add a tester who can then sign in
 
