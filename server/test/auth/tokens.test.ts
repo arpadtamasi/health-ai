@@ -1,6 +1,6 @@
 // Task 3.4 · BR-01m3eb1emh9rysqjsxn62b3rsw (MCP token lifecycle)
 import { describe, expect, it } from "vitest";
-import { makeTestApp, pkce, REDIRECT_URI, registerClient, signIn, startAuthorize } from "../helpers.js";
+import { continueHref, makeTestApp, pkce, REDIRECT_URI, registerClient, signIn, startAuthorize } from "../helpers.js";
 
 const refresh = (t: ReturnType<typeof makeTestApp>, clientId: string, rt: string) =>
   t.http.post("/token").type("form").send({ grant_type: "refresh_token", client_id: clientId, refresh_token: rt });
@@ -12,7 +12,7 @@ describe("token endpoint", () => {
     const { verifier, challenge } = pkce();
     const state = await startAuthorize(t, clientId, challenge);
     const cb = await t.http.get("/oauth/google/callback").query({ code: "g", state });
-    const back = new URL(cb.text.match(/href="([^"]+)"/)?.[1]?.replace(/&amp;/g, "&") ?? "");
+    const back = new URL(continueHref(cb.text));
     return { clientId, verifier, code: back.searchParams.get("code") ?? "" };
   }
   const exchange = (t: ReturnType<typeof makeTestApp>, clientId: string, code: string, verifier: string) =>

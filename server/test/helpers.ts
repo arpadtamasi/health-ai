@@ -86,6 +86,12 @@ export async function registerClient(t: TestApp, redirectUris = [REDIRECT_URI]):
   return res.body.client_id as string;
 }
 
+/** The href of the page's primary button (id="continue"). */
+export function continueHref(html: string): string {
+  const m = html.match(/id="continue" href="([^"]+)"/) ?? html.match(/href="([^"]+)" id="continue"/);
+  return (m?.[1] ?? "").replace(/&amp;/g, "&");
+}
+
 /** Runs /authorize and returns the state the server sent to Google. */
 export async function startAuthorize(t: TestApp, clientId: string, challenge: string): Promise<string> {
   const res = await t.http.get("/authorize").query({
@@ -97,8 +103,8 @@ export async function startAuthorize(t: TestApp, clientId: string, challenge: st
     state: "client-state",
     resource: new URL("/mcp", PUBLIC_URL).href,
   });
-  if (res.status !== 302) throw new Error(`authorize failed: ${res.status} ${res.text}`);
-  return new URL(res.headers.location as string).searchParams.get("state") ?? "";
+  if (res.status !== 200) throw new Error(`authorize failed: ${res.status} ${res.text}`);
+  return new URL(continueHref(res.text)).searchParams.get("state") ?? "";
 }
 
 /** Completes a full sign-in and returns the client's token response. */
@@ -109,7 +115,7 @@ export async function signIn(t: TestApp, googleCode = "g-code", over: Parameters
   const state = await startAuthorize(t, clientId, challenge);
   const cb = await t.http.get("/oauth/google/callback").query({ code: googleCode, state });
   if (cb.status !== 200) throw new Error(`callback failed: ${cb.status}`);
-  const back = new URL(cb.text.match(/href="([^"]+)"/)?.[1]?.replace(/&amp;/g, "&") ?? "");
+  const back = new URL(continueHref(cb.text));
   const token = await t.http.post("/token").type("form").send({
     grant_type: "authorization_code",
     client_id: clientId,

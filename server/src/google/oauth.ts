@@ -62,7 +62,7 @@ export class HttpGoogleOAuth implements GoogleOAuth {
     url.searchParams.set("state", state);
     // Offline access and a fresh consent so Google always returns a refresh token.
     url.searchParams.set("access_type", "offline");
-    url.searchParams.set("prompt", "consent");
+    url.searchParams.set("prompt", "select_account consent");
     url.searchParams.set("include_granted_scopes", "true");
     if (loginHint) url.searchParams.set("login_hint", loginHint);
     return url.toString();

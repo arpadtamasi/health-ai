@@ -3,9 +3,23 @@
 // BR-01m3eb1e9vvvzkdcxwyjjjqbhd (Google credentials are protected),
 // BR-01m3eb1hxc1z2rfzkd2jcgeae2 (Connected screen before returning to the client)
 import { describe, expect, it } from "vitest";
-import { makeTestApp, pkce, READ_SCOPES, REDIRECT_URI, registerClient, signIn, startAuthorize } from "../helpers.js";
+import { continueHref, makeTestApp, pkce, READ_SCOPES, REDIRECT_URI, registerClient, signIn, startAuthorize } from "../helpers.js";
 
 describe("sign-in through Google", () => {
+  it("shows the start page with what is shared before Google sign-in", async () => {
+    const t = makeTestApp();
+    const clientId = await registerClient(t);
+    const res = await t.http.get("/authorize").query({
+      response_type: "code", client_id: clientId, redirect_uri: REDIRECT_URI,
+      code_challenge: pkce().challenge, code_challenge_method: "S256", state: "s",
+    });
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("Connect your Google Health data");
+    expect(res.text).toContain("Health values stored by us");
+    expect(res.text).toContain("Continue with Google");
+    expect(continueHref(res.text)).toMatch(/^https:\/\/accounts\.google\.test\/auth\?state=/);
+  });
+
   it("asks Google for identity, offline access and the Health scopes", async () => {
     const t = makeTestApp();
     const clientId = await registerClient(t);
@@ -52,7 +66,8 @@ describe("sign-in through Google", () => {
     const cb = await t.http.get("/oauth/google/callback").query({ code: "g3", state });
     expect(cb.status).toBe(403);
     expect(cb.text).toContain("Permissions are missing");
-    expect(cb.text).toContain(READ_SCOPES[0]);
+    expect(cb.text).toContain("Read your Google Health data");
+    expect(cb.text).toContain("error=access_denied");
     expect(t.store.users.size).toBe(0);
     expect(t.store.authCodes.size).toBe(0);
   });

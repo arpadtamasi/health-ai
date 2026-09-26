@@ -2,9 +2,9 @@ import { Router } from "express";
 import type { Sealer } from "../crypto/sealer.js";
 import type { GoogleOAuth } from "../google/oauth.js";
 import type { AuthRequest, Store } from "../store/types.js";
-import { connectedPage, errorPage, notInvitedPage, permissionsMissingPage, reconnectedPage } from "./pages.js";
+import { accessExpiredPage, connectedPage, errorPage, notInvitedPage, permissionsMissingPage, reconnectedPage } from "./pages.js";
 import type { ReconnectLinks } from "./reconnect.js";
-import { checkGrantedScopes, googleScopes } from "./scopes.js";
+import { checkGrantedScopes, describeMissing, googleScopes } from "./scopes.js";
 import { AUTH_REQUEST_TTL_MS, randomToken, sha256 } from "./tokens.js";
 
 export const GOOGLE_CALLBACK_PATH = "/oauth/google/callback";
@@ -32,6 +32,15 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
     return deps.google.authUrl({ state: id, scopes: googleScopes(deps), ...(req.loginHint ? { loginHint: req.loginHint } : {}) });
   }
 
+  // OAuth error response to the client, for "Back to Claude" after a refusal.
+  function backToClient(req: AuthRequest, error: string): string | undefined {
+    if (req.kind !== "connect" || !req.redirectUri) return undefined;
+    const u = new URL(req.redirectUri);
+    u.searchParams.set("error", error);
+    if (req.clientState !== undefined) u.searchParams.set("state", req.clientState);
+    return u.href;
+  }
+
   router.get(GOOGLE_CALLBACK_PATH, async (req, res, next) => {
     try {
       const state = typeof req.query.state === "string" ? req.query.state : "";
@@ -42,8 +51,8 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
       }
       if (typeof req.query.error === "string") {
         // The user denied consent on Google's screen.
-        const missing = checkGrantedScopes(deps, []).missingRead;
-        res.status(403).type("html").send(permissionsMissingPage(missing, await retryUrl(authReq)));
+        const missing = describeMissing(deps, checkGrantedScopes(deps, []).missingRead);
+        res.status(403).type("html").send(permissionsMissingPage(missing, await retryUrl(authReq), backToClient(authReq, "access_denied")));
         return;
       }
       const code = typeof req.query.code === "string" ? req.query.code : "";
@@ -52,14 +61,15 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
       // BR-01m3eb1cehbhtykqpwpgqnygxe: only allow-listed accounts; nothing is stored otherwise.
       if (!(await deps.store.getAllowEntry(result.email))) {
         await deps.google.revoke(result.refreshToken ?? result.accessToken).catch(() => undefined);
-        res.status(403).type("html").send(notInvitedPage(result.email));
+        res.status(403).type("html").send(notInvitedPage(result.email, await retryUrl(authReq), backToClient(authReq, "access_denied")));
         return;
       }
 
       // BR-01m3eb1dz1bqrx534g1g403fqw: no MCP tokens unless the Health read scopes were granted.
       const scopeCheck = checkGrantedScopes(deps, result.grantedScopes);
       if (scopeCheck.missingRead.length > 0) {
-        res.status(403).type("html").send(permissionsMissingPage(scopeCheck.missingRead, await retryUrl(authReq)));
+        const missing = describeMissing(deps, scopeCheck.missingRead);
+        res.status(403).type("html").send(permissionsMissingPage(missing, await retryUrl(authReq), backToClient(authReq, "access_denied")));
         return;
       }
       if (!result.refreshToken) {
@@ -116,7 +126,7 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
       }
       const id = randomToken();
       await deps.store.putAuthRequest({ id, kind: "reconnect", createdAt: now(), userId: user.id, loginHint: user.email });
-      res.redirect(deps.google.authUrl({ state: id, scopes: googleScopes(deps), loginHint: user.email }));
+      res.type("html").send(accessExpiredPage(deps.google.authUrl({ state: id, scopes: googleScopes(deps), loginHint: user.email })));
     } catch (err) {
       next(err);
     }

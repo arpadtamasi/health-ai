@@ -11,6 +11,7 @@ import type {
 import type { GoogleOAuth } from "../google/oauth.js";
 import type { Store } from "../store/types.js";
 import { ACCESS_TOKEN_TTL_SECONDS, AUTH_CODE_TTL_MS, type AccessTokens, randomToken, sha256 } from "./tokens.js";
+import { startPage } from "./pages.js";
 import { googleScopes } from "./scopes.js";
 
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
@@ -77,7 +78,9 @@ export class HealthOAuthProvider implements OAuthServerProvider {
       ...(params.state !== undefined ? { clientState: params.state } : {}),
       ...(params.resource ? { resource: params.resource.href } : {}),
     });
-    res.redirect(this.deps.google.authUrl({ state: id, scopes: googleScopes(this.deps) }));
+    // The start page shows what is shared before Google sign-in (signin-flow-brief, state "Start").
+    const googleUrl = this.deps.google.authUrl({ state: id, scopes: googleScopes(this.deps) });
+    res.status(200).type("html").send(startPage(googleUrl, this.deps.healthWriteScopes.length > 0));
   }
 
   async challengeForAuthorizationCode(_client: OAuthClientInformationFull, code: string): Promise<string> {

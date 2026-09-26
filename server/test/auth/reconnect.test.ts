@@ -1,7 +1,7 @@
 // Task 3.6 · BR-01m3eb1eyq4j8yawgs12rtmjkp (Re-authentication when Google access is lost)
 import { describe, expect, it } from "vitest";
 import { ReconnectRequiredError } from "../../src/auth/google-access.js";
-import { makeTestApp, signIn } from "../helpers.js";
+import { continueHref, makeTestApp, signIn } from "../helpers.js";
 
 describe("Google access and reconnect", () => {
   it("refreshes and caches the Google access token", async () => {
@@ -32,9 +32,10 @@ describe("Google access and reconnect", () => {
 
     const link = new URL(err.reconnectUrl);
     const go = await t.http.get(link.pathname + link.search);
-    expect(go.status).toBe(302);
+    expect(go.status).toBe(200);
+    expect(go.text).toContain("Google access expired");
     expect(t.google.lastAuth?.loginHint).toBe("owner@example.com");
-    const state = new URL(go.headers.location as string).searchParams.get("state");
+    const state = new URL(continueHref(go.text)).searchParams.get("state");
 
     t.google.account("g-re", { refreshToken: "google-refresh-new" });
     const cb = await t.http.get("/oauth/google/callback").query({ code: "g-re", state });
@@ -54,7 +55,7 @@ describe("Google access and reconnect", () => {
     const t = makeTestApp();
     await signIn(t);
     const url = new URL(await t.links.issue("sub-owner"));
-    expect((await t.http.get(url.pathname + url.search)).status).toBe(302);
+    expect((await t.http.get(url.pathname + url.search)).status).toBe(200);
     const again = await t.http.get(url.pathname + url.search);
     expect(again.status).toBe(400);
     expect(again.text).toContain("expired or was already used");

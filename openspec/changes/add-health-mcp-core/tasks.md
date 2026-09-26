@@ -19,7 +19,7 @@
 - [x] 3.4 Implement `/token` for authorization code (PKCE) and rotating refresh tokens with reuse detection; verify tests for code exchange, rotation, and grant revocation on reuse
 - [x] 3.5 Implement bearer token validation middleware returning 401 with `WWW-Authenticate` resource metadata; verify tests for missing, expired and revoked tokens
 - [x] 3.6 Implement Google access token refresh with `invalid_grant` handling and signed single-use reconnect links; verify tests that a tool call after `invalid_grant` returns the reconnect error and that reconnecting keeps the user record
-- [ ] 3.7 Build the sign-in pages (start, connected, access expired, not invited, permissions missing, error) per `docs/designs/signin-flow-brief.md` in plain Material Design 3; verify the Connected screen continues to the client after 1–2 s and its button returns immediately
+- [x] 3.7 Build the sign-in pages (start, connected, access expired, not invited, permissions missing, error) per `docs/designs/signin-flow-brief.md` in plain Material Design 3; verify the Connected screen continues to the client after 1–2 s and its button returns immediately
 - [ ] 3.8 Document the auth flow and operator allow-list management in `docs/auth.md`; verify the documented steps add a tester who can then sign in
 
 ## 4. MCP server and health data tools (`mcp-server`, `health-data-tools`)

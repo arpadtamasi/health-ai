@@ -21,3 +21,11 @@ export function checkGrantedScopes(c: ScopeConfig, granted: string[]): ScopeChec
   const mcpScopes = missingRead.length === 0 ? [MCP_SCOPES.read, ...(writeOk ? [MCP_SCOPES.write] : [])] : [];
   return { missingRead, mcpScopes };
 }
+
+/** Human wording for missing Google permissions; scope URLs mean nothing to users. */
+export function describeMissing(c: ScopeConfig, missing: string[]): string[] {
+  const out: string[] = [];
+  if (missing.some((s) => c.healthReadScopes.includes(s))) out.push("Read your Google Health data (sleep, heart rate, activity)");
+  if (missing.some((s) => c.healthWriteScopes.includes(s))) out.push("Log meals and water in Google Health");
+  return out;
+}
