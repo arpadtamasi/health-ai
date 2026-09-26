@@ -14,7 +14,7 @@ provenance:
 
 ## Rule
 
-The system SHALL expose a fixed, small set of generic tools that correspond to Google Health API operations: `list_data_types`, `read_data`, `aggregate_data`, `write_data`, `update_data`, `delete_data`, `get_profile` and `list_devices`, rather than one tool per data type.
+The system SHALL expose a fixed, small set of generic tools that correspond to Google Health API operations: `list_data_types`, `read_data`, `aggregate_data`, `write_data`, `update_data`, `delete_data`, `get_profile` and `list_devices`, rather than one tool per data type. Every tool SHALL also accept the `intent` argument of the rule *Every tool call states its intent*; `send_feedback`, and for the owner `list_feedback` and `usage_summary`, belong to the service-insight capability.
 
 ## Rationale
 

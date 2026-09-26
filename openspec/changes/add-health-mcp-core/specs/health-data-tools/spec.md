@@ -11,7 +11,7 @@ The system SHALL expose a fixed, small set of generic tools that correspond to G
 
 #### Scenario: Tool listing
 - **WHEN** a client calls `tools/list`
-- **THEN** the response contains exactly the core tools of this capability plus `delete_my_data`, each with an input schema
+- **THEN** the response contains the core tools of this capability, `delete_my_data` and `send_feedback`, plus `list_feedback` and `usage_summary` for the owner only, each with an input schema that includes `intent`
 
 ### Requirement: Thin mapping without domain logic
 The tools MUST pass data between the client and the Google Health API without estimating, inferring, or altering health values, apart from format conversion between the MCP input schema and the API's request and response formats.

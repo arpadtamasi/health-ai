@@ -11,6 +11,7 @@ I want to talk to my own health data (Fitbit Air, via the Google Health API) fro
 - Per-user storage in Firestore; Google refresh tokens encrypted with Cloud KMS. Built for the owner plus a small group of testers (Google OAuth app in "Testing" mode, max 100 users).
 - A thin tool layer that maps the Google Health API resource model one-to-one (list data types, read, aggregate, write, update, delete, profile, devices) instead of one tool per data type. No AI, heuristics or domain logic in the server; conversational features (meal logging flow, summaries, coaching) are left to the client and to a later packaging layer.
 - Self-service data deletion for users (revoke Google access, erase stored data).
+- Service insight for the owner: a `send_feedback` tool for users and their agents, a required-in-practice `intent` argument on every tool call, and owner-only `list_feedback` and `usage_summary` tools. Records stay private to the owner, are deleted with the user's data, and expire after 90 days.
 
 Out of scope (later changes): meal-logging skills/prompts, barcode lookup, hydration reminders and push notifications, public launch and Google OAuth verification.
 
@@ -19,6 +20,7 @@ Out of scope (later changes): meal-logging skills/prompts, barcode lookup, hydra
 ### New Capabilities
 - `mcp-server`: Remote MCP transport, deployment on Cloud Run, per-user isolation, error conventions, and user data deletion.
 - `mcp-auth`: MCP OAuth authorization server flow backed by Google sign-in, Google Health consent, encrypted token storage, refresh and re-authentication handling.
+- `service-insight`: Feedback from users and agents, call intents, and the owner-only tools to review them.
 - `health-data-tools`: The thin, resource-oriented MCP tool set that maps the Google Health API (discovery, read, aggregate, write, update, delete, profile, devices).
 
 ### Modified Capabilities

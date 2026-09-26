@@ -23,4 +23,4 @@ A client calls `tools/list`
 
 ## Then
 
-The response contains exactly the core tools of this capability plus `delete_my_data`, each with an input schema
+The response contains the core tools of this capability, `delete_my_data` and `send_feedback`, plus `list_feedback` and `usage_summary` for the owner only, each with an input schema that includes `intent`

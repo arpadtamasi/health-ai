@@ -34,6 +34,13 @@
 - [ ] 4.8 Add tool annotations, upstream error mapping (validation, rate limit) and log redaction; verify tests that error results are readable and logs contain no health values or tokens
 - [ ] 4.9 Document the tools with example calls in `docs/tools.md`; verify each example matches the tool's input schema via a schema test
 
+## 4b. Service insight (`service-insight`)
+
+- [ ] 4b.1 Add the `intent` argument to every tool schema and a shared wrapper that records intents (including missing ones) in Firestore; verify tests for a call with intent, without intent, and that the log contains no intent text
+- [ ] 4b.2 Implement `send_feedback` with user/agent source and optional related tool; verify tests for both sources and the empty-message refusal
+- [ ] 4b.3 Implement owner-only `list_feedback` and `usage_summary`, hidden from `tools/list` for other accounts; verify tests for the owner, a tester listing tools, and a tester calling the tool
+- [ ] 4b.4 Include feedback and intents in `delete_my_data` and set 90-day Firestore TTL on both collections; verify a deletion test and the TTL configuration in the setup script
+
 ## 5. Deployment
 
 - [ ] 5.1 Add a deploy script/CI job that builds the container and deploys to Cloud Run with the service account and secrets, plus Firebase Hosting with rewrites to Cloud Run; verify the metadata endpoints and sign-in pages are served over HTTPS from one origin
