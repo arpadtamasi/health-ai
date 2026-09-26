@@ -49,6 +49,7 @@ A thin, standard remote MCP server over the Google Health API: one sign-in conne
 
 - Working name: health-ai (no final name, logo or visual identity yet).
 - Interface language: English.
+- Visual language (owner's decision): plain Material Design 3, played straight, sitting alongside Google's own account and Google Health surfaces. Custom visual worlds (wayfinding, lab report, hypnogram, seed packet, spirit level) were explored and declined.
 - Mood (owner's words): balance, confidence, health. It must feel like being well, never like being a patient: no clinical, lab-report or illness associations.
 
 ## Evidence on Hand
