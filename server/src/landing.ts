@@ -28,8 +28,7 @@ const LANDING_STYLE = `
 .how b{font-weight:500}.how span{display:block;color:var(--md-on-surface-variant);font-size:13px;line-height:18px}
 .connect .note{text-align:left}
 .chat{background:var(--md-surface-container-low);border-radius:24px;padding:20px 24px 16px;display:flex;flex-direction:column;gap:14px;font-variant-numeric:tabular-nums}
-.attach{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;background:var(--md-surface);color:var(--md-on-surface);border-radius:8px;padding:4px 8px 4px 6px;margin-bottom:6px}
-.attach .ms{width:16px;height:16px}
+.photo-q{padding:6px 6px 10px}.photo-q .photo{display:block;width:100%;max-width:240px;height:auto;border-radius:16px 16px 6px 6px}.photo-q p{padding:8px 10px 0}
 .logged{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:center;margin-top:12px;background:var(--md-surface);border-radius:12px;padding:8px 12px 8px 8px;font-size:14px;line-height:20px}
 .logged .icon{width:32px;height:32px}.logged .icon .ms{width:18px;height:18px}.logged .s{font-size:12.5px}
 .chat .q{align-self:flex-end;max-width:70%;background:var(--md-primary-container);color:var(--md-on-primary-container);border-radius:20px 20px 4px 20px;padding:10px 16px;font-size:15px;line-height:22px}
@@ -77,11 +76,25 @@ setTimeout(function(){b.classList.remove('done');b.innerHTML=l},2000)})})})();
 </script>`;
 
 const MEAL_EXAMPLE = `<section class="chat" aria-label="Example conversation: logging a meal">
-<p class="q"><span class="attach">${icon("photo_camera")}IMG_2041.jpg</span><br>Lunch.</p>
+<div class="q photo-q"><svg class="photo" viewBox="0 0 240 160" role="img" aria-label="Photo of lunch: grilled chicken breast, rice and cucumber salad on a plate">
+<defs><radialGradient id="tbl" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#d8c2a4"/><stop offset="1" stop-color="#a98663"/></radialGradient>
+<radialGradient id="plt" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9e4dc"/></radialGradient></defs>
+<rect width="240" height="160" fill="url(#tbl)"/>
+<ellipse cx="123" cy="86" rx="72" ry="66" fill="#3b2a1a" opacity=".22"/>
+<circle cx="120" cy="80" r="70" fill="url(#plt)"/><circle cx="120" cy="80" r="54" fill="none" stroke="#ddd6cb" stroke-width="1.5"/>
+<g fill="#fbf9f3" stroke="#e2dccd" stroke-width=".8">
+<ellipse cx="86" cy="98" rx="26" ry="19"/><ellipse cx="72" cy="88" rx="14" ry="11"/><ellipse cx="100" cy="110" rx="15" ry="9"/></g>
+<g fill="#f0ebdf"><ellipse cx="78" cy="88" rx="3" ry="1.4" transform="rotate(20 78 88)"/><ellipse cx="86" cy="92" rx="3" ry="1.4" transform="rotate(-30 86 92)"/><ellipse cx="94" cy="98" rx="3" ry="1.4" transform="rotate(10 94 98)"/><ellipse cx="82" cy="100" rx="3" ry="1.4" transform="rotate(60 82 100)"/><ellipse cx="90" cy="104" rx="3" ry="1.4" transform="rotate(-10 90 104)"/><ellipse cx="72" cy="80" rx="3" ry="1.4" transform="rotate(40 72 80)"/><ellipse cx="100" cy="94" rx="3" ry="1.4" transform="rotate(-50 100 94)"/><ellipse cx="88" cy="84" rx="3" ry="1.4" transform="rotate(15 88 84)"/></g>
+<g transform="rotate(-24 136 62)"><path d="M100 60c4-18 24-28 48-26s38 14 36 28-20 24-44 24-44-8-40-26z" fill="#d49a5f"/>
+<path d="M100 60c4-18 24-28 48-26s38 14 36 28" fill="none" stroke="#b97b40" stroke-width="3" stroke-linecap="round"/>
+<path d="M122 36v48M142 34v52M162 38v44" stroke="#f3e2c8" stroke-width="2.4"/>
+<path d="M108 52l10 8M112 70l10 7M128 44l10 8M128 62l10 8M148 44l10 8M148 64l10 8M166 50l10 7" stroke="#7a4a20" stroke-width="2.4" stroke-linecap="round"/></g>
+<g stroke="#4f7a3a" stroke-width="2"><circle cx="138" cy="108" r="9.5" fill="#dfeccb"/><circle cx="138" cy="108" r="4" fill="#b9d49a" stroke="none"/><circle cx="156" cy="100" r="9.5" fill="#dfeccb"/><circle cx="156" cy="100" r="4" fill="#b9d49a" stroke="none"/><circle cx="152" cy="118" r="9.5" fill="#dfeccb"/><circle cx="152" cy="118" r="4" fill="#b9d49a" stroke="none"/><circle cx="170" cy="110" r="9.5" fill="#dfeccb"/><circle cx="170" cy="110" r="4" fill="#b9d49a" stroke="none"/></g>
+</svg><p>Lunch.</p></div>
 <div class="a"><span class="logo" aria-hidden="true">${icon("favorite")}</span><div>
 <p>Logged to Google Health as lunch at 12:40: grilled chicken breast, rice and a cucumber salad. From the photo I estimate about 640 kcal and 48 g of protein.</p>
 <div class="logged"><span class="icon">${icon("check")}</span><div><div>Lunch · 12:40 · 640 kcal</div><div class="s">Written to Google Health · Nutrition</div></div></div>
-<p class="offer">If the portion was bigger or smaller than it looks, tell me and I'll correct the entry.</p>
+<p class="offer">If the portion was bigger or smaller than it looks, tell me and I'll replace the entry with the right amounts.</p>
 </div></div>
 <p class="cap">${icon("chat")}Example exchange. The dish and its numbers are illustrative.</p>
 </section>`;
@@ -121,7 +134,7 @@ export function landingPage(publicUrl: URL, writeAvailable: boolean): string {
 <section class="chat" aria-label="Example conversation: sleep">
 <p class="q">How did I sleep this week?</p>
 <div class="a"><span class="logo" aria-hidden="true">${icon("favorite")}</span><div>
-<p>A mixed week: the start and the end were fine, with two weaker nights in the middle. You averaged about 6 h 15 min of sleep a night.</p>
+<p>A mixed week: a short first night, two broken nights in the middle, and a good finish. You averaged about 6 h 15 min of sleep a night.</p>
 <table class="wk"><caption>Nights this week</caption><thead><tr><th scope="col">Night</th><th scope="col">In bed</th><th scope="col">Asleep</th><th scope="col">Awake</th><th scope="col">Deep</th><th scope="col">REM</th></tr></thead><tbody>
 <tr><th scope="row">Sun–Mon</th><td>22:48 – 03:57</td><td>4 h 56</td><td>13 min</td><td>35 min</td><td>39 min</td></tr>
 <tr><th scope="row">Mon–Tue</th><td>21:49 – 05:50</td><td><b>7 h 40</b></td><td>21 min</td><td>58 min</td><td>106 min</td></tr>
