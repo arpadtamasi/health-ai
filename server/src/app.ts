@@ -16,6 +16,7 @@ import { AccessTokens } from "./auth/tokens.js";
 import { HealthApi, type Fetch } from "./health/api.js";
 import { logEvent, pseudonym } from "./log.js";
 import { landingPage } from "./landing.js";
+import { LUNCH_PHOTO, LUNCH_PHOTO_PATH } from "./landing-photo.js";
 import { buildMcpServer } from "./mcp/server.js";
 
 export interface AppDeps {
@@ -55,6 +56,9 @@ export function createApp(deps: AppDeps): App {
   const landing = landingPage(deps.publicUrl, deps.healthWriteScopes.length > 0);
   app.get("/", (_req, res) => {
     res.type("html").send(landing);
+  });
+  app.get(LUNCH_PHOTO_PATH, (_req, res) => {
+    res.type("image/webp").set("cache-control", "public, max-age=31536000, immutable").send(LUNCH_PHOTO);
   });
 
   // Cloud Run reserves paths ending in "z", so deployed checks use /health.
