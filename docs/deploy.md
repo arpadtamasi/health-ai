@@ -37,12 +37,17 @@ scripts/deploy.sh
 The scopes follow `docs/google-health-api.md`. Nutrition (meals and water) has only a write scope, so
 Health AI can read back only the entries it logged itself.
 
-The script:
+`scripts/deploy.sh` runs the two halves, which can also run on their own with the same variables
+(or the ones `scripts/bootstrap.sh` saved in `.health-ai.env`):
 
-1. Builds `server/` with its Dockerfile through Cloud Build and deploys a new Cloud Run revision
-   with the `health-ai-run` service account. Secrets come from Secret Manager.
-2. Deploys Firebase Hosting from `firebase.json`.
-3. Checks `/health` and the protected resource metadata through the Hosting origin.
+1. **Backend**, `scripts/deploy-backend.sh`: builds `server/` with its Dockerfile through Cloud
+   Build and deploys a new Cloud Run revision with the `health-ai-run` service account. Secrets come
+   from Secret Manager. Checks `/health` and the protected resource metadata through the Hosting
+   origin.
+2. **Frontend**, `scripts/deploy-frontend.sh`: builds the landing page (`site/`, Astro) with
+   `PUBLIC_URL` and `GOOGLE_HEALTH_WRITE_SCOPES`, deploys Firebase Hosting from `firebase.json`,
+   and checks that `/` shows the MCP URL. Needs only `PROJECT_ID`, `PUBLIC_URL` and the write
+   scopes.
 
 In Claude, add a custom connector with the URL `https://<hosting domain>/mcp`.
 
@@ -56,8 +61,8 @@ gcloud run services update-traffic health-ai --region europe-west1 --project my-
   --to-revisions <previous-revision>=100
 ```
 
-Firebase Hosting only holds the rewrite rules, so a Cloud Run rollback is enough. To roll back
-Hosting itself: Firebase console → *Hosting* → *Release history* → *Roll back*.
+A Cloud Run rollback does not touch the landing page, and a Hosting rollback does not touch the
+server. To roll back Hosting (the landing page and the rewrite rules): Firebase console → *Hosting* → *Release history* → *Roll back*.
 
 The next `scripts/deploy.sh` sends all traffic to the new revision again.
 
