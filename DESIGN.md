@@ -159,12 +159,16 @@ components:
     textColor: "{colors.on-surface}"
     rounded: "{rounded.card-lg}"
     padding: "20px 24px 16px"
-  chip-attachment:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.on-surface}"
-    typography: "{typography.label}"
-    rounded: "{rounded.tile}"
-    padding: "4px 8px 4px 6px"
+  bubble-photo:
+    backgroundColor: "{colors.primary-container}"
+    textColor: "{colors.on-primary-container}"
+    typography: "{typography.body}"
+    rounded: "20px 20px 4px 20px"
+    padding: "6px 6px 10px"
+  bubble-photo-image:
+    backgroundColor: "{colors.surface-container-high}"
+    rounded: "14px 14px 4px 14px"
+    width: "200px"
   logged-row:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.on-surface}"
@@ -207,7 +211,7 @@ components:
 
 # Design System: Health AI
 
-<!-- Recorded from the shipped build on 2026-09-26 (the below-the-fold "Also in the same conversation" section, attachment chip and logged row added the same day): server/src/auth/pages.ts (tokens, icons, fonts, sign-in components) and server/src/landing.ts (landing page). Values here are what the code does, not what was planned. -->
+<!-- Recorded from the shipped build on 2026-09-26 (the below-the-fold "Also in the same conversation" section, photo bubble and logged row added the same day): server/src/auth/pages.ts (tokens, icons, fonts, sign-in components) and the static landing page in site/ (site/src/pages/index.astro, site/src/styles/landing.css; moved to Astro on Firebase Hosting on 2026-09-27, visually unchanged). Values here are what the code does, not what was planned. -->
 
 ## Overview
 
@@ -285,7 +289,7 @@ An M3 tonal-spot palette from the blue seed `#3B6EA8`; the frontmatter lists the
 Two containers, both centred with `margin: 0 auto` on the surface colour:
 
 - **Sign-in shell:** `max-width: 480px`, `min-height: 100dvh`, a flex column of app bar (64px) then `main` with `gap: 16px` and padding `8px 20px 24px`. Actions sit at the bottom (`margin-top: auto`) as a stacked column with 8px gaps. Result pages (`main.center`) centre content and text with `padding-bottom: 64px`. Safe-area insets pad the body top and bottom.
-- **Landing:** `max-width: 1200px`, side padding 32px (20px under 900px). The hero is a 5fr/7fr grid with a 48px gutter and `padding: 40px 0 32px`; the left column stacks headline, intro and connect card with 20px gaps. Under both columns the "what is shared" row is an auto-fit grid (`repeat(auto-fit, minmax(min(100%, 300px), 1fr))`) of list items separated by 1px vertical dividers, so two items fill the row when the write scope is off. Below the fold, the `.more` section (`padding: 40px 0 8px`, flex column, 16px gap) holds a headline-small and an auto-fit grid of further conversation cards (`repeat(auto-fit, minmax(min(100%, 440px), 1fr))`, 24px gap, `align-items: stretch`): two cards sit side by side and share a bottom edge because each card's caption is pushed down with `margin-top: auto`; a lone card (write scope off) takes the full width. Then a footer (`padding: 32px 0 24px`) with space-between, wrapping.
+- **Landing:** `max-width: 1200px`, side padding 32px (20px under 900px). The hero is a 5fr/7fr grid with a 48px gutter and `padding: 40px 0 32px`; the left column stacks headline, intro and connect card with 20px gaps. Under both columns the "what is shared" row is an auto-fit grid (`repeat(auto-fit, minmax(min(100%, 300px), 1fr))`) of list items separated by 1px vertical dividers, so two items fill the row when the write scope is off. Below the fold, the `.more` section (`padding: 40px 0 8px`, flex column, 16px gap) holds a headline-small and an auto-fit grid of further conversation cards (`repeat(auto-fit, minmax(min(100%, 440px), 1fr))`, 24px gap, `align-items: stretch`): two cards sit side by side and share a bottom edge because each card's caption is pushed down with `margin-top: auto`; when both cards are present the grid is `3fr 2fr` (the photo card wide, the text-heavy experiment card narrow, so both end together); a lone card (write scope off) takes the full width. Then a footer (`padding: 32px 0 24px`) with space-between, wrapping.
 
 **Breakpoint:** one, at `max-width: 900px`. The hero collapses to one column (24px gap) and reorders: headline, intro, conversation card, connect card. The table hides its "In bed" column, every conversation card tightens to `16px 18px 14px` with a 20px radius, the shared row stacks with horizontal dividers, and the `.more` section becomes `padding: 32px 0 0` with a one-column grid at 16px gap and cards at `16px 18px 14px`.
 
@@ -293,7 +297,7 @@ Two containers, both centred with `margin: 0 auto` on the surface colour:
 
 ## Elevation & Depth
 
-Flat. There is no `box-shadow` in either file. Depth is tonal layering only: the page is `surface`, cards and list blocks step up to `surface-container-low`, and a field inside a card steps once more to `surface-container-high`. Interactive emphasis comes from colour (primary fill on buttons) and, on the Copy button, an M3 state layer: an `::after` overlay of `on-primary` at 8% on hover and 12% on active, fading over 150ms. Inside the conversation card, the attachment chip and the logged row step *down* to `surface` to read as inset objects on the `surface-container-low` card. The sign-in buttons brighten instead (`filter: brightness(1.06)` on hover); see the drift note in the report.
+Flat. There is no `box-shadow` in either file. Depth is tonal layering only: the page is `surface`, cards and list blocks step up to `surface-container-low`, and a field inside a card steps once more to `surface-container-high`. Interactive emphasis comes from colour (primary fill on buttons) and, on the Copy button, an M3 state layer: an `::after` overlay of `on-primary` at 8% on hover and 12% on active, fading over 150ms. Inside the conversation card, the logged row steps *down* to `surface` to read as an inset object on the `surface-container-low` card; a photo in a tester bubble loads on `surface-container-high`. The sign-in buttons brighten instead (`filter: brightness(1.06)` on hover); see the drift note in the report.
 
 ### Named Rules
 **The No-Shadow Rule.** Surfaces never cast shadows. A new surface picks the next container tone up; if it needs a boundary on the same tone, it gets a 1px `outline-variant` line.
@@ -304,7 +308,8 @@ Rounded, in three families:
 
 - **Containers** are 16px (list block, connect card, shared row); the conversation card is 24px (20px on mobile) and the URL field inside a card is 12px. Small tiles (logo, assist chip, status chip) are 8px.
 - **Interactive elements are full pills**: the 48px button is 24px radius, the 40px text button inherits it, the 36px Copy button is 18px.
-- Inset objects on a card are 8px (attachment chip) and 12px (logged row), matching the tile and field radii.
+- The logged row, an inset object on a card, is 12px, matching the field radius.
+- A photo inside a tester bubble is `14px 14px 4px 14px`: the bubble's 20px corners less its 6px padding, with the 4px tail corner echoed at the bottom-right.
 - **Icon holders are circles**: 40px list-item icon circle (32px inside the conversation card), 28px numbered step circle, 72px result badge.
 - The tester's bubble is asymmetric, `20px 20px 4px 20px`, with the tight corner at the bottom-right pointing to the sender.
 - Hairlines: the step indicator and progress bar are 4px tall with 2px radius.
@@ -342,8 +347,8 @@ Rounded, in three families:
 - **Icon circle:** 40px circle, `secondary-container`, 24px icon; 32px with an 18px icon inside the conversation card's highlight rows and logged row.
 - **Step number:** 28px circle, `secondary-container`, CSS counter at 13px/500; step text is 14px/20px with a 500 title and a 13px/18px `on-surface-variant` line.
 
-### Attachment chip
-A small inset chip inside a tester bubble for an attached photo (meal conversation card): `surface` on `on-surface`, 8px radius, `padding: 4px 8px 4px 6px`, 12px/500, 16px leading icon with 6px gap, 6px below to the bubble text.
+### Photo bubble
+A tester bubble carrying the photo the tester sent (meal conversation card): the same `primary-container` bubble and `20px 20px 4px 20px` radius as the text bubble, tightened to `padding: 6px 6px 10px`. The image is 200px wide (`max-width: 100%`), square (`aspect-ratio: 1`, `object-fit: cover`), `14px 14px 4px 14px` radius, 8px above the caption, on a `surface-container-high` loading background, with a descriptive `alt`, `loading="lazy"` and explicit 200×200 dimensions. The caption text sits in a block span with `padding: 0 10px` so it lines up with the text bubble's inset. The one raster is `site/src/assets/meal-lunch-salmon.webp` (480×480 WebP source; Astro emits 200w and 400w WebP copies in a `srcset`), an Unsplash photo by Sebastian Coman Photography under the Unsplash License, cropped to a square, with its origin in `meal-lunch-salmon.webp.json` beside it; the card caption credits the photographer on the page.
 
 ### Logged row
 A confirmation strip inside an answer (meal conversation card): `surface` on `on-surface`, 12px radius, `padding: 8px 12px 8px 8px`, `32px 1fr` grid with 10px gap, 12px above; a 32px `secondary-container` icon circle with an 18px check, a 14px/20px line and a 12.5px supporting line in `on-surface-variant`.
@@ -361,7 +366,7 @@ Full-width, `border-collapse`, 13px/18px (12px on mobile), cells `padding: 5px 8
 Three 4px segments with 6px gaps and 2px radius on `surface-container-high`; completed segments are `primary`. The connected page's progress bar is 120px wide, fills with `scaleX` over the redirect delay (linear), and is disabled under `prefers-reduced-motion: reduce`.
 
 ### Icons
-Material Icons paths (Apache-2.0) inlined as 24px SVG with `fill: currentColor`, `aria-hidden`. Sizes: 24px in list circles, 20px in the logo tile, 18px in the Copy button, highlight rows and logged row, 16px in the caption and attachment chip, 40px in a badge.
+Material Icons paths (Apache-2.0) inlined as 24px SVG with `fill: currentColor`, `aria-hidden`. Sizes: 24px in list circles, 20px in the logo tile, 18px in the Copy button, highlight rows and logged row, 16px in the caption, 40px in a badge.
 
 ## Do's and Don'ts
 
@@ -377,4 +382,4 @@ Material Icons paths (Apache-2.0) inlined as 24px SVG with `fill: currentColor`,
 - **Don't** hard-code hex values in component CSS or introduce a second accent; tertiary and error containers are for badges only.
 - **Don't** load an icon font or a third typeface; the only non-Roboto face is the monospace stack for the connector URL.
 - **Don't** use weight 700 or uppercase for emphasis in running text; uppercase exists only in the table header labels.
-- **Don't** show health values outside the one supplied example answer, and don't reach for clinical cues (lab-report styling, medical red as text) anywhere.
+- **Don't** show real health values other than the owner's supplied example answer; illustrative figures are labelled as such and sourced imagery is credited on the page. Don't reach for clinical cues (lab-report styling, medical red as text) anywhere.

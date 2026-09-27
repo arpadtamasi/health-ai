@@ -1,0 +1,254 @@
+---
+// The landing page at "/": what Health AI is, shown as a conversation, and how to connect it.
+// Same plain Material Design 3 as the sign-in pages (.impeccable/surfaces/site-src-pages-index-astro.md).
+// The example answer is one real week of the owner's testing, translated; no other health values appear.
+import { Image } from "astro:assets";
+import { FONTS, STYLE } from "../../../server/src/auth/pages.ts";
+import Icon from "../components/Icon.astro";
+import { mcpUrl, writeAvailable } from "../config.ts";
+import mealPhoto from "../assets/meal-lunch-salmon.webp";
+import landingStyle from "../styles/landing.css?raw";
+
+const shared = [
+  ["bedtime", "Sleep, heart rate, activity", "From your Google Health account", "Read"],
+  ...(writeAvailable ? [["restaurant", "Meals and water you log", "Written to Google Health", "Read and write"]] : []),
+  ["lock", "Health values stored by us", "Delete your data at any time", "None"],
+] as const;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Health AI connects Claude to your own Google Health and Fitbit data: ask about sleep, heart rate and activity, and log meals by chat."
+    />
+    <title>Health AI · Ask Claude about your own sleep</title>
+    <Fragment set:html={FONTS} />
+    <style is:inline set:html={STYLE + landingStyle}></style>
+  </head>
+  <body>
+    <div class="lp">
+      <header class="appbar">
+        <span class="brand"><span class="logo" aria-hidden="true"><Icon name="favorite" /></span>Health AI</span>
+        <span class="pill">Testing · invited accounts</span>
+      </header>
+      <main class="hero">
+        <div class="lead">
+          <h1>Ask Claude about your own sleep.</h1>
+          <p class="intro">
+            Health AI connects Claude to your Google Health and Fitbit data. Ask about sleep, heart rate and activity, log
+            meals in the conversation, and run honest experiments on yourself.
+          </p>
+          <section class="connect" aria-labelledby="connect-h">
+            <h2 id="connect-h">Connect it to Claude</h2>
+            <div class="url">
+              <code id="mcp-url">{mcpUrl}</code><button class="copy" id="copy" type="button" aria-live="polite"
+                ><Icon name="content_copy" />Copy</button
+              >
+            </div>
+            <ol class="how">
+              <li>
+                <div>
+                  <b>Add the connector.</b><span
+                    >Claude → Settings → Connectors → Add custom connector, and paste the URL.</span
+                  >
+                </div>
+              </li>
+              <li>
+                <div>
+                  <b>Sign in with Google.</b><span
+                    >Keep the Health permissions selected. If Google says the app isn't verified, choose Advanced → Go to
+                    Health AI.</span
+                  >
+                </div>
+              </li>
+              <li>
+                <div><b>Ask Claude.</b><span>Start with “How did I sleep this week?”</span></div>
+              </li>
+            </ol>
+            <p class="note">Invited Google accounts only. While in testing, Google asks you to sign in again about once a week.</p>
+          </section>
+        </div>
+        <section class="chat" aria-label="Example conversation: sleep">
+          <p class="q">How did I sleep this week?</p>
+          <div class="a">
+            <span class="logo" aria-hidden="true"><Icon name="favorite" /></span>
+            <div>
+              <p>
+                A mixed week: the start and the end were fine, with two weaker nights in the middle. You averaged about 6 h
+                15 min of sleep a night.
+              </p>
+              <table class="wk">
+                <caption>Nights this week</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Night</th><th scope="col">In bed</th><th scope="col">Asleep</th><th scope="col"
+                      >Awake</th
+                    ><th scope="col">Deep</th><th scope="col">REM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><th scope="row">Sun–Mon</th><td>22:48 – 03:57</td><td>4 h 56</td><td>13 min</td><td>35 min</td><td>39 min</td></tr>
+                  <tr><th scope="row">Mon–Tue</th><td>21:49 – 05:50</td><td><b>7 h 40</b></td><td>21 min</td><td>58 min</td><td>106 min</td></tr>
+                  <tr><th scope="row">Tue–Wed</th><td>23:35 – 06:23</td><td>6 h 40</td><td>8 min</td><td><b>100 min</b></td><td>66 min</td></tr>
+                  <tr><th scope="row">Wed–Thu</th><td>19:55 – 03:37</td><td>5 h 31</td><td><b>131 min</b></td><td>56 min</td><td>35 min</td></tr>
+                  <tr><th scope="row">Thu–Fri</th><td>23:11 – 06:27</td><td>5 h 44</td><td><b>92 min</b></td><td>72 min</td><td>62 min</td></tr>
+                  <tr><th scope="row">Fri–Sat</th><td>23:58 – 07:18</td><td>7 h 08</td><td>12 min</td><td>69 min</td><td>99 min</td></tr>
+                </tbody>
+              </table>
+              <ul class="hl">
+                <li>
+                  <span class="icon"><Icon name="schedule" /></span>
+                  <div>
+                    <b>Wednesday and Thursday</b> were the low point. Both nights you woke before dawn and stayed awake, on
+                    Wednesday for about 1 h 20 min from 2:14.
+                  </div>
+                </li>
+                <li>
+                  <span class="icon"><Icon name="bedtime" /></span>
+                  <div>
+                    <b>Tuesday</b> was the most restful. Not the longest night, but 100 min of deep sleep, by far the most
+                    this week.
+                  </div>
+                </li>
+                <li>
+                  <span class="icon"><Icon name="check" /></span>
+                  <div><b>Last night</b> you bounced back: over 7 hours, little time awake and plenty of REM.</div>
+                </li>
+              </ul>
+              <p class="offer">If you like, I can check whether the weak middle lines up with your heart rate or daily activity.</p>
+            </div>
+          </div>
+          <p class="cap"><Icon name="chat" />A real answer from one week of the owner's testing, translated from Hungarian.</p>
+        </section>
+      </main>
+      <ul class="shared" aria-label="What is shared">
+        {
+          shared.map(([i, t, s, c]) => (
+            <li class="item">
+              <span class="icon">
+                <Icon name={i} />
+              </span>
+              <div>
+                <div class="t">{t}</div>
+                <div class="s">{s}</div>
+              </div>
+              <span class="chip">{c}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <section class="more" aria-labelledby="more-h">
+        <h2 id="more-h">Also in the same conversation</h2>
+        <div class:list={["grid", { pair: writeAvailable }]}>
+          {
+            writeAvailable && (
+              <section class="chat" aria-label="Example conversation: logging a meal">
+                <p class="q photo">
+                  <Image
+                    class="snap"
+                    src={mealPhoto}
+                    widths={[200, 400]}
+                    sizes="200px"
+                    width={200}
+                    height={200}
+                    alt="Photo of a lunch plate: pan-seared salmon with crispy skin, a herb bulgur salad and a light green purée"
+                  />
+                  <span>Lunch.</span>
+                </p>
+                <div class="a">
+                  <span class="logo" aria-hidden="true">
+                    <Icon name="favorite" />
+                  </span>
+                  <div>
+                    <p>
+                      Logged to Google Health as lunch at 12:40: pan-seared salmon with a herb bulgur salad and a light
+                      purée. From the photo I estimate <span class="nw">450–550 kcal</span> and{" "}
+                      <span class="nw">30–40 g</span> of protein.
+                    </p>
+                    <div class="logged">
+                      <span class="icon">
+                        <Icon name="check" />
+                      </span>
+                      <div>
+                        <div>Lunch · 12:40 · about 500 kcal · 35 g protein</div>
+                        <div class="s">Written to Google Health · Nutrition</div>
+                      </div>
+                    </div>
+                    <p class="offer">If the portion was bigger or smaller than it looks, tell me and I'll correct the entry.</p>
+                  </div>
+                </div>
+                <p class="cap">
+                  <Icon name="chat" />
+                  Example exchange. Photo by Sebastian Coman on Unsplash; the numbers are illustrative.
+                </p>
+              </section>
+            )
+          }
+          <section class="chat" aria-label="Example conversation: an experiment">
+            <p class="q">Does a late dinner hurt my deep sleep?</p>
+            <div class="a">
+              <span class="logo" aria-hidden="true"><Icon name="favorite" /></span>
+              <div>
+                <p>
+                  Let's test it properly instead of guessing. Your usual bedtime is around 23:00, so for two weeks I'll
+                  assign each evening as early or late, and read your Fitbit sleep stages every night.
+                </p>
+                <ul class="hl">
+                  <li>
+                    <span class="icon"><Icon name="schedule" /></span>
+                    <div>
+                      <b>Tonight is an early night:</b> finish eating by 19:30. Late nights mean dinner between 21:00 and 22:00.
+                    </div>
+                  </li>
+                  <li>
+                    <span class="icon"><Icon name="restaurant" /></span>
+                    <div>
+                      <b>Log dinner each evening</b> with a photo or one sentence, and tell me when a night should not count.
+                    </div>
+                  </li>
+                  <li>
+                    <span class="icon"><Icon name="science" /></span>
+                    <div>
+                      <b>The comparison is computed in code,</b> with a confidence interval. If the data can't tell, the answer
+                      is “no clear difference”.
+                    </div>
+                  </li>
+                </ul>
+                <p class="offer">Shall I start tonight, or from Monday?</p>
+              </div>
+            </div>
+            <p class="cap"><Icon name="chat" />Example exchange following the experiment design. No result exists yet.</p>
+          </section>
+        </div>
+      </section>
+      <footer class="foot">
+        <span>Independent project. Not affiliated with or endorsed by Google. Not medical advice.</span><span
+          >Health AI · MCP server over the Google Health API</span
+        >
+      </footer>
+    </div>
+    <script is:inline>
+      (function () {
+        var b = document.getElementById("copy"),
+          u = document.getElementById("mcp-url");
+        if (!b || !u || !navigator.clipboard) return;
+        var l = b.innerHTML;
+        b.addEventListener("click", function () {
+          navigator.clipboard.writeText(u.textContent).then(function () {
+            b.classList.add("done");
+            b.innerHTML =
+              '<svg class="ms" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>Copied';
+            setTimeout(function () {
+              b.classList.remove("done");
+              b.innerHTML = l;
+            }, 2000);
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

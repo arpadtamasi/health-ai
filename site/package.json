@@ -1,0 +1,25 @@
+{
+  "name": "health-ai-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static landing page on Firebase Hosting (Astro)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "^7.3.5",
+    "sharp": "^0.35.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^22.20.4",
+    "typescript": "^5.9.3"
+  }
+}

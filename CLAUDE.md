@@ -12,6 +12,13 @@ In the Claude Code cloud sandbox, `docker build` needs the proxy and CA: build a
 `--network host --build-arg HTTPS_PROXY=$HTTPS_PROXY` and `/root/.ccr/ca-bundle.crt` added via
 `NODE_EXTRA_CA_CERTS` in the build stage only. Never commit the sandbox CA into the real Dockerfile.
 
+## Landing page (`site/`)
+
+Static Astro page for `/`, served by Firebase Hosting (`firebase.json` → `site/dist`); every other
+path is rewritten to Cloud Run. It imports the tokens, fonts and icons from
+`server/src/auth/pages.ts`. Run from `site/`: `npm run dev`, `npm run build`, `npm run check`.
+`PUBLIC_URL` and `GOOGLE_HEALTH_WRITE_SCOPES` are read at build time; `scripts/deploy.sh` builds it.
+
 ## Tooling
 
 This repo has three AI workflow toolkits committed under `.claude/`.

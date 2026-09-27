@@ -1,8 +1,8 @@
 ---
 version: 1
-slug: "server-src-landing-ts"
-primary_target: "server/src/landing.ts"
-related_targets: ["server/src/app.ts"]
+slug: "site-src-pages-index-astro"
+primary_target: "site/src/pages/index.astro"
+related_targets: ["site/src/styles/landing.css", "server/src/auth/pages.ts"]
 ---
 
 # Surface brief: Landing page (`/`)
@@ -11,7 +11,7 @@ Shaped with /impeccable on 2026-09-26 from the owner's choice "beszélgetés el�
 
 ## Scope and visitor mode
 
-- Route `/` on the Cloud Run service, server-rendered like the sign-in pages.
+- Route `/`, a static Astro page (`site/`) on Firebase Hosting; it reuses the sign-in pages' tokens, fonts and icons from `server/src/auth/pages.ts`. Moved off the Cloud Run service on 2026-09-27 so the photo and the page are served from the same place in every environment.
 - Mode: **Persuade**. The visitor is an invited tester holding the link from the owner; success is adding the connector in Claude and signing in.
 - Language: English (PRODUCT.md).
 
@@ -34,7 +34,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 ## Example conversations
 
 - Hero, sleep this week: the owner's real answer (see FIRST VIEWPORT).
-- Below the fold, log a meal: a synthetic exchange (photo attachment, one word, the logged entry), captioned as illustrative; rendered only when the write scope is configured, like the "Read and write" shared item.
+- Below the fold, log a meal: a synthetic exchange (the tester's photo of the plate, one word, the logged entry); the photo is the owner's pick from Unsplash, Sebastian Coman Photography, Unsplash License (site/src/assets/meal-lunch-salmon.webp, origin in its sidecar; Astro emits 200w and 400w copies), credited in the card caption; captioned as illustrative; rendered only when the write scope is configured, like the "Read and write" shared item.
 - Below the fold, run an experiment: a synthetic exchange following docs/designs/sleep-dinner-experiment.md (early/late assignment, logging, verdict computed in code), captioned as an example with no result.
 
 ## Signature interaction

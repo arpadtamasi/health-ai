@@ -1,0 +1,10 @@
+---
+// Inline Material icon, shared with the server-rendered sign-in pages.
+import { icon } from "../../../server/src/auth/pages.ts";
+
+interface Props {
+  name: string;
+}
+---
+
+<Fragment set:html={icon(Astro.props.name)} />

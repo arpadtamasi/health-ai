@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Builds the server container, deploys it to Cloud Run, then deploys Firebase Hosting, which
-# rewrites every path to the Cloud Run service so the sign-in pages, the OAuth endpoints and /mcp
-# share one HTTPS origin (design D8). Run scripts/gcp-setup.sh first.
+# Builds the server container, deploys it to Cloud Run, then builds the static landing page (site/,
+# Astro) and deploys Firebase Hosting. Hosting serves the landing page's files and rewrites every
+# other path to the Cloud Run service, so the landing page, the sign-in pages, the OAuth endpoints
+# and /mcp share one HTTPS origin (design D8). Run scripts/gcp-setup.sh first.
 #
 #   PROJECT_ID=my-project PUBLIC_URL=https://my-project.web.app GOOGLE_CLIENT_ID=... \
 #   GOOGLE_HEALTH_READ_SCOPES="..." GOOGLE_HEALTH_WRITE_SCOPES="..." scripts/deploy.sh
@@ -49,10 +50,15 @@ gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --quiet 
   --allow-unauthenticated \
   --min-instances 0 --max-instances 3 --memory 512Mi --timeout 60
 
+echo "== Landing page (site/)"
+(cd "$ROOT/site" && npm ci && \
+  PUBLIC_URL="$PUBLIC_URL" GOOGLE_HEALTH_WRITE_SCOPES="$GOOGLE_HEALTH_WRITE_SCOPES" npm run build)
+
 echo "== Firebase Hosting"
 (cd "$ROOT" && npx --yes firebase-tools@latest deploy --only hosting --project "$PROJECT_ID" --non-interactive)
 
 echo "== Smoke check"
 curl -fsS "${PUBLIC_URL}/health" && echo
+curl -fsS "${PUBLIC_URL}/" | grep -q "${PUBLIC_URL}/mcp" && echo "landing ok"
 curl -fsS "${PUBLIC_URL}/.well-known/oauth-protected-resource/mcp" >/dev/null && echo "metadata ok"
 echo "MCP URL for Claude: ${PUBLIC_URL}/mcp"

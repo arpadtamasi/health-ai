@@ -1,3 +1,6 @@
 .health-ai.env
 .firebase/
 .impeccable/review/
+site/node_modules/
+site/dist/
+site/.astro/

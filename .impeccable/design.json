@@ -1,11 +1,11 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-26T15:05:00Z",
+  "generatedAt": "2026-09-26T19:10:00Z",
   "title": "Design System: Health AI",
   "extensions": {
     "source": {
       "tokens": "server/src/auth/pages.ts (STYLE, :root and prefers-color-scheme: dark)",
-      "landing": "server/src/landing.ts (LANDING_STYLE)",
+      "landing": "site/src/pages/index.astro, site/src/styles/landing.css",
       "seed": "#3B6EA8 (docs/designs/signin-flow-brief.md)",
       "cssPrefix": "--md-"
     },
@@ -417,7 +417,7 @@
         "24px",
         "20px logo",
         "18px copy/highlight/logged",
-        "16px caption/attachment",
+        "16px caption",
         "40px badge"
       ],
       "fill": "currentColor"
@@ -442,6 +442,20 @@
           "mobileGap": "16px"
         },
         "purpose": "Below-the-fold auto-fit grid of further conversation cards (meal, experiment) under a headline-small; cards stretch to share a bottom edge, a lone card takes the full width."
+      }
+    ],
+    "imagery": [
+      {
+        "path": "site/src/assets/meal-lunch-salmon.webp",
+        "format": "WebP",
+        "size": "480x480",
+        "renderedAt": "200px (2.4x)",
+        "origin": "Unsplash photo Co-T6odt0es by Sebastian Coman Photography, Unsplash License, square crop",
+        "provenance": "site/src/assets/meal-lunch-salmon.webp.json",
+        "disclosure": "Card caption: 'Photo by Sebastian Coman on Unsplash; the numbers are illustrative.'",
+        "usedBy": [
+          "bubble-photo"
+        ]
       }
     ]
   },
@@ -511,12 +525,12 @@
       "css": ".ds-chat{background:var(--md-surface-container-low,#f2f3fa);color:var(--md-on-surface,#191c20);border-radius:24px;padding:20px 24px 16px;display:flex;flex-direction:column;gap:14px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-variant-numeric:tabular-nums}.ds-chat p{margin:0}.ds-q{align-self:flex-end;max-width:70%;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);border-radius:20px 20px 4px 20px;padding:10px 16px;font-size:15px;line-height:22px}.ds-a{display:grid;grid-template-columns:32px 1fr;gap:12px}.ds-a p{font-size:15px;line-height:22px}.ds-logo{width:32px;height:32px;margin-top:2px;border-radius:8px;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);display:grid;place-items:center}.ds-logo .ds-ms{width:20px;height:20px}.ds-wk{width:100%;border-collapse:collapse;margin:12px 0 2px;font-size:13px;line-height:18px}.ds-wk th,.ds-wk td{text-align:left;padding:5px 8px 5px 0;font-weight:400;white-space:nowrap}.ds-wk thead th{font-size:11px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;color:var(--md-on-surface-variant,#43474e);border-bottom:1px solid var(--md-outline-variant,#c3c6cf)}.ds-wk tbody th{font-weight:500}.ds-wk td b{font-weight:500;color:var(--md-primary,#39608f)}.ds-wk tbody tr+tr td,.ds-wk tbody tr+tr th{border-top:1px solid color-mix(in srgb,var(--md-outline-variant,#c3c6cf) 45%,transparent)}.ds-cap{font-size:12px;line-height:16px;color:var(--md-on-surface-variant,#43474e);border-top:1px solid var(--md-outline-variant,#c3c6cf);padding-top:12px;display:flex;align-items:center;gap:6px}.ds-cap .ds-ms{width:16px;height:16px}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
     },
     {
-      "name": "Attachment Chip",
-      "kind": "chip",
-      "refersTo": "chip-attachment",
-      "description": "Inset chip for an attached photo inside a tester bubble (meal conversation card).",
-      "html": "<p class=\"ds-q\"><span class=\"ds-attach\"><svg class=\"ds-ms\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 15.2c1.77 0 3.2-1.43 3.2-3.2S13.77 8.8 12 8.8 8.8 10.23 8.8 12s1.43 3.2 3.2 3.2zM9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z\"/></svg>IMG_2041.jpg</span><br>Lunch.</p>",
-      "css": ".ds-q{display:inline-block;margin:0;max-width:70%;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);border-radius:20px 20px 4px 20px;padding:10px 16px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-size:15px;line-height:22px}.ds-attach{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;background:var(--md-surface,#f8f9ff);color:var(--md-on-surface,#191c20);border-radius:8px;padding:4px 8px 4px 6px;margin-bottom:6px}.ds-attach .ds-ms{width:16px;height:16px}.ds-ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}"
+      "name": "Photo Bubble",
+      "kind": "custom",
+      "refersTo": "bubble-photo",
+      "description": "Tester bubble carrying a sent photo: same primary-container bubble and tail as the text bubble, tighter padding, square 200px image with the tail corner echoed, caption inset 10px.",
+      "html": "<p class=\"ds-q ds-photo\"><img class=\"ds-snap\" src=\"/assets/meal-lunch-salmon.webp\" width=\"200\" height=\"200\" alt=\"Photo of a lunch plate: pan-seared salmon, herb bulgur salad and a light purée\"><span>Lunch.</span></p>",
+      "css": ".ds-q{display:inline-block;margin:0;max-width:70%;background:var(--md-primary-container,#d3e4ff);color:var(--md-on-primary-container,#1e4875);border-radius:20px 20px 4px 20px;padding:10px 16px;font-family:\"Roboto Flex\",Roboto,system-ui,sans-serif;font-size:15px;line-height:22px}.ds-q.ds-photo{padding:6px 6px 10px;border-radius:20px 20px 4px 20px}.ds-photo .ds-snap{display:block;width:200px;max-width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:14px 14px 4px 14px;margin-bottom:8px;background:var(--md-surface-container-high,#e7e8ee)}.ds-photo span{display:block;padding:0 10px}"
     },
     {
       "name": "Logged Row",
