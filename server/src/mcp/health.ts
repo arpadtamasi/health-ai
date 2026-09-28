@@ -157,7 +157,18 @@ export function registerHealthTools(server: McpServer, ctx: HealthContext): void
     const id = `hai-${randomUUID()}`;
     const name = `users/me/dataTypes/${type.id}/dataPoints/${id}`;
     const op = await ctx.api.createDataPoint(type.id, { name, [payloadField(type.id)]: data });
-    return jsonResult({ id, dataType: type.id, operation: op });
+    // IF-01m3eb1gy6aa3z553154dgycdd: return the upstream id. Google may assign its own name instead of the
+    // one sent, so the id is read from the finished operation's resource, never assumed.
+    const created = createdName(op, type.id);
+    if (!created) {
+      return jsonResult({
+        id: null,
+        dataType: type.id,
+        note: "Google accepted the entry but did not return its name yet. Find it with read_data before updating or deleting it.",
+        operation: op,
+      });
+    }
+    return jsonResult({ id: created, dataType: type.id, operation: op });
   });
 
   addTool(server, ctx, "update_data", {
@@ -234,6 +245,18 @@ export function registerHealthTools(server: McpServer, ctx: HealthContext): void
  */
 function entryId(type: DataType, value: string): string | undefined {
   if (ID_PATTERN.test(value)) return value;
-  const m = /^users\/[^/]+\/dataTypes\/([a-z0-9-]+)\/dataPoints\/([a-z0-9-]{4,63})$/.exec(value);
+  const m = NAME_PATTERN.exec(value);
   return m && m[1] === type.id ? m[2] : undefined;
+}
+
+/** A data point name as Google returns it; the point id is Google's own and not limited to our id format. */
+const NAME_PATTERN = /^users\/[^/]+\/dataTypes\/([a-z0-9-]+)\/dataPoints\/([A-Za-z0-9._~-]{1,200})$/;
+
+/** The name of the data point a finished create operation returned, if it is one of this type. */
+function createdName(op: unknown, typeId: string): string | undefined {
+  const response = (op as { done?: unknown; response?: unknown } | null)?.response;
+  const name = (response as { name?: unknown } | null)?.name;
+  if (typeof name !== "string") return undefined;
+  const m = NAME_PATTERN.exec(name);
+  return m && m[1] === typeId ? name : undefined;
 }

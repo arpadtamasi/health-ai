@@ -76,6 +76,10 @@ export function createApp(deps: AppDeps): App {
     }),
   );
 
+  // A 4xx on /mcp is decided by the SDK (protocol checks) or the bearer check, neither of which logs
+  // why; this records the reason. BR-01m3eb1d1eddbp6nd8cm0nnjtm: protocol fields only, no payload.
+  app.use("/mcp", logRejectedMcpRequests);
+
   // BR-01m3eb1bh5h0gad7vmdj01xfc6: every MCP request carries a valid access token.
   const bearer = requireBearerAuth({ verifier: provider, resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(mcpUrl) });
   const pseudonymOf = (userId: string) => pseudonym(deps.jwtSecret, userId);
@@ -133,3 +137,65 @@ export function createApp(deps: AppDeps): App {
 
   return { app, provider, tokens, googleAccess, links };
 }
+
+/** Logs why an /mcp request got a 400, from the error body the SDK or the bearer check wrote. */
+function logRejectedMcpRequests(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  const chunks: string[] = [];
+  const keep = (chunk: unknown): void => {
+    if (res.statusCode !== 400 || chunk === undefined || chunk === null || typeof chunk === "function") return;
+    chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk as Uint8Array).toString("utf8"));
+  };
+  const write = res.write.bind(res) as (...a: unknown[]) => boolean;
+  const end = res.end.bind(res) as (...a: unknown[]) => express.Response;
+  res.write = ((...a: unknown[]) => {
+    keep(a[0]);
+    return write(...a);
+  }) as typeof res.write;
+  res.end = ((...a: unknown[]) => {
+    keep(a[0]);
+    if (res.statusCode === 400) {
+      logEvent({
+        msg: "mcp_request_rejected",
+        status: res.statusCode,
+        httpMethod: req.method,
+        reason: rejectionReason(chunks.join("")),
+        protocolVersion: req.header("mcp-protocol-version") ?? "",
+        hasSessionId: req.header("mcp-session-id") !== undefined,
+        rpcMethod: rpcMethods(req.body),
+      });
+    }
+    return end(...a);
+  }) as typeof res.end;
+  next();
+}
+
+/**
+ * The fixed part of an SDK or OAuth error: "Bad Request: Unsupported protocol version" from a JSON-RPC
+ * error, "invalid_request" from an OAuth one. Anything after the second colon (versions, parser
+ * detail that could quote the body) is dropped.
+ */
+function rejectionReason(body: string): string {
+  try {
+    const json = JSON.parse(body) as { error?: unknown };
+    const e = json.error;
+    if (typeof e === "string") return e.slice(0, 60);
+    if (e && typeof e === "object") {
+      const { code, message } = e as { code?: unknown; message?: unknown };
+      const text = typeof message === "string" ? message.split(":").slice(0, 2).join(":").trim() : "";
+      return `${String(code ?? "")} ${text}`.trim().slice(0, 100);
+    }
+  } catch {
+    // not JSON: fall through
+  }
+  return "unparsed";
+}
+
+function rpcMethods(body: unknown): string {
+  const items = Array.isArray(body) ? body : [body];
+  return items
+    .map((m) => (m && typeof m === "object" && typeof (m as { method?: unknown }).method === "string" ? (m as { method: string }).method : ""))
+    .filter(Boolean)
+    .join(",")
+    .slice(0, 100);
+}
+

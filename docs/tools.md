@@ -49,8 +49,13 @@ dates. Hour buckets take timestamps with an offset.
 
 ## write_data
 
-Creates one entry and returns its `id`. The writable types are `nutrition-log` (meals) and
-`hydration-log` (drinks).
+Creates one entry and returns its `id`: the name Google gave the new entry, which `update_data` and
+`delete_data` take. The writable types are `nutrition-log` (meals) and `hydration-log` (drinks).
+The interval's `endTime` must be strictly after `startTime`; log a drink as a 1-minute interval.
+
+Protein, sugar, fiber, vitamins and minerals of a meal go in `nutrients`, one entry per nutrient in
+grams. Every value Google Health accepts is listed by `list_data_types`:
+`PROTEIN`, `BIOTIN`, `CAFFEINE`, `CALCIUM`, `CHLORIDE`, `CARBOHYDRATES`, `CHOLESTEROL`, `CHROMIUM`, `COPPER`, `DIETARY_FIBER`, `FOLIC_ACID`, `IODINE`, `IRON`, `MAGNESIUM`, `MANGANESE`, `MOLYBDENUM`, `MONOUNSATURATED_FAT`, `NIACIN`, `PANTOTHENIC_ACID`, `PHOSPHORUS`, `POLYUNSATURATED_FAT`, `POTASSIUM`, `RIBOFLAVIN`, `SATURATED_FAT`, `SELENIUM`, `SODIUM`, `SUGAR`, `THIAMIN`, `TRANS_FAT`, `UNSATURATED_FAT`, `VITAMIN_A`, `VITAMIN_B12`, `VITAMIN_B6`, `VITAMIN_C`, `VITAMIN_D`, `VITAMIN_E`, `VITAMIN_K`, `ZINC`, `FOLATE`.
 
 ```json write_data
 {
@@ -61,7 +66,11 @@ Creates one entry and returns its `id`. The writable types are `nutrition-log` (
     "foodDisplayName": "Chicken salad",
     "energy": { "kcal": 420 },
     "totalCarbohydrate": { "grams": 18 },
-    "totalFat": { "grams": 22 }
+    "totalFat": { "grams": 22 },
+    "nutrients": [
+      { "nutrient": "PROTEIN", "quantity": { "grams": 35 } },
+      { "nutrient": "DIETARY_FIBER", "quantity": { "grams": 6 } }
+    ]
   },
   "intent": "log the lunch from the photo"
 }
@@ -71,7 +80,7 @@ Creates one entry and returns its `id`. The writable types are `nutrition-log` (
 {
   "data_type": "hydration-log",
   "data": {
-    "interval": { "startTime": "2026-09-26T07:00:00Z", "endTime": "2026-09-26T07:00:00Z", "startUtcOffset": "7200s", "endUtcOffset": "7200s" },
+    "interval": { "startTime": "2026-09-26T07:00:00Z", "endTime": "2026-09-26T07:01:00Z", "startUtcOffset": "7200s", "endUtcOffset": "7200s" },
     "amountConsumed": { "milliliters": 250 }
   },
   "intent": "log a glass of water"

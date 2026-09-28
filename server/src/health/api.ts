@@ -7,6 +7,10 @@ export class HealthApiError extends Error {
     readonly status: number,
     readonly upstreamStatus: string,
     readonly upstreamMessage: string,
+    /** `ErrorInfo.reason` from the error details, when Google sends one. */
+    readonly reason = "",
+    /** The request fields Google objected to (`BadRequest.fieldViolations[].field`): names, never values. */
+    readonly fields: string[] = [],
   ) {
     super(`Google Health API ${status} ${upstreamStatus}`);
     this.name = "HealthApiError";
@@ -69,11 +73,27 @@ export class HealthApi {
     const text = await res.text();
     const json = text ? (JSON.parse(text) as Json) : {};
     if (!res.ok) {
-      const err = (json["error"] ?? {}) as { status?: string; message?: string };
-      throw new HealthApiError(res.status, err.status ?? "", err.message ?? res.statusText);
+      const err = (json["error"] ?? {}) as { status?: string; message?: string; details?: unknown };
+      const { reason, fields } = errorDetails(err.details);
+      throw new HealthApiError(res.status, err.status ?? "", err.message ?? res.statusText, reason, fields);
     }
     return json;
   }
+}
+
+/** The machine-readable parts of a google.rpc.Status `details` list: the reason and the field names. */
+function errorDetails(details: unknown): { reason: string; fields: string[] } {
+  let reason = "";
+  const fields: string[] = [];
+  for (const d of Array.isArray(details) ? details : []) {
+    const item = (d ?? {}) as { reason?: unknown; fieldViolations?: unknown };
+    if (!reason && typeof item.reason === "string") reason = item.reason;
+    for (const v of Array.isArray(item.fieldViolations) ? item.fieldViolations : []) {
+      const field = (v as { field?: unknown } | null)?.field;
+      if (typeof field === "string") fields.push(field);
+    }
+  }
+  return { reason, fields };
 }
 
 /** A readable tool error for an upstream failure: BR-01m3eb1c4j4hc489jbay9ncwhx (Actionable tool errors). */
@@ -86,6 +106,6 @@ export function describeHealthApiError(err: HealthApiError): string {
     return `Google Health refused access.${reason} The user may not have granted this permission; they can reconnect Health AI and allow it.`;
   }
   if (err.status === 404) return `Google Health could not find it.${reason}`;
-  if (err.status >= 500) return `Google Health is unavailable right now (HTTP ${err.status}). Try again later.`;
+  if (err.status >= 500) return `Google Health failed on its side (HTTP ${err.status}).${reason} Try again later.`;
   return `Google Health returned HTTP ${err.status}.${reason}`;
 }

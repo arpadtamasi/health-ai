@@ -20,6 +20,12 @@ path is rewritten to Cloud Run. It imports the tokens, fonts and icons from
 `PUBLIC_URL` and `GOOGLE_HEALTH_WRITE_SCOPES` are read at build time. `scripts/deploy-frontend.sh`
 builds and deploys it, `scripts/deploy-backend.sh` deploys the server, `scripts/deploy.sh` runs both.
 
+## Feedback
+
+Testers' feedback from Claude (`send_feedback`) lands in Firestore `feedback` and expires after 90
+days. The `feedback` skill (`.claude/skills/feedback/`) reads it and tracks decisions in
+`docs/feedback/triage.md` (messages verbatim, with emails, names and personal measurements redacted).
+
 ## Tooling
 
 This repo has three AI workflow toolkits committed under `.claude/`.

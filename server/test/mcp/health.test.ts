@@ -8,6 +8,7 @@
 // The Health API answers below follow the discovery document's schemas; real recorded responses replace
 // them once task 1.2 has run against the owner's account.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { NUTRIENTS } from "../../src/health/registry.js";
 import { connectMcp, makeTestApp, READ_SCOPES, signIn, TESTER, type TestApp } from "../helpers.js";
 
 const conns: Awaited<ReturnType<typeof connectMcp>>[] = [];
@@ -34,6 +35,10 @@ describe("list_data_types (4.2)", () => {
     expect(byId("sleep")).toMatchObject({ readable: true, writable: false });
     expect(byId("nutrition-log")).toMatchObject({ readable: true, writable: true, readableScope: "only entries written by Health AI" });
     expect((byId("nutrition-log")["writeFields"] as { required: string[] }).required.join(" ")).toMatch(/foodDisplayName/);
+    // IF-01m3eb1fytpbacz2b3vfnsjrjw: the writable fields name every nutrient Google Health accepts, protein included.
+    const optional = (byId("nutrition-log")["writeFields"] as { optional: string[] }).optional.join(" ");
+    for (const n of NUTRIENTS) expect(optional).toContain(n);
+    expect(JSON.stringify((byId("nutrition-log")["writeFields"] as { example: unknown }).example)).toContain("PROTEIN");
     expect(byId("moods")).toMatchObject({ readable: false, writable: false });
     expect(byId("steps")["aggregations"]).toEqual(["hour", "day", "week"]);
     expect(byId("sleep")["aggregations"]).toEqual([]);
@@ -179,15 +184,28 @@ describe("write_data, update_data, delete_data (4.5)", () => {
     energy: { kcal: 420 },
   };
 
-  it("sends the values unchanged and returns the upstream id", async () => {
+  it("sends the values unchanged and returns the upstream id Google assigned", async () => {
+    // IF-01m3eb1gy6aa3z553154dgycdd: Google names the point itself; the name it returns is the id.
     const t = makeTestApp();
-    t.health.handler = ({ body }) => ({ json: { name: "operations/op-1", done: true, response: body } });
+    const upstream = "users/123456/dataTypes/nutrition-log/dataPoints/8791234567890123456";
+    t.health.handler = ({ body }) => ({ json: { name: "operations/op-1", done: true, response: { ...(body as object), name: upstream } } });
     const c = await connect(t);
     const r = json((await c.call("write_data", { data_type: "nutrition-log", data: meal, intent: "log lunch" })).text);
     const req = t.health.last();
     expect(req.url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints");
-    expect(req.body).toEqual({ name: `users/me/dataTypes/nutrition-log/dataPoints/${String(r["id"])}`, nutritionLog: meal });
-    expect(String(r["id"])).toMatch(/^hai-[a-z0-9-]{36}$/);
+    expect(req.body).toMatchObject({ nutritionLog: meal });
+    expect(r["id"]).toBe(upstream);
+    await c.call("update_data", { data_type: "nutrition-log", id: String(r["id"]), data: meal });
+    expect(t.health.last().url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints/8791234567890123456");
+  });
+
+  it("says so instead of inventing an id when Google returns no name", async () => {
+    const t = makeTestApp();
+    t.health.handler = () => ({ json: { name: "operations/op-2", done: false } });
+    const c = await connect(t);
+    const r = json((await c.call("write_data", { data_type: "nutrition-log", data: meal })).text);
+    expect(r["id"]).toBeNull();
+    expect(String(r["note"])).toMatch(/read_data/);
   });
 
   it("updates and deletes by id or by data point name, always under users/me", async () => {
@@ -261,5 +279,62 @@ describe("annotations and upstream errors (4.8)", () => {
     expect(lines).not.toContain("Chicken salad");
     expect(lines).not.toContain("999999");
     expect(lines).not.toContain("google-at-");
+  });
+
+  it("logs Google's code, reason, rejected fields and the payload shape of a failed write, never the values", async () => {
+    // BR-01m3eb1d1eddbp6nd8cm0nnjtm (No health data in logs)
+    const t = makeTestApp();
+    const c = await connect(t);
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    t.health.handler = () => ({
+      status: 500,
+      json: {
+        error: {
+          code: 500, status: "INTERNAL", message: "Internal error for Salmon bowl 512 kcal",
+          details: [
+            { "@type": "type.googleapis.com/google.rpc.ErrorInfo", reason: "BACKEND_ERROR", domain: "health.googleapis.com" },
+            { "@type": "type.googleapis.com/google.rpc.BadRequest", fieldViolations: [{ field: "nutrition_log.nutrients[0].nutrient", description: "PROTEIN 38" }] },
+          ],
+        },
+      },
+    });
+    const meal = { foodDisplayName: "Salmon bowl", energy: { kcal: 512 }, nutrients: [{ nutrient: "PROTEIN", quantity: { grams: 38 } }] };
+    const r = await c.call("update_data", { data_type: "nutrition-log", id: "hai-abcd-1234", data: meal });
+    expect(r).toMatchObject({ isError: true });
+    expect(r.text).toMatch(/failed on its side \(HTTP 500\).*Google said/);
+    const failure = log.mock.calls.flat().map(String).find((l) => l.includes('"tool_failure"')) ?? "";
+    expect(JSON.parse(failure)).toMatchObject({
+      tool: "update_data",
+      upstreamStatus: 500,
+      upstreamCode: "INTERNAL",
+      upstreamReason: "BACKEND_ERROR",
+      upstreamFields: "nutrition_log.nutrients[0].nutrient",
+      payloadShape: "energy.kcal,foodDisplayName,nutrients[].nutrient,nutrients[].quantity.grams",
+    });
+    const lines = log.mock.calls.flat().join("\n");
+    for (const value of ["Salmon", "512", "PROTEIN", "38"]) expect(lines).not.toContain(value);
+  });
+});
+
+describe("rejected MCP requests", () => {
+  it("logs why the SDK answered 400, with protocol fields only", async () => {
+    // BR-01m3eb1d1eddbp6nd8cm0nnjtm (No health data in logs)
+    const t = makeTestApp();
+    const { token } = await signIn(t, "g-code");
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const res = await t.http.post("/mcp")
+      .set("authorization", `Bearer ${String(token.body.access_token)}`)
+      .set("accept", "application/json, text/event-stream")
+      .set("mcp-protocol-version", "2099-01-01")
+      .send({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "write_data", arguments: { data: { foodDisplayName: "Salmon bowl" } } } });
+    expect(res.status).toBe(400);
+    const line = log.mock.calls.flat().map(String).find((l) => l.includes('"mcp_request_rejected"')) ?? "";
+    expect(JSON.parse(line)).toMatchObject({
+      status: 400,
+      reason: "-32000 Bad Request: Unsupported protocol version",
+      protocolVersion: "2099-01-01",
+      rpcMethod: "tools/call",
+    });
+    expect(log.mock.calls.flat().join("\n")).not.toContain("Salmon");
   });
 });
