@@ -26,12 +26,21 @@ export interface DataType {
   writeFields?: { required: string[]; optional: string[]; example: Record<string, unknown> };
 }
 
+/**
+ * Every nutrient Google Health accepts in a nutrition log's `nutrients` array (NutrientQuantity.nutrient
+ * in the v4 discovery document), protein first. Protein has no top-level field; it is only recorded here.
+ */
+export const NUTRIENTS = [
+  "PROTEIN", "BIOTIN", "CAFFEINE", "CALCIUM", "CHLORIDE", "CARBOHYDRATES", "CHOLESTEROL", "CHROMIUM", "COPPER", "DIETARY_FIBER", "FOLIC_ACID", "IODINE", "IRON", "MAGNESIUM", "MANGANESE", "MOLYBDENUM", "MONOUNSATURATED_FAT", "NIACIN", "PANTOTHENIC_ACID", "PHOSPHORUS", "POLYUNSATURATED_FAT", "POTASSIUM", "RIBOFLAVIN", "SATURATED_FAT", "SELENIUM", "SODIUM", "SUGAR", "THIAMIN", "TRANS_FAT", "UNSATURATED_FAT", "VITAMIN_A", "VITAMIN_B12", "VITAMIN_B6", "VITAMIN_C", "VITAMIN_D", "VITAMIN_E", "VITAMIN_K", "ZINC", "FOLATE",
+] as const;
+
 const t = (
   id: string, kind: DataKind, category: ScopeCategory, description: string,
   agg: "both" | "none" = "none", extra: Partial<DataType> = {},
 ): DataType => ({ id, kind, category, description, rollUp: agg === "both", dailyRollUp: agg === "both", writable: false, ...extra });
 
-const SESSION_INTERVAL = "interval: {startTime, endTime (RFC 3339), startUtcOffset, endUtcOffset (e.g. \"7200s\")}";
+const SESSION_INTERVAL =
+  "interval: {startTime, endTime (RFC 3339, strictly after startTime; a drink is a 1-minute interval), startUtcOffset, endUtcOffset (e.g. \"7200s\")}";
 
 export const DATA_TYPES: readonly DataType[] = [
   t("steps", "interval", "activity_and_fitness", "Step counts per interval.", "both"),
@@ -73,7 +82,8 @@ export const DATA_TYPES: readonly DataType[] = [
       optional: [
         "mealType: BREAKFAST | LUNCH | DINNER | SNACK | ANYTIME | …",
         "energy: {kcal}", "energyFromFat: {kcal}", "totalCarbohydrate: {grams}", "totalFat: {grams}",
-        "nutrients: [{nutrient: e.g. DIETARY_FIBER | CAFFEINE | CALCIUM, quantity: {grams}}]",
+        "nutrients: [{nutrient, quantity: {grams}}], one entry per nutrient; protein, sugar, fiber, vitamins and minerals go here",
+        `nutrient: ${NUTRIENTS.join(" | ")}`,
         "serving: {amount, foodMeasurementUnit}",
       ],
       example: {
@@ -83,6 +93,10 @@ export const DATA_TYPES: readonly DataType[] = [
         energy: { kcal: 420 },
         totalCarbohydrate: { grams: 18 },
         totalFat: { grams: 22 },
+        nutrients: [
+          { nutrient: "PROTEIN", quantity: { grams: 35 } },
+          { nutrient: "DIETARY_FIBER", quantity: { grams: 6 } },
+        ],
       },
     },
   }),
@@ -92,7 +106,7 @@ export const DATA_TYPES: readonly DataType[] = [
       required: [SESSION_INTERVAL, "amountConsumed: {milliliters}"],
       optional: ["amountConsumed.userProvidedUnit: LITER | MILLILITER | CUP_US | …"],
       example: {
-        interval: { startTime: "2026-09-26T09:00:00Z", endTime: "2026-09-26T09:00:00Z", startUtcOffset: "7200s", endUtcOffset: "7200s" },
+        interval: { startTime: "2026-09-26T09:00:00Z", endTime: "2026-09-26T09:01:00Z", startUtcOffset: "7200s", endUtcOffset: "7200s" },
         amountConsumed: { milliliters: 250 },
       },
     },

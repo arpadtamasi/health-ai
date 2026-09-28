@@ -3,7 +3,7 @@ import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/
 import { z } from "zod";
 import { ReconnectRequiredError } from "../auth/google-access.js";
 import { describeHealthApiError, HealthApiError } from "../health/api.js";
-import { logEvent } from "../log.js";
+import { logEvent, shapeOf } from "../log.js";
 import type { Store } from "../store/types.js";
 import { INSIGHT_RETENTION_MS } from "./retention.js";
 
@@ -71,7 +71,17 @@ export function addTool<S extends z.ZodRawShape>(
           tool: name,
           user: ctx.userRef,
           error: err instanceof Error ? err.name : "unknown",
-          ...(err instanceof HealthApiError ? { upstreamStatus: err.status } : {}),
+          // BR-01m3eb1d1eddbp6nd8cm0nnjtm: Google's code, reason and field names, and the payload's
+          // shape; never Google's message text or the values sent, which can echo health data.
+          ...(err instanceof HealthApiError
+            ? {
+              upstreamStatus: err.status,
+              upstreamCode: err.upstreamStatus,
+              ...(err.reason ? { upstreamReason: err.reason } : {}),
+              ...(err.fields.length ? { upstreamFields: err.fields.join(",") } : {}),
+              ...("data" in args ? { payloadShape: shapeOf(args["data"]) } : {}),
+            }
+            : {}),
         });
       }
     }

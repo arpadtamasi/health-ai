@@ -25,9 +25,10 @@ descriptions only, and still has to be confirmed with real calls in task 1.2.
 - Page size defaults to 1440 and can go up to 10000. For `sleep` and `exercise` the default and the
   maximum are both 25. Pagination uses `pageToken` and `nextPageToken`.
 - Writes (`create`, `patch`, `batchDelete`) return a long-running `Operation`. Data point names are
-  `users/{user}/dataTypes/{type}/dataPoints/{id}`. **The id can be chosen by the client**: 4–63
-  characters of lowercase letters, digits and hyphens. So `write_data` can pick the id and return it
-  straight away.
+  `users/{user}/dataTypes/{type}/dataPoints/{id}`. The discovery document says the id can be chosen
+  by the client (4–63 lowercase letters, digits and hyphens), **but in practice (2026-09-27, tester
+  feedback) Google gave nutrition-log entries its own names**, so a client-chosen id was not found
+  afterwards. `write_data` therefore returns the name from the finished operation's `response`.
 - Only "identifiable" data types have data point names, and only those can be written, patched or
   deleted. The discovery document does not list which types those are (**inferred**: the session
   types and the manually logged types; nutrition and hydration logs certainly, since their write
