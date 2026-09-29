@@ -173,7 +173,10 @@ export function registerHealthTools(server: McpServer, ctx: HealthContext): void
 
   addTool(server, ctx, "update_data", {
     title: "Update data",
-    description: "Replaces the values of an entry created earlier (by write_data or read back with read_data), identified by its id.",
+    description:
+      "Replaces the values of an entry created earlier (by write_data or read back with read_data), identified by its id. " +
+      "Google Health currently answers every nutrition-log update with HTTP 500 on its side; to correct a meal, " +
+      "delete_data the entry and write_data the corrected one.",
     inputSchema: {
       data_type: dataTypeArg,
       id: z.string().describe("The entry id returned by write_data, or the data point name from read_data."),

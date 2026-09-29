@@ -92,6 +92,11 @@ grams. Every value Google Health accepts is listed by `list_data_types`:
 Replaces the values of an entry. It takes the `id` from `write_data`, or the data point `name` from
 `read_data`.
 
+Google Health currently answers every `nutrition-log` update with HTTP 500 `INTERNAL`, whatever the
+payload or name (probed 2026-09-29; `updateMask` is not a parameter of this method). Until Google
+fixes it ([issue 567168257](https://issuetracker.google.com/issues/567168257)), correct a meal with
+`delete_data` and a new `write_data`.
+
 ```json update_data
 {
   "data_type": "nutrition-log",
