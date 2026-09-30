@@ -15,9 +15,18 @@ export const SERVER_INSTRUCTIONS = [
  * A fresh MCP server per request (stateless Streamable HTTP, design D2), holding the tools this
  * caller may use. IF-01m3eb1b7edb7e1dh0rft2dq63 (MCP endpoint).
  */
-export function buildMcpServer(ctx: HealthContext, deps: AccountDeps): McpServer {
+export function buildMcpServer(ctx: HealthContext, deps: AccountDeps, publicUrl: URL): McpServer {
   const server = new McpServer(
-    { name: "health-ai", title: "Health AI", version: "0.1.0" },
+    {
+      name: "health-ai",
+      title: "Health AI",
+      version: "0.1.0",
+      icons: [
+        { src: new URL("/favicon.svg", publicUrl).href, mimeType: "image/svg+xml", sizes: ["any"] },
+        { src: new URL("/icon-192.png", publicUrl).href, mimeType: "image/png", sizes: ["192x192"] },
+        { src: new URL("/icon-512.png", publicUrl).href, mimeType: "image/png", sizes: ["512x512"] },
+      ],
+    },
     { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
   );
   registerHealthTools(server, ctx);
