@@ -154,12 +154,7 @@ export function registerHealthTools(server: McpServer, ctx: HealthContext): void
     if ("error" in type) return errorResult(type.error);
     const denied = writable(type);
     if (denied) return errorResult(denied);
-    const id = `hai-${randomUUID()}`;
-    const name = `users/me/dataTypes/${type.id}/dataPoints/${id}`;
-    const op = await ctx.api.createDataPoint(type.id, { name, [payloadField(type.id)]: data });
-    // IF-01m3eb1gy6aa3z553154dgycdd: return the upstream id. Google may assign its own name instead of the
-    // one sent, so the id is read from the finished operation's resource, never assumed.
-    const created = createdName(op, type.id);
+    const { created, op } = await createEntry(ctx, type, data);
     if (!created) {
       return jsonResult({
         id: null,
@@ -175,8 +170,9 @@ export function registerHealthTools(server: McpServer, ctx: HealthContext): void
     title: "Update data",
     description:
       "Replaces the values of an entry created earlier (by write_data or read back with read_data), identified by its id. " +
-      "Google Health currently answers every nutrition-log update with HTTP 500 on its side; to correct a meal, " +
-      "delete_data the entry and write_data the corrected one.",
+      "Google Health does not allow editing a nutrition-log entry once created (intended behavior, issue 567168257), so for " +
+      "nutrition-log this writes the corrected entry and then deletes the old one: the result carries the NEW id, and the " +
+      "old id is no longer valid.",
     inputSchema: {
       data_type: dataTypeArg,
       id: z.string().describe("The entry id returned by write_data, or the data point name from read_data."),
@@ -190,6 +186,19 @@ export function registerHealthTools(server: McpServer, ctx: HealthContext): void
     if (denied) return errorResult(denied);
     const pointId = entryId(type, id);
     if (!pointId) return errorResult(`Invalid argument \`id\`: "${id}" is not an id of a \`${type.id}\` entry.`);
+    if (REPLACE_ON_UPDATE.has(type.id)) {
+      // Write first, delete second: if the write fails nothing changed, and a failed delete leaves a duplicate, never a loss.
+      const { created, op: writeOp } = await createEntry(ctx, type, data);
+      try {
+        const deleteOp = await ctx.api.batchDelete(type.id, [`users/me/dataTypes/${type.id}/dataPoints/${pointId}`]);
+        return jsonResult({ id: created ?? null, replaced: pointId, dataType: type.id, operation: writeOp, deleteOperation: deleteOp });
+      } catch (e) {
+        return errorResult(
+          `The corrected entry was written (id ${created ?? "not returned yet; find it with read_data"}), but the old entry ` +
+            `${pointId} could not be deleted, so both exist now. Delete ${pointId} with delete_data. Cause: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
     const op = await ctx.api.patchDataPoint(type.id, pointId, {
       name: `users/me/dataTypes/${type.id}/dataPoints/${pointId}`,
       [payloadField(type.id)]: data,
@@ -240,6 +249,20 @@ export function registerHealthTools(server: McpServer, ctx: HealthContext): void
     const res = await ctx.api.listPairedDevices();
     return jsonResult({ devices: res["pairedDevices"] ?? [] });
   });
+}
+
+/** Types whose entries Google cannot patch (intended behavior); update_data replaces them with write + delete. */
+const REPLACE_ON_UPDATE: ReadonlySet<string> = new Set(["nutrition-log"]);
+
+/**
+ * Creates one entry. IF-01m3eb1gy6aa3z553154dgycdd: the id is the upstream name, read from the finished operation's
+ * resource, because Google may assign its own instead of the one sent.
+ */
+async function createEntry(ctx: HealthContext, type: DataType, data: Record<string, unknown>) {
+  const id = `hai-${randomUUID()}`;
+  const name = `users/me/dataTypes/${type.id}/dataPoints/${id}`;
+  const op = await ctx.api.createDataPoint(type.id, { name, [payloadField(type.id)]: data });
+  return { created: createdName(op, type.id), op };
 }
 
 /**

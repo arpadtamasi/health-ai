@@ -76,7 +76,7 @@ export const DATA_TYPES: readonly DataType[] = [
   t("daily-sleep-temperature-derivations", "daily", "health_metrics_and_measurements", "Skin temperature variation during sleep, per day."),
   t("sleep", "session", "sleep", "Sleep sessions with start, end, stages and summary. At most 25 per page."),
   t("nutrition-log", "session", "nutrition", "Logged meals and foods. Only entries written by Health AI can be read back. " +
-    "Google Health currently fails every update (HTTP 500); correct a meal by deleting it and writing it again.", "both", {
+    "Google does not allow editing a logged meal; update_data corrects one by writing the new entry and deleting the old, so the id changes.", "both", {
     writable: true,
     writeFields: {
       required: [SESSION_INTERVAL, "foodDisplayName (anonymous food) or food (a Food resource name)"],

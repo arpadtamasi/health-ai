@@ -92,10 +92,11 @@ grams. Every value Google Health accepts is listed by `list_data_types`:
 Replaces the values of an entry. It takes the `id` from `write_data`, or the data point `name` from
 `read_data`.
 
-Google Health currently answers every `nutrition-log` update with HTTP 500 `INTERNAL`, whatever the
-payload or name (probed 2026-09-29; `updateMask` is not a parameter of this method). Until Google
-fixes it ([issue 567168257](https://issuetracker.google.com/issues/567168257)), correct a meal with
-`delete_data` and a new `write_data`.
+Google Health does not allow editing a `nutrition-log` entry once it exists (its answer to issue
+[567168257](https://issuetracker.google.com/issues/567168257): intended behavior; a patch returns HTTP 500).
+So for `nutrition-log`, `update_data` writes the corrected entry first and then deletes the old one. The
+result carries the **new** `id`; the old one is no longer valid. If the delete fails, both entries exist and
+the error says which id to remove with `delete_data`. Other types are patched in place.
 
 ```json update_data
 {

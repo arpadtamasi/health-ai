@@ -108,6 +108,7 @@ export function createApp(deps: AppDeps): App {
           now,
         },
         { sealer: deps.sealer, google: deps.google, googleAccess },
+        deps.publicUrl,
       );
       const transport = new StreamableHTTPServerTransport({ enableJsonResponse: true });
       res.on("close", () => {

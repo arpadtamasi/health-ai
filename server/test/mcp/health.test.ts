@@ -195,8 +195,6 @@ describe("write_data, update_data, delete_data (4.5)", () => {
     expect(req.url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints");
     expect(req.body).toMatchObject({ nutritionLog: meal });
     expect(r["id"]).toBe(upstream);
-    await c.call("update_data", { data_type: "nutrition-log", id: String(r["id"]), data: meal });
-    expect(t.health.last().url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints/8791234567890123456");
   });
 
   it("says so instead of inventing an id when Google returns no name", async () => {
@@ -208,13 +206,41 @@ describe("write_data, update_data, delete_data (4.5)", () => {
     expect(String(r["note"])).toMatch(/read_data/);
   });
 
-  it("updates and deletes by id or by data point name, always under users/me", async () => {
+  it("replaces a nutrition-log entry by writing the corrected one, then deleting the old, and returns the new id", async () => {
+    // Google does not allow editing nutrition-log entries (issue 567168257, intended behavior).
+    const t = makeTestApp();
+    const fresh = "users/123456/dataTypes/nutrition-log/dataPoints/9999";
+    t.health.handler = ({ body, url }) =>
+      url.pathname.endsWith(":batchDelete")
+        ? { json: {} }
+        : { json: { name: "operations/op-3", done: true, response: { ...(body as object), name: fresh } } };
+    const c = await connect(t);
+    const r = json((await c.call("update_data", { data_type: "nutrition-log", id: "users/123456/dataTypes/nutrition-log/dataPoints/abcd-1234", data: { ...meal, energy: { kcal: 380 } } })).text);
+    const [write, del] = t.health.requests;
+    expect(write?.method).toBe("POST");
+    expect(write?.url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints");
+    expect((write?.body as { nutritionLog: { energy: unknown } }).nutritionLog.energy).toEqual({ kcal: 380 });
+    expect(del?.url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints:batchDelete");
+    expect(del?.body).toEqual({ names: ["users/me/dataTypes/nutrition-log/dataPoints/abcd-1234"] });
+    expect(r).toMatchObject({ id: fresh, replaced: "abcd-1234" });
+  });
+
+  it("names both ids when the old entry cannot be deleted after the corrected one was written", async () => {
+    const t = makeTestApp();
+    const fresh = "users/123456/dataTypes/nutrition-log/dataPoints/9999";
+    t.health.handler = ({ body, url }) =>
+      url.pathname.endsWith(":batchDelete")
+        ? { status: 500, json: { error: { code: 500, status: "INTERNAL", message: "boom" } } }
+        : { json: { name: "operations/op-4", done: true, response: { ...(body as object), name: fresh } } };
+    const c = await connect(t);
+    const r = await c.call("update_data", { data_type: "nutrition-log", id: "abcd-1234", data: meal });
+    expect(r.isError).toBe(true);
+    expect(r.text).toMatch(/9999.*abcd-1234.*both exist/s);
+  });
+
+  it("deletes by id or by data point name, always under users/me", async () => {
     const t = makeTestApp();
     const c = await connect(t);
-    await c.call("update_data", { data_type: "nutrition-log", id: "users/123456/dataTypes/nutrition-log/dataPoints/abcd-1234", data: { ...meal, energy: { kcal: 380 } } });
-    expect(t.health.last().method).toBe("PATCH");
-    expect(t.health.last().url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints/abcd-1234");
-    expect((t.health.last().body as { nutritionLog: { energy: unknown } }).nutritionLog.energy).toEqual({ kcal: 380 });
     await c.call("delete_data", { data_type: "nutrition-log", ids: ["abcd-1234", "hai-5678"] });
     expect(t.health.last().url.pathname).toBe("/v4/users/me/dataTypes/nutrition-log/dataPoints:batchDelete");
     expect(t.health.last().body).toEqual({
