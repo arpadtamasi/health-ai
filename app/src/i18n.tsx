@@ -35,6 +35,21 @@ const en = {
   cameraHint: "Point at the fridge, a menu, the counter, a plate, anything",
   typeInstead: "Type instead",
   takePhoto: "Take the photo",
+  status: "Status",
+  chat: "Chat",
+  log: "Log",
+  photo: "Photo",
+  water: "Water",
+  ofGoal: (goal: string) => `of ${goal}`,
+  under: (v: string) => `${v} under`,
+  over: (v: string) => `${v} over`,
+  heroOverline: (time: string, behind: boolean) => (behind ? `${time} · BEHIND THE PLAN` : `${time} · ON THE PLAN`),
+  heroBig: (label: string, gap: string) => `${label} −${gap}`,
+  heroOnPlan: "On the plan",
+  heroUnder: (under: number, left: number) => `${under} kcal under the plan for now. ${left} kcal left today.`,
+  heroOver: (over: number, left: number) => `${over} kcal over the plan for now. ${left} kcal left today.`,
+  toastUndo: "Undo",
+  loading: "Loading…",
 };
 
 const hu: typeof en = {
@@ -67,6 +82,21 @@ const hu: typeof en = {
   cameraHint: "Mutass a hűtőre, étlapra, pultra, tányérra, bármire",
   typeInstead: "Inkább beírom",
   takePhoto: "Fotó készítése",
+  status: "Státusz",
+  chat: "Chat",
+  log: "Naplózás",
+  photo: "Fotó",
+  water: "Víz",
+  ofGoal: (goal) => `${goal}-ból`,
+  under: (v) => `${v} alatta`,
+  over: (v) => `${v} felette`,
+  heroOverline: (time, behind) => (behind ? `${time} · A TERV MÖGÖTT` : `${time} · A TERVEN`),
+  heroBig: (label, gap) => `${label} −${gap}`,
+  heroOnPlan: "A terven vagy",
+  heroUnder: (under, left) => `${under} kcal a terv alatt most. Ma még ${left} kcal van hátra.`,
+  heroOver: (over, left) => `${over} kcal a terv felett most. Ma még ${left} kcal van hátra.`,
+  toastUndo: "Visszavonás",
+  loading: "Betöltés…",
 };
 
 const TEXTS = { en, hu } as const;

@@ -17,6 +17,8 @@ export interface DayState {
   date: string;
   minutes: number;
   timeZone: string;
+  /** Not sent yet: arrives with the water layer. */
+  water?: { ml: number; goalMl: number };
 }
 export type WhatNow =
   | { kind: "options"; options: Option[]; basis: string }

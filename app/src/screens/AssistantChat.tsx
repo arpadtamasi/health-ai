@@ -1,22 +1,19 @@
 // The chat, on assistant-ui's React Native primitives (docs: assistant-ui.com/docs/react-native), styled with our tokens.
 // The runtime is a local one with a ChatModelAdapter that calls our /api/app/chat; the cards and the Undo are tool-call parts
 // with our own components; the quick replies are assistant-ui suggestions that send on tap.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Image, Platform, Pressable, Text, View } from "react-native";
 import {
   AssistantRuntimeProvider, ComposerPrimitive, MessagePrimitive, ThreadPrimitive, useAui, useAuiState, useLocalRuntime,
   type ChatModelAdapter, type ChatModelRunResult,
 } from "@assistant-ui/react-native";
-import { ApiError, type ChatEvent, type DayState, type Usual } from "../api/client";
+import { ApiError, type ChatEvent, type Usual } from "../api/client";
 import { backend } from "../backend";
 import { Button, Chip } from "../components/ui";
 import { OptionCard, type Option } from "../components/food";
-import { PaceStrip, type PaceItem } from "../components/chat";
 import { UiIcon } from "../components/icons";
-import { pace } from "../pace";
 import { isLang, useT, type Lang, type Texts } from "../i18n";
 import { tokens as T } from "../theme/tokens";
-import { CameraScreen } from "./CameraScreen";
 
 const c = T.color;
 
@@ -91,48 +88,52 @@ function Message({ onChoose, onUndo }: { onChoose: (o: Option) => void; onUndo: 
   );
 }
 
-function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: () => void }) {
+export interface ChatProps {
+  onboarded: boolean;
+  usuals: Usual[];
+  /** A photo taken on the Status (or from the chat's camera button): sent as the next message. */
+  photo: { uri: string; base64: string } | null;
+  onPhotoHandled: () => void;
+  onCamera: () => void;
+  /** Back to the Status. Only offered once the person is set up. */
+  onStatus: () => void;
+  /** Something was logged or undone: the Status has to read the day again. */
+  onChanged: () => void;
+  /** The first conversation finished and the person is set up. */
+  onReady: () => void;
+}
+
+function Inner({ onboarded, usuals, photo, onPhotoHandled, onCamera, onStatus, onChanged, onReady }: ChatProps) {
   const { t, setLang } = useT();
   box.t = t;
   box.setLang = setLang;
   const aui = useAui();
-  const [state, setState] = useState<DayState | null>(null);
-  const [cameraOpen, setCameraOpen] = useState(false);
   const meta = useAuiState((s) => {
     const m = s.thread.messages[s.thread.messages.length - 1];
     return (m?.metadata?.custom ?? {}) as Meta;
   });
   const [ready, setReady] = useState(onboarded);
-  const [usuals, setUsuals] = useState<Usual[]>([]);
   const [consented, setConsented] = useState(false);
 
-  const loadState = useCallback(async () => {
-    try { setState(await backend.state()); } catch (e) { if (e instanceof ApiError && e.status === 401) onSignedOut(); }
-  }, [onSignedOut]);
-  const loadUsuals = useCallback(async () => {
-    try { setUsuals(await backend.usuals()); } catch { /* the buttons are a convenience: no buttons is fine */ }
-  }, []);
-  useEffect(() => { if (ready) { void loadState(); void loadUsuals(); } }, [ready, loadState, loadUsuals]);
-  useEffect(() => { if (meta.onboarded) setReady(true); }, [meta.onboarded]);
+  useEffect(() => { if (meta.onboarded && !ready) { setReady(true); onReady(); } }, [meta.onboarded, ready, onReady]);
+  // Whatever the chat did (a logged meal, a saved setting) may have changed the day: the Status reads it again. The callback is
+  // kept in a ref so that a new function from the parent cannot retrigger this effect.
+  const count = useAuiState((st) => st.thread.messages.length);
+  const changed = useRef(onChanged);
+  changed.current = onChanged;
+  useEffect(() => { if (ready && count > 1) changed.current(); }, [count, ready]);
 
-  const items: PaceItem[] = useMemo(() => {
-    if (!state) return [];
-    const raw = [
-      { label: t.calories, unit: "", goal: state.goals.calories, result: pace(state.goals.calories, state.eaten.calories, state.minutes, state.window) },
-      { label: t.carbs, unit: " g", goal: state.goals.carbs, result: pace(state.goals.carbs, state.eaten.carbs, state.minutes, state.window) },
-      { label: t.protein, unit: " g", goal: state.goals.protein, result: pace(state.goals.protein, state.eaten.protein, state.minutes, state.window) },
-    ];
-    const rel = (i: (typeof raw)[number]) => i.result.gap / i.goal;
-    const worst = [...raw].sort((a, b) => rel(a) - rel(b))[0]!;
-    return raw.map(({ goal: _goal, ...i }) => ({ ...i, highlight: i === worst && i.result.behind }));
-  }, [state, t]);
+  useEffect(() => {
+    if (!photo) return;
+    aui.thread().append({ role: "user", content: [{ type: "image", image: `data:image/jpeg;base64,${photo.base64}` }, { type: "text", text: t.photoQuestion }] });
+    onPhotoHandled();
+  }, [photo, aui, t, onPhotoHandled]);
 
   const choose = async (o: Option) => {
     try {
       const { id } = await backend.log(o);
       aui.thread().append({ role: "assistant", content: [{ type: "tool-call", toolCallId: `log-${Date.now()}`, toolName: "logged", args: {}, argsText: "{}", result: { name: o.name, kcal: o.kcal, id } }] });
-      await loadState();
-      void loadUsuals();
+      onChanged();
     } catch { /* the card stays; the person can tap again */ }
   };
   const undo = async (id: string | null) => {
@@ -140,27 +141,30 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
     try {
       await backend.unlog(id);
       aui.thread().append({ role: "assistant", content: [{ type: "text", text: t.undone }] });
-      await loadState();
+      onChanged();
     } catch { aui.thread().append({ role: "assistant", content: [{ type: "text", text: t.undoFailed }] }); }
   };
-
-  const photo = (p: { uri: string; base64: string }) => {
-    setCameraOpen(false);
-    aui.thread().append({ role: "user", content: [{ type: "image", image: `data:image/jpeg;base64,${p.base64}` }, { type: "text", text: t.photoQuestion }] });
-  };
-
-  if (cameraOpen) return <CameraScreen onCapture={photo} onCancel={() => setCameraOpen(false)} />;
 
   const replies = meta.replies?.length ? meta.replies : (ready ? [] : t.firstReplies);
   const showConsent = meta.needsConsent && !consented;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface, paddingHorizontal: T.space.xl, paddingTop: T.space.m, gap: T.space.m }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m, height: 48 }}>
-        <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={18} color={c.onPrimary} filled /></View>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: c.onSurface }}>{t.appName}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", height: 48 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m }}>
+          {ready ? (
+            <Pressable accessibilityRole="button" accessibilityLabel={t.status} onPress={onStatus}><UiIcon name="arrow-left" size={22} color={c.onSurface} /></Pressable>
+          ) : (
+            <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={18} color={c.onPrimary} filled /></View>
+          )}
+          <Text style={{ fontSize: 18, fontWeight: "600", color: c.onSurface }}>{ready ? t.chat : t.appName}</Text>
+        </View>
+        {ready ? (
+          <Pressable accessibilityRole="button" onPress={onStatus} style={{ backgroundColor: c.surfaceLow, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 }}>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: c.onSurface }}>{t.status}</Text>
+          </Pressable>
+        ) : null}
       </View>
-      {items.length ? <PaceStrip items={items} /> : null}
       <ThreadPrimitive.Root style={{ flex: 1 }}>
         <ThreadPrimitive.MessagesFlatList autoScroll style={{ flex: 1 }} contentContainerStyle={{ gap: T.space.s, paddingBottom: T.space.m }}>
           {() => <Message onChoose={(o) => void choose(o)} onUndo={(id) => void undo(id)} />}
@@ -168,7 +172,7 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
         {showConsent ? (
           <View style={{ gap: T.space.s, backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l }}>
             <Text style={{ fontSize: T.font.body, color: c.onSurface }}>{t.consentText}</Text>
-            <Button label={t.consentButton} onPress={() => void backend.consent().then(() => { setConsented(true); setReady(true); })} />
+            <Button label={t.consentButton} onPress={() => void backend.consent().then(() => { setConsented(true); setReady(true); onReady(); })} />
           </View>
         ) : null}
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: T.space.s, paddingVertical: T.space.s }}>
@@ -185,12 +189,12 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
           {ready && !replies.length ? usuals.map((u) => <Chip key={u.name} label={u.name} onPress={() => void choose({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein })} />) : null}
         </View>
         <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "flex-end", gap: T.space.s }}>
-          <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={() => setCameraOpen(true)}
+          <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={onCamera}
             style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primaryContainer, alignItems: "center", justifyContent: "center" }}>
             <UiIcon name="camera" size={22} color={c.onPrimaryContainer} />
           </Pressable>
           <ComposerPrimitive.Input placeholder={t.placeholder} multiline placeholderTextColor={c.onSurfaceVariant}
-            style={[{ flex: 1, backgroundColor: c.surfaceHigh, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 10, maxHeight: 120, fontSize: T.font.base, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
+            style={[{ flex: 1, backgroundColor: c.surfaceHigh, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 10, minHeight: 44, maxHeight: 120, fontSize: T.font.base, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
           <ComposerPrimitive.Send style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
             <UiIcon name="arrow-up" size={20} color={c.onPrimary} />
           </ComposerPrimitive.Send>
@@ -200,11 +204,11 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
   );
 }
 
-export function AssistantChat({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: () => void }) {
+export function AssistantChat(props: ChatProps) {
   const { t } = useT();
   box.t = t;
   const runtime = useLocalRuntime(adapter, {
-    initialMessages: [{ role: "assistant", content: [{ type: "text", text: onboarded ? t.greetReady : t.greetSetup }] }],
+    initialMessages: [{ role: "assistant", content: [{ type: "text", text: props.onboarded ? t.greetReady : t.greetSetup }] }],
   });
-  return <AssistantRuntimeProvider runtime={runtime}><Inner onboarded={onboarded} onSignedOut={onSignedOut} /></AssistantRuntimeProvider>;
+  return <AssistantRuntimeProvider runtime={runtime}><Inner {...props} /></AssistantRuntimeProvider>;
 }
