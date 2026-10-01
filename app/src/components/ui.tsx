@@ -1,14 +1,8 @@
-import type { ReactNode } from "react";
-import { Pressable, Text, View, type ViewStyle } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { tokens as T } from "../theme/tokens";
 import { FoodIcon, type FoodCategory } from "./icons";
 
 const c = T.color;
-
-export function Card({ children, tone = "low", pad = T.space.l, style }: { children: ReactNode; tone?: "low" | "warn" | "good"; pad?: number; style?: ViewStyle }) {
-  const bg = { low: c.surfaceLow, warn: c.warn, good: c.good }[tone];
-  return <View style={[{ backgroundColor: bg, borderRadius: T.radius.card, padding: pad }, style]}>{children}</View>;
-}
 
 export function Button({ label, onPress, kind = "primary", disabled = false }: { label: string; onPress?: () => void; kind?: "primary" | "text"; disabled?: boolean }) {
   const primary = kind === "primary";
@@ -34,6 +28,3 @@ export function Chip({ label, icon, selected = false, onPress }: { label: string
   );
 }
 
-export function Banner({ children }: { children: ReactNode }) {
-  return <View style={{ backgroundColor: c.primaryContainer, borderRadius: T.radius.card, padding: T.space.m }}>{children}</View>;
-}

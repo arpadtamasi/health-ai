@@ -1,13 +1,13 @@
-// SPIKE: the same chat on assistant-ui's React Native primitives (docs: assistant-ui.com/docs/react-native), styled with our tokens.
+// The chat, on assistant-ui's React Native primitives (docs: assistant-ui.com/docs/react-native), styled with our tokens.
 // The runtime is a local one with a ChatModelAdapter that calls our /api/app/chat; the cards and the Undo are tool-call parts
-// with our own components; the quick replies are assistant-ui suggestions that send on tap. Compare with ChatScreen.tsx.
+// with our own components; the quick replies are assistant-ui suggestions that send on tap.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Image, Platform, Pressable, Text, View } from "react-native";
 import {
   AssistantRuntimeProvider, ComposerPrimitive, MessagePrimitive, ThreadPrimitive, useAui, useAuiState, useLocalRuntime,
   type ChatModelAdapter, type ChatModelRunResult,
 } from "@assistant-ui/react-native";
-import { ApiError, type ChatEvent, type DayState } from "../api/client";
+import { ApiError, type ChatEvent, type DayState, type Usual } from "../api/client";
 import { backend } from "../backend";
 import { Button, Chip } from "../components/ui";
 import { OptionCard, type Option } from "../components/food";
@@ -95,12 +95,16 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
     return (m?.metadata?.custom ?? {}) as Meta;
   });
   const [ready, setReady] = useState(onboarded);
+  const [usuals, setUsuals] = useState<Usual[]>([]);
   const [consented, setConsented] = useState(false);
 
   const loadState = useCallback(async () => {
     try { setState(await backend.state()); } catch (e) { if (e instanceof ApiError && e.status === 401) onSignedOut(); }
   }, [onSignedOut]);
-  useEffect(() => { if (ready) void loadState(); }, [ready, loadState]);
+  const loadUsuals = useCallback(async () => {
+    try { setUsuals(await backend.usuals()); } catch { /* the buttons are a convenience: no buttons is fine */ }
+  }, []);
+  useEffect(() => { if (ready) { void loadState(); void loadUsuals(); } }, [ready, loadState, loadUsuals]);
   useEffect(() => { if (meta.onboarded) setReady(true); }, [meta.onboarded]);
 
   const items: PaceItem[] = useMemo(() => {
@@ -120,9 +124,17 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
       const { id } = await backend.log(o);
       aui.thread().append({ role: "assistant", content: [{ type: "tool-call", toolCallId: `log-${Date.now()}`, toolName: "logged", args: {}, argsText: "{}", result: { name: o.name, kcal: o.kcal, id } }] });
       await loadState();
+      void loadUsuals();
     } catch { /* the card stays; the person can tap again */ }
   };
-  const undo = async (id: string | null) => { if (id) { try { await backend.unlog(id); await loadState(); } catch { /* ignore */ } } };
+  const undo = async (id: string | null) => {
+    if (!id) return;
+    try {
+      await backend.unlog(id);
+      aui.thread().append({ role: "assistant", content: [{ type: "text", text: "Undone." }] });
+      await loadState();
+    } catch { aui.thread().append({ role: "assistant", content: [{ type: "text", text: "I could not undo that." }] }); }
+  };
 
   const photo = (p: { uri: string; base64: string }) => {
     setCameraOpen(false);
@@ -162,6 +174,7 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
               <Text style={{ fontSize: T.font.body, color: c.onPrimaryContainer }}>What should I eat now?</Text>
             </ThreadPrimitive.Suggestion>
           ) : null}
+          {ready && !replies.length ? usuals.map((u) => <Chip key={u.name} label={u.name} onPress={() => void choose({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein })} />) : null}
         </View>
         <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "flex-end", gap: T.space.s }}>
           <Pressable accessibilityRole="button" accessibilityLabel="Open the camera" onPress={() => setCameraOpen(true)}
