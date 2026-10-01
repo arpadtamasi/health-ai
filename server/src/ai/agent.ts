@@ -10,6 +10,8 @@ import { LANGUAGES, type Language } from "../store/types.js";
 
 export interface SettingsPatch {
   calories?: number;
+  /** Daily water goal in millilitres. */
+  waterMl?: number;
   window?: { startHour: number; endHour: number };
   constraints?: string[];
 }
@@ -31,13 +33,19 @@ export interface AgentEnv {
   /** The saved language, if any. */
   language(): Promise<Language | undefined>;
   setLanguage(language: Language): Promise<void>;
-  logMeal(meal: { name: string; kcal: number; carbs: number; protein: number }): Promise<{ id: string | null; left?: { calories: number; carbs: number; protein: number } }>;
+  logMeal(meal: { name: string; kcal: number; carbs: number; protein: number; ingredients?: string[] }): Promise<{ id: string | null; left?: { calories: number; carbs: number; protein: number } }>;
+  logWater(ml: number): Promise<{ id: string | null; left?: { waterMl: number } }>;
+  /** The latest entries of the person, newest first, with the ids a deletion needs. */
+  recentEntries(): Promise<{ id: string; kind: "meal" | "water"; name: string; detail: string; when: string }[]>;
 }
 
 export type ChatEvent =
   | { type: "text"; text: string }
-  | { type: "options"; options: Option[]; basis: string }
+  | { type: "options"; options: Option[]; basis: string; source: "photo" | "typed" }
   | { type: "logged"; name: string; kcal: number; id: string | null }
+  | { type: "logged_water"; ml: number; id: string | null }
+  /** A deletion was proposed: the app shows a confirmation card, and only the person's tap deletes anything. */
+  | { type: "confirm_delete"; ids: string[]; all: boolean; labels: string[] }
   | { type: "settings_saved" }
   /** Short answers the person can tap instead of typing. */
   | { type: "replies"; replies: string[] }
@@ -68,6 +76,8 @@ const systemFor = (saved: Language | undefined, clock: Clock | undefined) => [
   "SUGGESTIONS: when they ask what to eat, or show a photo of a fridge, a menu, a counter or a plate, call suggest_options (the photo of this message is attached automatically; pass optionsText only when they typed options). Then add one short sentence about the biggest gap; the app shows the cards itself, do not repeat them.",
   "If they have not told you what they can choose from and there is no photo, ask them to type it or take a photo.",
   "QUICK REPLIES: when you ask a question that has a few common answers, also call quick_replies with 2 to 4 short answers in the person's language: for foods to avoid include \"none\" plus common ones (nuts, lactose, gluten); for the activity level the levels; for the aim lose, keep and gain; for a yes or no question yes and no. Do not call it when the answer is free text, like an age or a weight.",
+  "WATER: the daily water goal is a setting like the calorie goal. When they say they drank water (\"két pohár víz\", \"fél liter\", \"a bottle\"), call log_water with the amount in millilitres (a glass is 250 ml, a large glass 400, a bottle 500 unless they say otherwise) and say how much is left of the goal, from the tool result. Only plain water counts; coffee, tea and other drinks are logged with log_meal, not as water. If the person did not give a water goal in the setup, mention that you can set it and propose about 30 ml per kilogram of body weight when you know the weight, otherwise 2 litres; call save_settings with waterMl only after they agree.",
+  "HISTORY: the person can delete what they logged. To delete, call list_entries to find the entries, then call request_delete with the ids (or all: true for the whole history). request_delete only shows a confirmation card: the person's own tap deletes, never you; say so in one short sentence and never claim that something is deleted before they confirm.",
   "LOGGING: when the person's latest message says they ate something, call log_meal for exactly that, naming the food in the language the person writes in and giving honest estimates for calories, carbs and protein, and say what you logged.",
   "Never log a food you suggested, a food from an earlier message, or anything the person did not just say they ate: the app logs the cards they tap itself.",
   "After log_meal, use the numbers the tool returns for what is left today; never work them out yourself.",
@@ -85,6 +95,7 @@ const TOOLS: ToolSpec[] = [
   }, ["sex", "age", "heightCm", "weightKg", "activity", "aim"]),
   tool("save_settings", "Save settings the person agreed to. Only the fields you pass change. constraints replaces the whole list (an empty list means nothing to avoid).", {
     calories: { type: "number" },
+    waterMl: { type: "number", description: "Daily water goal in millilitres, 500 to 8000." },
     window: { type: "object", properties: { startHour: { type: "number" }, endHour: { type: "number" } }, required: ["startHour", "endHour"] },
     constraints: { type: "array", items: { type: "string" } },
   }),
@@ -94,11 +105,20 @@ const TOOLS: ToolSpec[] = [
   tool("set_language", "Save the language the person speaks, so the chat and the app's own texts use it from now on.", {
     language: { type: "string", enum: [...LANGUAGES] },
   }, ["language"]),
+  tool("log_water", "Log water the person says they drank. Millilitres; only plain water.", {
+    ml: { type: "number", description: "Millilitres, 10 to 5000." },
+  }, ["ml"]),
+  tool("list_entries", "The person's latest logged meals and drinks (the last week, newest first) with their ids, to find what they mean.", {}),
+  tool("request_delete", "Propose deleting entries: shows a confirmation card the person must tap. Pass the ids from list_entries, or all: true for the whole history.", {
+    ids: { type: "array", items: { type: "string" } },
+    all: { type: "boolean" },
+  }),
   tool("quick_replies", "Show 2 to 4 short answers the person can tap instead of typing, for the question you are asking.", {
     replies: { type: "array", items: { type: "string" }, description: "Each at most 24 characters, in the person's language." },
   }, ["replies"]),
   tool("log_meal", "Log a meal the person says they ate, with estimated values for the portion.", {
     name: { type: "string" }, kcal: { type: "number" }, carbs: { type: "number", description: "grams" }, protein: { type: "number", description: "grams" },
+    ingredients: { type: "array", items: { type: "string" }, description: "The ingredients you can tell or infer; optional." },
   }, ["name", "kcal", "carbs", "protein"]),
 ];
 
@@ -128,7 +148,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const t = await env.today();
           if (!t.state) return JSON.stringify({ onboarded: t.onboarded, setupDone: false });
           const g = gaps(t.state);
-          return JSON.stringify({ onboarded: t.onboarded, setupDone: true, goals: t.state.goals, eaten: t.state.eaten, paceGap: g, window: t.state.window, avoid: t.state.constraints, localTimeMinutes: t.state.minutesNow, now: await env.clock().catch(() => undefined) });
+          return JSON.stringify({ onboarded: t.onboarded, setupDone: true, goals: t.state.goals, eaten: t.state.eaten, paceGap: g, window: t.state.window, avoid: t.state.constraints, water: t.state.water, localTimeMinutes: t.state.minutesNow, now: await env.clock().catch(() => undefined) });
         }
         case "estimate_calories": {
           const sex = args["sex"], activity = args["activity"], aim = args["aim"];
@@ -143,6 +163,8 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const patch: SettingsPatch = {};
           const calories = asNumber(args["calories"]);
           if (calories !== undefined) patch.calories = calories;
+          const waterMl = asNumber(args["waterMl"]);
+          if (waterMl !== undefined) patch.waterMl = waterMl;
           const w = args["window"] as { startHour?: unknown; endHour?: unknown } | undefined;
           if (w && asNumber(w.startHour) !== undefined && asNumber(w.endHour) !== undefined) patch.window = { startHour: Number(w.startHour), endHour: Number(w.endHour) };
           if (Array.isArray(args["constraints"])) patch.constraints = args["constraints"].filter((c): c is string => typeof c === "string");
@@ -156,7 +178,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const r = await env.suggest({ ...(optionsText ? { optionsText } : {}), ...(input.image ? { images: [input.image] } : {}) });
           if (r.kind === "not_ready") return JSON.stringify({ error: "Setup is not done yet. Finish the setup conversation first." });
           if (r.kind === "options") {
-            events.push({ type: "options", options: r.options, basis: r.basis });
+            events.push({ type: "options", options: r.options, basis: r.basis, source: input.image ? "photo" : "typed" });
             return JSON.stringify({ shown: r.options.map((o) => `${o.rank}. ${o.name} (${o.kcal} kcal, ${o.carbs} g carbs, ${o.protein} g protein)`) });
           }
           return JSON.stringify({ shown: [], reason: r.reason });
@@ -167,6 +189,26 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           await env.setLanguage(l as Language);
           events.push({ type: "language", language: l as Language });
           return JSON.stringify({ saved: true });
+        }
+        case "log_water": {
+          const ml = asNumber(args["ml"]);
+          if (ml === undefined || ml < 10 || ml > 5000) return JSON.stringify({ error: "Give the amount in millilitres, from 10 to 5000." });
+          const r = await env.logWater(Math.round(ml));
+          events.push({ type: "logged_water", ml: Math.round(ml), id: r.id });
+          return JSON.stringify({ logged: true, ...(r.left ? { leftTodayMl: r.left.waterMl } : {}) });
+        }
+        case "list_entries": {
+          return JSON.stringify({ entries: await env.recentEntries() });
+        }
+        case "request_delete": {
+          const all = args["all"] === true;
+          const wanted = Array.isArray(args["ids"]) ? args["ids"].filter((i): i is string => typeof i === "string") : [];
+          if (!all && wanted.length === 0) return JSON.stringify({ error: "Pass the ids from list_entries, or all: true." });
+          const known = await env.recentEntries();
+          const picked = all ? [] : known.filter((e) => wanted.includes(e.id));
+          if (!all && picked.length === 0) return JSON.stringify({ error: "None of those ids is one of the person's recent entries. Call list_entries first." });
+          events.push({ type: "confirm_delete", ids: picked.map((e) => e.id), all, labels: picked.map((e) => `${e.name} ${e.detail} (${e.when})`) });
+          return JSON.stringify({ shown: "A confirmation card is on the screen. Nothing is deleted until the person taps it." });
         }
         case "quick_replies": {
           const list = Array.isArray(args["replies"]) ? args["replies"].filter((r): r is string => typeof r === "string") : [];
@@ -179,7 +221,8 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const nm = typeof args["name"] === "string" ? args["name"].trim() : "";
           const kcal = asNumber(args["kcal"]), carbs = asNumber(args["carbs"]), protein = asNumber(args["protein"]);
           if (!nm || kcal === undefined || carbs === undefined || protein === undefined || kcal < 0 || kcal > 5000) return JSON.stringify({ error: "Name, calories, carbs and protein are needed." });
-          const r = await env.logMeal({ name: nm, kcal, carbs, protein });
+          const ingredients = Array.isArray(args["ingredients"]) ? args["ingredients"].filter((i): i is string => typeof i === "string").slice(0, 40) : undefined;
+          const r = await env.logMeal({ name: nm, kcal, carbs, protein, ...(ingredients?.length ? { ingredients } : {}) });
           events.push({ type: "logged", name: nm, kcal: Math.round(kcal), id: r.id });
           return JSON.stringify({ logged: true, ...(r.left ? { leftToday: r.left } : {}) });
         }

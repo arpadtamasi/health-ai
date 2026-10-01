@@ -18,6 +18,8 @@ export interface DayState {
   window: { startHour: number; endHour: number };
   /** Allergies and foods to avoid, as the user said them. */
   constraints: string[];
+  /** Water drunk today and the daily goal, in millilitres. */
+  water?: { ml: number; goalMl: number };
 }
 
 export interface Option {

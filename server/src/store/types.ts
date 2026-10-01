@@ -5,7 +5,7 @@ export type ClientRecord = OAuthClientInformationFull;
 /** A pending /authorize or reconnect, keyed by the `state` sent to Google. */
 export interface AuthRequest {
   id: string;
-  kind: "connect" | "reconnect" | "app";
+  kind: "connect" | "reconnect" | "app" | "app-connect";
   createdAt: number;
   clientId?: string;
   redirectUri?: string;
@@ -51,8 +51,8 @@ export interface User {
   id: string;
   email: string;
   grantedScopes: string[];
-  /** Google refresh token, sealed; never stored in plain text. */
-  googleRefreshTokenSealed: string;
+  /** Google refresh token, sealed; never stored in plain text. Absent until Google Health is connected (the app also works without it). */
+  googleRefreshTokenSealed?: string;
   status: "active" | "needs_reconnect";
   createdAt: number;
   updatedAt: number;
@@ -100,7 +100,7 @@ export interface IntentRecord {
 /** What the app needs to know about a person besides Google data: goals, eating window, foods to avoid, consent. */
 export interface AppSettings {
   userId: string;
-  goals: { calories: number; carbs: number; protein: number };
+  goals: { calories: number; carbs: number; protein: number; /** Daily water goal in millilitres; the default applies when absent. */ waterMl?: number };
   window: { startHour: number; endHour: number };
   /** Allergies and foods to avoid, as the person said them. */
   constraints: string[];
@@ -118,7 +118,36 @@ export type Language = (typeof LANGUAGES)[number];
 export interface AppPrefs {
   userId: string;
   language?: Language;
+  /** IANA time zone of the person's device: the day, the pace and the meal type are read in it. */
+  timeZone?: string;
   updatedAt: number;
+}
+
+export const DEFAULT_WATER_GOAL_ML = 2000;
+
+/**
+ * A meal or a drink the person logged, kept in the service's own storage until they delete it (BR: Meals and water kept by the
+ * service belong to the person). Never holds a photo or chat text.
+ */
+export interface Entry {
+  id: string;
+  userId: string;
+  kind: "meal" | "water";
+  name: string;
+  kcal: number;
+  carbs: number;
+  protein: number;
+  /** Millilitres, for water. */
+  ml?: number;
+  /** The ingredients the model recognised, for meals that came from a photo or from the chat. */
+  ingredients: string[];
+  source: "photo" | "typed" | "button" | "chat";
+  /** True when the values were estimated (a photo, a described meal) and not entered exactly. */
+  estimate: boolean;
+  /** When it was eaten or drunk, epoch milliseconds. */
+  at: number;
+  /** The resource name of its copy in Google Health, once mirrored. */
+  googleName?: string;
 }
 
 /** A half-open time range [from, to) in epoch milliseconds. */
@@ -175,6 +204,14 @@ export interface Store {
 
   getAppPrefs(userId: string): Promise<AppPrefs | undefined>;
   putAppPrefs(prefs: AppPrefs): Promise<void>;
+
+  putEntry(entry: Entry): Promise<void>;
+  /** One person's entries in the range, oldest first. */
+  listEntries(userId: string, range: TimeRange): Promise<Entry[]>;
+  getEntry(userId: string, id: string): Promise<Entry | undefined>;
+  deleteEntry(userId: string, id: string): Promise<void>;
+  /** Removes every entry of one person and returns what was removed (the caller removes the Google Health copies). */
+  deleteAllEntries(userId: string): Promise<Entry[]>;
 
   /** Model tokens used by one user on one local day (the daily limit counts these). */
   getTokenUsage(userId: string, day: string): Promise<number>;

@@ -48,26 +48,42 @@ export function sumNutrition(points: unknown[]): Macros {
   return { calories: Math.round(total.calories), carbs: Math.round(total.carbs), protein: Math.round(total.protein) };
 }
 
-export async function loadToday(api: HealthApi, nowMs: number): Promise<{ eaten: Macros; clock: LocalClock; timeZone: string }> {
-  const settings = await api.getSettings();
-  const timeZone = typeof settings["timeZone"] === "string" && settings["timeZone"] ? settings["timeZone"] : "UTC";
-  const clock = localClock(nowMs, timeZone);
-  const type = findDataType("nutrition-log");
-  if (!type) throw new Error("nutrition-log is missing from the registry");
-  const range = parseRange(clock.date, nextDate(clock.date));
+/** Millilitres drunk, summed over hydration-log data points. */
+export function sumHydration(points: unknown[]): number {
+  let ml = 0;
+  for (const p of points) ml += num(obj(obj(obj(p)["hydrationLog"])["amountConsumed"])["milliliters"]);
+  return Math.round(ml);
+}
+
+/** The data points of one Google Health type for the local days [from, to), paged. */
+export async function listGooglePoints(api: HealthApi, typeId: string, from: string, to: string): Promise<Record<string, unknown>[]> {
+  const type = findDataType(typeId);
+  if (!type) throw new Error(`${typeId} is missing from the registry`);
+  const range = parseRange(from, to);
   if ("error" in range) throw new Error(range.error);
   const filter = listFilter(type, range);
   if (typeof filter !== "string") throw new Error(filter.error);
-
-  const points: unknown[] = [];
+  const points: Record<string, unknown>[] = [];
   let pageToken: string | undefined;
-  for (let page = 0; page < 5; page++) {
+  for (let page = 0; page < 10; page++) {
     const res = await api.listDataPoints(type.id, { filter, pageSize: 100, ...(pageToken ? { pageToken } : {}) });
-    if (Array.isArray(res["dataPoints"])) points.push(...res["dataPoints"]);
+    if (Array.isArray(res["dataPoints"])) points.push(...(res["dataPoints"] as Record<string, unknown>[]));
     pageToken = typeof res["nextPageToken"] === "string" && res["nextPageToken"] ? res["nextPageToken"] : undefined;
     if (!pageToken) break;
   }
-  return { eaten: sumNutrition(points), clock, timeZone };
+  return points;
+}
+
+/** Start of the local day (and of the next one) in epoch milliseconds, for a time zone. */
+export function dayBounds(nowMs: number, timeZone: string): { from: number; to: number } {
+  const { date } = localClock(nowMs, timeZone);
+  const at = (d: string) => {
+    const guess = Date.parse(`${d}T00:00:00Z`);
+    // The offset at local midnight, found by correcting the guess once (it can differ from the offset at the guess itself).
+    const first = guess - utcOffsetSeconds(guess, timeZone) * 1000;
+    return guess - utcOffsetSeconds(first, timeZone) * 1000;
+  };
+  return { from: at(date), to: at(nextDate(date)) };
 }
 
 /** The user's UTC offset in seconds at an instant, from their time zone (what the Health API wants as "7200s"). */
@@ -84,48 +100,4 @@ export function mealTypeAt(minutes: number): "BREAKFAST" | "LUNCH" | "SNACK" | "
   if (minutes < 15 * 60) return "LUNCH";
   if (minutes < 18 * 60) return "SNACK";
   return "DINNER";
-}
-
-export interface Usual { name: string; kcal: number; carbs: number; protein: number; count: number }
-
-/** The foods logged most often: grouped by name (case-insensitive), averaged, at least `minCount` times, most frequent first. */
-export function topUsuals(points: unknown[], limit = 4, minCount = 2): Usual[] {
-  const groups = new Map<string, { name: string; n: number; kcal: number; carbs: number; protein: number }>();
-  for (const p of points) {
-    const n = obj(obj(p)["nutritionLog"]);
-    const name = typeof n["foodDisplayName"] === "string" ? n["foodDisplayName"].trim() : "";
-    if (!name) continue;
-    const macros = sumNutrition([p]);
-    const key = name.toLowerCase();
-    const g = groups.get(key) ?? { name, n: 0, kcal: 0, carbs: 0, protein: 0 };
-    g.n += 1; g.kcal += macros.calories; g.carbs += macros.carbs; g.protein += macros.protein;
-    groups.set(key, g);
-  }
-  return [...groups.values()]
-    .filter((g) => g.n >= minCount)
-    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
-    .slice(0, limit)
-    .map((g) => ({ name: g.name, kcal: Math.round(g.kcal / g.n), carbs: Math.round(g.carbs / g.n), protein: Math.round(g.protein / g.n), count: g.n }));
-}
-
-/** Entries of the last `days` days written through this service, for the usuals buttons. */
-export async function loadUsuals(api: HealthApi, nowMs: number, days = 30): Promise<Usual[]> {
-  const settings = await api.getSettings();
-  const timeZone = typeof settings["timeZone"] === "string" && settings["timeZone"] ? settings["timeZone"] : "UTC";
-  const today = localClock(nowMs, timeZone).date;
-  const type = findDataType("nutrition-log");
-  if (!type) throw new Error("nutrition-log is missing from the registry");
-  const range = parseRange(addDays(today, -days), nextDate(today));
-  if ("error" in range) throw new Error(range.error);
-  const filter = listFilter(type, range);
-  if (typeof filter !== "string") throw new Error(filter.error);
-  const points: unknown[] = [];
-  let pageToken: string | undefined;
-  for (let page = 0; page < 10; page++) {
-    const res = await api.listDataPoints(type.id, { filter, pageSize: 100, ...(pageToken ? { pageToken } : {}) });
-    if (Array.isArray(res["dataPoints"])) points.push(...res["dataPoints"]);
-    pageToken = typeof res["nextPageToken"] === "string" && res["nextPageToken"] ? res["nextPageToken"] : undefined;
-    if (!pageToken) break;
-  }
-  return topUsuals(points);
 }

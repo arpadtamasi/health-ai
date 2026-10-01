@@ -87,7 +87,7 @@ export function createApp(deps: AppDeps): App {
   app.use("/api/app", appApiRouter({
     store: deps.store,
     sessions,
-    apiFor: (userId) => new HealthApi(() => googleAccess.accessToken(userId), deps.healthFetch),
+    healthFor: async (userId) => ((await googleAccess.connected(userId)) ? new HealthApi(() => googleAccess.accessToken(userId), deps.healthFetch) : undefined),
     ...(deps.ai ? { ai: deps.ai } : {}),
     now,
   }));

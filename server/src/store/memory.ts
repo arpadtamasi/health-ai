@@ -1,5 +1,5 @@
 import type {
-  AllowEntry, AppPrefs, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -18,6 +18,7 @@ export class MemoryStore implements Store {
   readonly appSettings = new Map<string, AppSettings>();
   readonly tokenUsage = new Map<string, number>();
   readonly appPrefs = new Map<string, AppPrefs>();
+  readonly entries = new Map<string, Entry>();
 
   allow(email: string, owner = false): void {
     this.allowList.set(email.toLowerCase(), { email: email.toLowerCase(), owner });
@@ -85,6 +86,18 @@ export class MemoryStore implements Store {
 
   async getAppSettings(userId: string) { return this.appSettings.get(userId); }
   async putAppSettings(s: AppSettings) { this.appSettings.set(s.userId, s); }
+  async putEntry(e: Entry) { this.entries.set(`${e.userId}|${e.id}`, e); }
+  async listEntries(userId: string, range: TimeRange) {
+    return [...this.entries.values()].filter((e) => e.userId === userId && inRange(e.at, range)).sort((a, b) => a.at - b.at);
+  }
+  async getEntry(userId: string, id: string) { return this.entries.get(`${userId}|${id}`); }
+  async deleteEntry(userId: string, id: string) { this.entries.delete(`${userId}|${id}`); }
+  async deleteAllEntries(userId: string) {
+    const gone = [...this.entries.values()].filter((e) => e.userId === userId);
+    for (const e of gone) this.entries.delete(`${userId}|${e.id}`);
+    return gone;
+  }
+
   async getAppPrefs(userId: string) { return this.appPrefs.get(userId); }
   async putAppPrefs(p: AppPrefs) { this.appPrefs.set(p.userId, p); }
   async getTokenUsage(userId: string, day: string) { return this.tokenUsage.get(`${userId}|${day}`) ?? 0; }
@@ -98,6 +111,7 @@ export class MemoryStore implements Store {
   async deleteUserData(userId: string) {
     this.appSettings.delete(userId);
     this.appPrefs.delete(userId);
+    for (const k of [...this.entries.keys()]) if (k.startsWith(`${userId}|`)) this.entries.delete(k);
     for (const k of [...this.tokenUsage.keys()]) if (k.startsWith(`${userId}|`)) this.tokenUsage.delete(k);
     this.users.delete(userId);
     for (const [k, g] of this.grants) if (g.userId === userId) this.grants.delete(k);

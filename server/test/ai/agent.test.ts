@@ -32,7 +32,7 @@ function scripted(...replies: ConverseResponse[]): ModelClient & { requests: Con
 
 function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logged: unknown[]; suggestedWith: unknown[]; languages: unknown[] } {
   const e = {
-    saved: [] as unknown[], logged: [] as unknown[], suggestedWith: [] as unknown[], languages: [] as unknown[],
+    saved: [] as unknown[], logged: [] as unknown[], suggestedWith: [] as unknown[], languages: [] as unknown[], water: [] as number[],
     clock: () => Promise.resolve({ date: "2026-10-01", time: "16:24", weekday: "Thursday", timeZone: "Europe/Budapest" }),
     language: () => Promise.resolve(undefined),
     setLanguage: (l: unknown) => { e.languages.push(l); return Promise.resolve(); },
@@ -44,6 +44,8 @@ function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logge
         options: [{ rank: 1, name: "Chicken with rice", category: "grain" as const, kcal: 560, carbs: 62, protein: 38, ingredients: ["chicken", "rice"] }] });
     },
     logMeal: (m: unknown) => { e.logged.push(m); return Promise.resolve({ id: "users/1/dataTypes/nutrition-log/dataPoints/9" }); },
+    logWater: (ml: number) => { e.water.push(ml); return Promise.resolve({ id: "w1", left: { waterMl: 1500 } }); },
+    recentEntries: () => Promise.resolve([{ id: "e1", kind: "meal" as const, name: "Apple", detail: "95 kcal", when: "Wed 12:00" }, { id: "e2", kind: "water" as const, name: "Water", detail: "250 ml", when: "Wed 13:00" }]),
     ...over,
   };
   return e as never;
@@ -115,6 +117,35 @@ describe("the chat agent", () => {
     const r = await runAgent(deps(m), e, { history: [], message: "ettem egy pogácsát" });
     expect(e.logged).toEqual([{ name: "Pogácsa", kcal: 110, carbs: 12, protein: 3 }]);
     expect(r.events[0]).toEqual({ type: "logged", name: "Pogácsa", kcal: 110, id: "users/1/dataTypes/nutrition-log/dataPoints/9" });
+  });
+
+  it("logs water, refuses an absurd amount, and tells the model what is left", async () => {
+    const e = env();
+    const m = scripted(call("t1", "log_water", { ml: 330 }), say("Rendben."));
+    const r = await runAgent(deps(m), e, { history: [], message: "ittam egy kis kólát, 330 ml" });
+    expect((e as unknown as { water: number[] }).water).toEqual([330]);
+    expect(r.events[0]).toEqual({ type: "logged_water", ml: 330, id: "w1" });
+    expect(resultsOf(m.requests[1]!)[0]).toEqual({ logged: true, leftTodayMl: 1500 });
+    const bad = scripted(call("t1", "log_water", { ml: 90000 }), say("Hm."));
+    await runAgent(deps(bad), env(), { history: [], message: "x" });
+    expect(resultsOf(bad.requests[1]!)[0]).toHaveProperty("error");
+  });
+
+  it("only proposes a deletion: a confirmation card for entries it was shown, never a delete", async () => {
+    const m = scripted(call("t1", "request_delete", { ids: ["e1", "nope"] }), say("Kérlek, erősítsd meg."));
+    const r = await runAgent(deps(m), env(), { history: [], message: "töröld az almát" });
+    expect(r.events[0]).toEqual({ type: "confirm_delete", ids: ["e1"], all: false, labels: ["Apple 95 kcal (Wed 12:00)"] });
+    const unknown = scripted(call("t1", "request_delete", { ids: ["zzz"] }), say("Nem találom."));
+    const r2 = await runAgent(deps(unknown), env(), { history: [], message: "töröld" });
+    expect(r2.events.map((x) => x.type)).toEqual(["text"]);
+    const all = scripted(call("t1", "request_delete", { all: true }), say("Megerősíted?"));
+    expect((await runAgent(deps(all), env(), { history: [], message: "töröld az egész előzményt" })).events[0]).toMatchObject({ type: "confirm_delete", all: true });
+  });
+
+  it("lists recent entries for the model", async () => {
+    const m = scripted(call("t1", "list_entries", {}), say("Ezeket látom."));
+    await runAgent(deps(m), env(), { history: [], message: "mit naplóztam?" });
+    expect((resultsOf(m.requests[1]!)[0]!["entries"] as unknown[]).length).toBe(2);
   });
 
   it("hands the model what is left after a logged meal, so it does not calculate", async () => {

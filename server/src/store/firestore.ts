@@ -1,7 +1,7 @@
 import { Firestore, Timestamp, type CollectionReference, type DocumentData } from "@google-cloud/firestore";
 import { AUTH_CODE_TTL_MS, AUTH_REQUEST_TTL_MS, RECONNECT_LINK_TTL_SECONDS } from "../auth/tokens.js";
 import type {
-  AllowEntry, AppPrefs, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -139,6 +139,27 @@ export class FirestoreStore implements Store {
   async getAppSettings(userId: string) { return this.get<AppSettings>(COLLECTIONS.appSettings, userId); }
   async putAppSettings(s: AppSettings) { await this.col(COLLECTIONS.appSettings).doc(s.userId).set(s); }
 
+  // Entries live under the person's user document, so a range query on `at` needs only the automatic single-field index.
+  private entries(userId: string) { return this.col(COLLECTIONS.users).doc(userId).collection("entries"); }
+  async putEntry(e: Entry) { await this.entries(e.userId).doc(e.id).set(e); }
+  async listEntries(userId: string, range: TimeRange) {
+    const snaps = await this.entries(userId).where("at", ">=", range.from).where("at", "<", range.to).orderBy("at", "asc").get();
+    return snaps.docs.map((d) => d.data() as Entry);
+  }
+  async getEntry(userId: string, id: string) {
+    const snap = await this.entries(userId).doc(id).get();
+    return snap.exists ? (snap.data() as Entry) : undefined;
+  }
+  async deleteEntry(userId: string, id: string) { await this.entries(userId).doc(id).delete(); }
+  async deleteAllEntries(userId: string) {
+    const snaps = await this.entries(userId).get();
+    const gone = snaps.docs.map((d) => d.data() as Entry);
+    const writer = this.db.bulkWriter();
+    for (const d of snaps.docs) void writer.delete(d.ref);
+    await writer.close();
+    return gone;
+  }
+
   async getAppPrefs(userId: string) { return this.get<AppPrefs>(COLLECTIONS.appPrefs, userId); }
   async putAppPrefs(p: AppPrefs) { await this.col(COLLECTIONS.appPrefs).doc(p.userId).set(p); }
 
@@ -162,6 +183,7 @@ export class FirestoreStore implements Store {
       const snaps = await this.col(name).where("userId", "==", userId).get();
       for (const d of snaps.docs) void writer.delete(d.ref);
     }
+    for (const d of (await this.entries(userId).get()).docs) void writer.delete(d.ref);
     void writer.delete(this.col(COLLECTIONS.users).doc(userId));
     await writer.close();
   }

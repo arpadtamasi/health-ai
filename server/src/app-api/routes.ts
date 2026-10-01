@@ -1,33 +1,39 @@
 // The app's browser API under /api/app/*: US-01m3rvr64zrzczabckjf6crb2z (pace), US-01m3rwa0cvrtcapqk0k3h6mqvc (what to eat),
-// US-01m3rw2bqxkqp6v1hg9g02t1zr (chat onboarding and settings). Every request carries the session cookie; requests that
-// change anything also need the custom header, as CSRF protection.
+// US-01m3rw2bqxkqp6v1hg9g02t1zr (chat onboarding and settings), US-01m3rvr6g951cs1s9p1czxvmhp (log a meal), water and the history.
+// Every request carries the session cookie; requests that change anything also need the custom header, as CSRF protection.
 import { Router, type Request, type RequestHandler } from "express";
 import express from "express";
 import { z } from "zod";
+import { runAgent } from "../ai/agent.js";
 import { dayKey, TokenBudget, type UsageStore } from "../ai/budget.js";
 import type { AiModel } from "../ai/model.js";
 import { whatNow } from "../ai/whatNow.js";
 import type { HealthApi } from "../health/api.js";
-import type { AppSettings, Store } from "../store/types.js";
-import type { Sessions } from "./session.js";
-import { runAgent } from "../ai/agent.js";
+import { DEFAULT_WATER_GOAL_ML, type AppSettings, type Store } from "../store/types.js";
 import { makeAgentEnv } from "./agentEnv.js";
-import { logNutrition, timeZoneOf } from "./meal.js";
-import { loadToday, loadUsuals } from "./today.js";
+import { Entries } from "./entries.js";
+import type { Sessions } from "./session.js";
 
 export const CSRF_HEADER = "x-health-ai";
+export const TIME_ZONE_HEADER = "x-timezone";
 const TOKEN_USAGE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
 export interface AppApiDeps {
   store: Store;
   sessions: Sessions;
-  apiFor: (userId: string) => HealthApi;
+  /** The person's Google Health, or undefined when they have not connected it. */
+  healthFor: (userId: string) => Promise<HealthApi | undefined>;
   ai?: { model: AiModel; modelName: string; dailyTokenLimit: number };
   now: () => number;
 }
 
+const image = z.object({ mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]), dataBase64: z.string().max(7_000_000) });
+
 const settingsBody = z.object({
-  goals: z.object({ calories: z.number().int().min(500).max(10000), carbs: z.number().int().min(0).max(1500), protein: z.number().int().min(0).max(600) }),
+  goals: z.object({
+    calories: z.number().int().min(500).max(10000), carbs: z.number().int().min(0).max(1500), protein: z.number().int().min(0).max(600),
+    waterMl: z.number().int().min(500).max(8000).optional(),
+  }),
   window: z.object({ startHour: z.number().int().min(0).max(23), endHour: z.number().int().min(1).max(24) }).refine((w) => w.endHour > w.startHour, "The window must end after it starts."),
   constraints: z.array(z.string().trim().min(1).max(60)).max(50),
   consent: z.boolean().optional(),
@@ -38,19 +44,22 @@ const logBody = z.object({
   kcal: z.number().min(0).max(5000),
   carbs: z.number().min(0).max(1000),
   protein: z.number().min(0).max(500),
+  ingredients: z.array(z.string().max(80)).max(40).optional(),
+  source: z.enum(["photo", "typed", "button", "chat"]).optional(),
 });
-const POINT_ID = /^(?:users\/[^/]+\/dataTypes\/nutrition-log\/dataPoints\/)?([A-Za-z0-9._~-]{1,200})$/;
+const waterBody = z.object({ ml: z.number().int().min(10).max(5000) });
+const idsBody = z.object({ ids: z.array(z.string().min(1).max(300)).min(1).max(100) });
 
 const chatBody = z.object({
   message: z.string().trim().min(1).max(2000),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000) })).max(40).default([]),
-  image: z.object({ mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]), dataBase64: z.string().max(7_000_000) }).optional(),
+  image: image.optional(),
 });
 
-const whatNowBody = z.object({
-  optionsText: z.string().max(2000).optional(),
-  image: z.object({ mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]), dataBase64: z.string().max(7_000_000) }).optional(),
-}).refine((b) => b.optionsText || b.image, "Give a photo or a list of options.");
+const whatNowBody = z.object({ optionsText: z.string().max(2000).optional(), image: image.optional() })
+  .refine((b) => b.optionsText || b.image, "Give a photo or a list of options.");
+
+const validZone = (z: string) => { try { new Intl.DateTimeFormat("en", { timeZone: z }); return true; } catch { return false; } };
 
 /** A usage store backed by the persistent Store, so the daily limit survives restarts and instances. */
 function usageStoreOf(store: Store, now: () => number): UsageStore {
@@ -75,11 +84,22 @@ export function appApiRouter(deps: AppApiDeps): Router {
       return;
     }
     res.locals["userId"] = userId;
+    // The phone tells its time zone: the day, the pace and the meal type are read in it, with or without Google Health.
+    const tz = req.headers[TIME_ZONE_HEADER];
+    if (typeof tz === "string" && tz.length < 64 && validZone(tz)) {
+      const prefs = await deps.store.getAppPrefs(userId);
+      if (prefs?.timeZone !== tz) await deps.store.putAppPrefs({ ...prefs, userId, timeZone: tz, updatedAt: deps.now() });
+    }
     next();
   };
   router.use(session);
 
   const uid = (req: Request) => String((req.res as { locals: Record<string, unknown> }).locals["userId"]);
+  const entriesOf = async (userId: string) => new Entries({ store: deps.store, userId, now: deps.now, health: await deps.healthFor(userId) });
+  const onboarded = async (userId: string) => {
+    const s = await deps.store.getAppSettings(userId);
+    return s && s.onboardedAt !== undefined ? s : undefined;
+  };
 
   router.get("/me", async (req, res) => {
     const user = await deps.store.getUser(uid(req));
@@ -89,7 +109,7 @@ export function appApiRouter(deps: AppApiDeps): Router {
     }
     const settings = await deps.store.getAppSettings(user.id);
     const prefs = await deps.store.getAppPrefs(user.id);
-    res.json({ email: user.email, onboarded: settings?.onboardedAt !== undefined, language: prefs?.language ?? null });
+    res.json({ email: user.email, onboarded: settings?.onboardedAt !== undefined, language: prefs?.language ?? null, healthConnected: (await deps.healthFor(user.id)) !== undefined });
   });
 
   router.get("/settings", async (req, res) => {
@@ -106,9 +126,10 @@ export function appApiRouter(deps: AppApiDeps): Router {
     const userId = uid(req);
     const before = await deps.store.getAppSettings(userId);
     const at = deps.now();
+    const { waterMl, ...macros } = parsed.data.goals;
     const next: AppSettings = {
       userId,
-      goals: parsed.data.goals,
+      goals: { ...macros, ...(waterMl !== undefined ? { waterMl } : {}) },
       window: parsed.data.window,
       constraints: parsed.data.constraints,
       updatedAt: at,
@@ -126,15 +147,15 @@ export function appApiRouter(deps: AppApiDeps): Router {
       res.status(409).json({ error: "onboarding_required" });
       return;
     }
-    const today = await loadToday(deps.apiFor(userId), deps.now());
-    res.json({ goals: settings.goals, window: settings.window, constraints: settings.constraints, eaten: today.eaten, date: today.clock.date, minutes: today.clock.minutes, timeZone: today.timeZone });
+    const day = await (await entriesOf(userId)).day();
+    res.json({
+      goals: settings.goals, window: settings.window, constraints: settings.constraints, eaten: day.eaten,
+      water: { ml: day.waterMl, goalMl: settings.goals.waterMl ?? DEFAULT_WATER_GOAL_ML },
+      date: day.clock.date, minutes: day.clock.minutes, timeZone: day.timeZone,
+    });
   });
 
-  // US-01m3rvr6p4vj42j4atck7vyw08 (Log water and repeat items in one tap): the foods logged most often in the last 30 days.
-  router.get("/usuals", async (req, res) => {
-    res.json({ usuals: await loadUsuals(deps.apiFor(uid(req)), deps.now()) });
-  });
-
+  // US-01m3rwa0cvrtcapqk0k3h6mqvc: three ranked options from a photo or a typed list.
   router.post("/what-now", async (req, res) => {
     const userId = uid(req);
     const body = whatNowBody.safeParse(req.body);
@@ -142,8 +163,8 @@ export function appApiRouter(deps: AppApiDeps): Router {
       res.status(400).json({ error: "invalid_request", detail: body.error.issues.map((i) => i.message) });
       return;
     }
-    const settings = await deps.store.getAppSettings(userId);
-    if (!settings || settings.onboardedAt === undefined) {
+    const settings = await onboarded(userId);
+    if (!settings) {
       res.status(409).json({ error: "onboarding_required" });
       return;
     }
@@ -151,24 +172,25 @@ export function appApiRouter(deps: AppApiDeps): Router {
       res.status(503).json({ error: "ai_unavailable" });
       return;
     }
-    const today = await loadToday(deps.apiFor(userId), deps.now());
-    const day = dayKey(new Date(deps.now()), today.timeZone);
+    const entries = await entriesOf(userId);
+    const day = await entries.day();
     const budget = new TokenBudget(usageStoreOf(deps.store, deps.now), deps.ai.dailyTokenLimit);
-    const left = await budget.check(userId, day);
+    const dk = dayKey(new Date(deps.now()), day.timeZone);
+    const left = await budget.check(userId, dk);
     if (!left.allowed) {
       res.status(429).json({ error: "daily_limit", used: left.used, limit: left.limit });
       return;
     }
     const result = await whatNow({ model: deps.ai.model, modelName: deps.ai.modelName }, {
-      state: { goals: settings.goals, eaten: today.eaten, minutesNow: today.clock.minutes, window: settings.window, constraints: settings.constraints },
+      state: { goals: settings.goals, eaten: day.eaten, minutesNow: day.clock.minutes, window: settings.window, constraints: settings.constraints },
       ...(body.data.optionsText ? { optionsText: body.data.optionsText } : {}),
       ...(body.data.image ? { images: [body.data.image] } : {}),
     });
-    await budget.record(userId, day, result.usage);
+    await budget.record(userId, dk, result.usage);
     res.json(result.kind === "options" ? { kind: "options", options: result.options, basis: result.basis } : { kind: "no_ranking", reason: result.reason });
   });
 
-  // US-01m3rvr6g951cs1s9p1czxvmhp (Log a meal in one step): one nutrition-log entry for the chosen option, written now.
+  // US-01m3rvr6g951cs1s9p1czxvmhp: one entry for the chosen option, written now, ours first and mirrored to Google Health when connected.
   router.post("/log", async (req, res) => {
     const userId = uid(req);
     const body = logBody.safeParse(req.body);
@@ -176,25 +198,58 @@ export function appApiRouter(deps: AppApiDeps): Router {
       res.status(400).json({ error: "invalid_request", detail: body.error.issues.map((i) => i.message) });
       return;
     }
-    const settings = await deps.store.getAppSettings(userId);
-    if (!settings || settings.onboardedAt === undefined) {
+    if (!(await onboarded(userId))) {
       res.status(409).json({ error: "onboarding_required" });
       return;
     }
-    const done = await logNutrition(deps.apiFor(userId), deps.now(), body.data);
+    const { ingredients, ...rest } = body.data;
+    const done = await (await entriesOf(userId)).logMeal({ ...rest, ...(ingredients ? { ingredients } : {}), source: body.data.source ?? "button" });
     res.json({ id: done.id, mealType: done.mealType });
   });
 
-  // Undo: removes an entry this service wrote. Names always resolve to users/me, so nobody else's data can be reached.
+  // US-01m3rvr6p4vj42j4atck7vyw08: a drink, from a button.
+  router.post("/water", async (req, res) => {
+    const userId = uid(req);
+    const body = waterBody.safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({ error: "invalid_request", detail: body.error.issues.map((i) => i.message) });
+      return;
+    }
+    if (!(await onboarded(userId))) {
+      res.status(409).json({ error: "onboarding_required" });
+      return;
+    }
+    res.json(await (await entriesOf(userId)).logWater(body.data.ml));
+  });
+
+  // The foods and drinks logged most often, as one-tap buttons.
+  router.get("/usuals", async (req, res) => {
+    res.json({ usuals: await (await entriesOf(uid(req))).usuals() });
+  });
+
+  // Undo of the last log: removes our entry and its Google Health copy.
   router.post("/unlog", async (req, res) => {
     const parsed = z.object({ id: z.string().min(1).max(300) }).safeParse(req.body);
-    const pointId = parsed.success ? POINT_ID.exec(parsed.data.id)?.[1] : undefined;
-    if (!pointId) {
+    if (!parsed.success) {
       res.status(400).json({ error: "invalid_request" });
       return;
     }
-    await deps.apiFor(uid(req)).batchDelete("nutrition-log", [`users/me/dataTypes/nutrition-log/dataPoints/${pointId}`]);
+    await (await entriesOf(uid(req))).remove([parsed.data.id]);
     res.json({ ok: true });
+  });
+
+  // BR "Meals and water kept by the service belong to the person": the person deletes their history, after their own tap on a
+  // confirmation card in the app; the chat only proposes it.
+  router.post("/entries/delete", async (req, res) => {
+    const parsed = idsBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid_request" });
+      return;
+    }
+    res.json({ deleted: await (await entriesOf(uid(req))).remove(parsed.data.ids) });
+  });
+  router.post("/entries/delete-all", async (req, res) => {
+    res.json({ deleted: await (await entriesOf(uid(req))).removeAll() });
   });
 
   // US-01m3rw2bqxkqp6v1hg9g02t1zr: the app's chat. The client keeps the conversation and sends it back each time.
@@ -209,19 +264,19 @@ export function appApiRouter(deps: AppApiDeps): Router {
       res.status(503).json({ error: "ai_unavailable" });
       return;
     }
-    const api = deps.apiFor(userId);
-    const day = dayKey(new Date(deps.now()), await timeZoneOf(api));
+    const entries = await entriesOf(userId);
+    const dk = dayKey(new Date(deps.now()), await entries.timeZone());
     const budget = new TokenBudget(usageStoreOf(deps.store, deps.now), deps.ai.dailyTokenLimit);
-    const left = await budget.check(userId, day);
+    const left = await budget.check(userId, dk);
     if (!left.allowed) {
       res.status(429).json({ error: "daily_limit", used: left.used, limit: left.limit });
       return;
     }
-    const env = makeAgentEnv({ store: deps.store, api, model: deps.ai.model, modelName: deps.ai.modelName, userId, now: deps.now });
+    const env = makeAgentEnv({ store: deps.store, entries, model: deps.ai.model, modelName: deps.ai.modelName, userId, now: deps.now });
     const result = await runAgent({ model: deps.ai.model, modelName: deps.ai.modelName }, env, {
       history: body.data.history, message: body.data.message, ...(body.data.image ? { image: body.data.image } : {}),
     });
-    await budget.record(userId, day, {
+    await budget.record(userId, dk, {
       inputTokens: result.usage.inputTokens + env.extraUsage.inputTokens,
       outputTokens: result.usage.outputTokens + env.extraUsage.outputTokens,
     });
