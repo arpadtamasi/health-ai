@@ -155,7 +155,7 @@ export function appApiRouter(deps: AppApiDeps): Router {
     res.json(result.kind === "options" ? { kind: "options", options: result.options, basis: result.basis } : { kind: "no_ranking", reason: result.reason });
   });
 
-  // US-01m3rvr6am99nrrbycxfw4r6v4 (log a meal in one step): one nutrition-log entry for the chosen option, written now.
+  // US-01m3rvr6g951cs1s9p1czxvmhp (Log a meal in one step): one nutrition-log entry for the chosen option, written now.
   router.post("/log", async (req, res) => {
     const userId = uid(req);
     const body = logBody.safeParse(req.body);
