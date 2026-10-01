@@ -51,7 +51,7 @@ const hu: typeof en = {
   undoFailed: "Ezt nem sikerült visszavonni.",
   logged: (name, kcal) => `Naplózva: ${name} (${kcal} kcal).`,
   calories: "Kalória",
-  carbs: "Szénhidrát",
+  carbs: "Szénh.",
   protein: "Fehérje",
   consentText: "Követő és javaslattevő segéd vagyok felnőtteknek, nem orvosi tanács. A folytatással elfogadod, hogy a chatet és a fotókat az AI-szolgáltató kapja.",
   consentButton: "Elfogadom, tovább",

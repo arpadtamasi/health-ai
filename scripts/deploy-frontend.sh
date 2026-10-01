@@ -15,7 +15,13 @@ echo "== Landing page (site/)"
   PUBLIC_URL="$PUBLIC_URL" GOOGLE_HEALTH_WRITE_SCOPES="$GOOGLE_HEALTH_WRITE_SCOPES" npm run build)
 
 echo "== App (app/, Expo web export into site/dist/app)"
-(cd "$ROOT/app" && npm ci && CI=1 npx expo export --platform web --output-dir "$ROOT/site/dist/app")
+# --clear: Metro caches transformed files together with the EXPO_PUBLIC_* values they were built with, so a build made earlier
+# with EXPO_PUBLIC_MOCK=1 would otherwise be reused. EXPO_PUBLIC_MOCK is emptied: the deployed app never runs on sample data.
+(cd "$ROOT/app" && npm ci && CI=1 EXPO_PUBLIC_MOCK= npx expo export --clear --platform web --output-dir "$ROOT/site/dist/app")
+if grep -rqs "Sample mode: the model is not connected" "$ROOT/site/dist/app/_expo"; then
+  echo "ERROR: the app build contains the sample-data mode; refusing to deploy it." >&2
+  exit 1
+fi
 
 echo "== Firebase Hosting"
 (cd "$ROOT" && npx --yes firebase-tools@latest deploy --only hosting --project "$PROJECT_ID" --non-interactive)

@@ -13,8 +13,8 @@ export function PaceStrip({ items }: { items: PaceItem[] }) {
       {items.map(({ label, unit, result, highlight }) => (
         <View key={label} style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: T.font.overline, color: c.onSurfaceVariant }}>{label}</Text>
-            <Text style={{ fontSize: T.font.overline, fontWeight: "700", color: highlight ? c.warn : c.onSurfaceVariant }}>
+            <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: T.font.overline, color: c.onSurfaceVariant }}>{label}</Text>
+            <Text numberOfLines={1} style={{ flexShrink: 0, marginLeft: 4, fontSize: T.font.overline, fontWeight: "700", color: highlight ? c.warn : c.onSurfaceVariant }}>
               {result.gap > 0 ? "+" : "−"}{Math.abs(result.gap)}{unit}
             </Text>
           </View>
