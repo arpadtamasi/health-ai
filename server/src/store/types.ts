@@ -5,7 +5,7 @@ export type ClientRecord = OAuthClientInformationFull;
 /** A pending /authorize or reconnect, keyed by the `state` sent to Google. */
 export interface AuthRequest {
   id: string;
-  kind: "connect" | "reconnect";
+  kind: "connect" | "reconnect" | "app";
   createdAt: number;
   clientId?: string;
   redirectUri?: string;
@@ -97,6 +97,19 @@ export interface IntentRecord {
   expireAt: number;
 }
 
+/** What the app needs to know about a person besides Google data: goals, eating window, foods to avoid, consent. */
+export interface AppSettings {
+  userId: string;
+  goals: { calories: number; carbs: number; protein: number };
+  window: { startHour: number; endHour: number };
+  /** Allergies and foods to avoid, as the person said them. */
+  constraints: string[];
+  /** Set when the first chat onboarding finished with an explicit list (an empty list counts) and the consent. */
+  onboardedAt?: number;
+  consentAt?: number;
+  updatedAt: number;
+}
+
 /** A half-open time range [from, to) in epoch milliseconds. */
 export interface TimeRange {
   from: number;
@@ -146,5 +159,13 @@ export interface Store {
    * Deletes everything stored for the user: the user record, grants, refresh tokens,
    * authorization codes, reconnect nonces, feedback and intents.
    */
+  getAppSettings(userId: string): Promise<AppSettings | undefined>;
+  putAppSettings(settings: AppSettings): Promise<void>;
+
+  /** Model tokens used by one user on one local day (the daily limit counts these). */
+  getTokenUsage(userId: string, day: string): Promise<number>;
+  /** Adds tokens and returns the new total for that user and day. Atomic. */
+  addTokenUsage(userId: string, day: string, tokens: number, expireAtMs: number): Promise<number>;
+
   deleteUserData(userId: string): Promise<void>;
 }

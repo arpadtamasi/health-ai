@@ -1,11 +1,21 @@
 {
   "hosting": {
     "public": "site/dist",
-    "ignore": ["firebase.json", "**/.*"],
+    "ignore": [
+      "firebase.json",
+      "**/.*"
+    ],
     "rewrites": [
       {
+        "source": "/app/**",
+        "destination": "/app/index.html"
+      },
+      {
         "source": "**",
-        "run": { "serviceId": "health-ai", "region": "europe-west1" }
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
       }
     ]
   }

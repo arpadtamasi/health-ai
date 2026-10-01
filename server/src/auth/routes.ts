@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Sessions } from "../app-api/session.js";
 import type { Sealer } from "../crypto/sealer.js";
 import type { GoogleOAuth } from "../google/oauth.js";
 import type { AuthRequest, Store } from "../store/types.js";
@@ -14,6 +15,7 @@ export interface AuthRoutesDeps {
   sealer: Sealer;
   google: GoogleOAuth;
   links: ReconnectLinks;
+  sessions: Sessions;
   healthReadScopes: string[];
   healthWriteScopes: string[];
   onGoogleTokenReplaced?: (userId: string) => void;
@@ -95,6 +97,13 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
         return;
       }
 
+      // The app's own sign-in: the same Google consent, ending in the browser session instead of an MCP code.
+      if (authReq.kind === "app") {
+        res.setHeader("set-cookie", deps.sessions.cookie(await deps.sessions.issue(result.sub)));
+        res.redirect("/app/");
+        return;
+      }
+
       const code2 = randomToken();
       await deps.store.putAuthCode({
         codeHash: sha256(code2),
@@ -110,6 +119,17 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
       back.searchParams.set("code", code2);
       if (authReq.clientState !== undefined) back.searchParams.set("state", authReq.clientState);
       res.type("html").send(connectedPage(back.href));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // US-01m3rw2bqxkqp6v1hg9g02t1zr: the app starts its Google sign-in here; the callback above finishes it.
+  router.get("/api/auth/start", async (_req, res, next) => {
+    try {
+      const id = randomToken();
+      await deps.store.putAuthRequest({ id, kind: "app", createdAt: now() });
+      res.redirect(deps.google.authUrl({ state: id, scopes: googleScopes(deps) }));
     } catch (err) {
       next(err);
     }

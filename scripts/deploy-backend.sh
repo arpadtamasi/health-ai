@@ -33,7 +33,7 @@ gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --quiet 
   --source "$ROOT/server" \
   --service-account "$SERVICE_ACCOUNT" \
   --env-vars-file "$ENV_FILE" \
-  --set-secrets "JWT_SECRET=health-ai-jwt-secret:latest,GOOGLE_CLIENT_SECRET=health-ai-google-client-secret:latest" \
+  --set-secrets "JWT_SECRET=health-ai-jwt-secret:latest,GOOGLE_CLIENT_SECRET=health-ai-google-client-secret:latest,ANTHROPIC_API_KEY=health-ai-anthropic-key:latest" \
   --allow-unauthenticated \
   --min-instances 0 --max-instances 3 --memory 512Mi --timeout 60
 

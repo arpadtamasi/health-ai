@@ -1,5 +1,5 @@
 import type {
-  AllowEntry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -15,6 +15,8 @@ export class MemoryStore implements Store {
   readonly reconnectNonces = new Map<string, ReconnectNonce>();
   readonly feedback = new Map<string, FeedbackRecord>();
   readonly intents = new Map<string, IntentRecord>();
+  readonly appSettings = new Map<string, AppSettings>();
+  readonly tokenUsage = new Map<string, number>();
 
   allow(email: string, owner = false): void {
     this.allowList.set(email.toLowerCase(), { email: email.toLowerCase(), owner });
@@ -80,7 +82,19 @@ export class MemoryStore implements Store {
     return newestFirst([...this.intents.values()].filter((i) => inRange(i.createdAt, range)));
   }
 
+  async getAppSettings(userId: string) { return this.appSettings.get(userId); }
+  async putAppSettings(s: AppSettings) { this.appSettings.set(s.userId, s); }
+  async getTokenUsage(userId: string, day: string) { return this.tokenUsage.get(`${userId}|${day}`) ?? 0; }
+  async addTokenUsage(userId: string, day: string, tokens: number) {
+    const key = `${userId}|${day}`;
+    const next = (this.tokenUsage.get(key) ?? 0) + tokens;
+    this.tokenUsage.set(key, next);
+    return next;
+  }
+
   async deleteUserData(userId: string) {
+    this.appSettings.delete(userId);
+    for (const k of [...this.tokenUsage.keys()]) if (k.startsWith(`${userId}|`)) this.tokenUsage.delete(k);
     this.users.delete(userId);
     for (const [k, g] of this.grants) if (g.userId === userId) this.grants.delete(k);
     for (const [k, t] of this.refreshTokens) if (t.userId === userId) this.refreshTokens.delete(k);

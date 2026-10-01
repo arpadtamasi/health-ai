@@ -1,5 +1,6 @@
 import { createApp } from "./app.js";
-import { loadConfig } from "./config.js";
+import { AnthropicModelClient } from "./ai/model.js";
+import { loadAiConfig, loadConfig } from "./config.js";
 import { cloudKmsWrapper, EnvelopeSealer } from "./crypto/kms.js";
 import { AesGcmSealer, type Sealer } from "./crypto/sealer.js";
 import { HttpGoogleOAuth } from "./google/oauth.js";
@@ -10,6 +11,7 @@ import { MemoryStore } from "./store/memory.js";
 import type { Store } from "./store/types.js";
 
 const config = loadConfig();
+const ai = loadAiConfig();
 
 function makeStore(): Store {
   if (config.store.kind === "firestore") {
@@ -27,6 +29,7 @@ const sealer: Sealer = config.sealer.kind === "kms"
 
 const { app } = createApp({
   ...config,
+  ...(ai ? { ai: { model: new AnthropicModelClient(ai.apiKey, process.env.ANTHROPIC_WORKSPACE_ID), modelName: ai.modelName, dailyTokenLimit: ai.dailyTokenLimit } } : {}),
   store: makeStore(),
   sealer,
   google: new HttpGoogleOAuth(
@@ -37,7 +40,7 @@ const { app } = createApp({
 });
 
 const server = app.listen(config.port, () => {
-  logEvent({ msg: "listening", port: config.port, store: config.store.kind, sealer: config.sealer.kind });
+  logEvent({ msg: "listening", port: config.port, store: config.store.kind, sealer: config.sealer.kind, ai: ai ? ai.modelName : "off" });
 });
 
 // Cloud Run sends SIGTERM before stopping an instance.

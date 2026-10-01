@@ -1,7 +1,7 @@
 import { Firestore, Timestamp, type CollectionReference, type DocumentData } from "@google-cloud/firestore";
 import { AUTH_CODE_TTL_MS, AUTH_REQUEST_TTL_MS, RECONNECT_LINK_TTL_SECONDS } from "../auth/tokens.js";
 import type {
-  AllowEntry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -23,17 +23,19 @@ export const COLLECTIONS = {
   reconnectNonces: "reconnectNonces",
   feedback: "feedback",
   intents: "intents",
+  appSettings: "appSettings",
+  tokenUsage: "tokenUsage",
 } as const;
 
 export const TTL_COLLECTIONS = [
   COLLECTIONS.authRequests, COLLECTIONS.authCodes, COLLECTIONS.refreshTokens, COLLECTIONS.reconnectNonces,
-  COLLECTIONS.feedback, COLLECTIONS.intents,
+  COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.tokenUsage,
 ] as const;
 
 /** Collections whose documents carry a `userId`; `deleteUserData` empties them for one user. */
 const USER_COLLECTIONS = [
   COLLECTIONS.grants, COLLECTIONS.refreshTokens, COLLECTIONS.authCodes, COLLECTIONS.authRequests,
-  COLLECTIONS.reconnectNonces, COLLECTIONS.feedback, COLLECTIONS.intents,
+  COLLECTIONS.reconnectNonces, COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.appSettings, COLLECTIONS.tokenUsage,
 ] as const;
 
 const expireAt = (ms: number) => Timestamp.fromMillis(ms);
@@ -131,6 +133,23 @@ export class FirestoreStore implements Store {
   async listIntents(range: TimeRange) {
     const snaps = await this.inRange(COLLECTIONS.intents, range).get();
     return snaps.docs.map((d) => withMillis<IntentRecord>(d.data()));
+  }
+
+  async getAppSettings(userId: string) { return this.get<AppSettings>(COLLECTIONS.appSettings, userId); }
+  async putAppSettings(s: AppSettings) { await this.col(COLLECTIONS.appSettings).doc(s.userId).set(s); }
+
+  async getTokenUsage(userId: string, day: string) {
+    const snap = await this.col(COLLECTIONS.tokenUsage).doc(`${userId}|${day}`).get();
+    return (snap.get("tokens") as number | undefined) ?? 0;
+  }
+  async addTokenUsage(userId: string, day: string, tokens: number, expireAtMs: number) {
+    const ref = this.col(COLLECTIONS.tokenUsage).doc(`${userId}|${day}`);
+    return this.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const total = ((snap.get("tokens") as number | undefined) ?? 0) + tokens;
+      tx.set(ref, { userId, day, tokens: total, expireAt: expireAt(expireAtMs) });
+      return total;
+    });
   }
 
   async deleteUserData(userId: string) {

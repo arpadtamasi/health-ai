@@ -54,3 +54,13 @@ describe("config", () => {
     expect(() => loadConfig({ ...env, STORE: "postgres" })).toThrow(/STORE/);
   });
 });
+
+describe("loadAiConfig", () => {
+  it("is off without an API key, and defaults to the cheapest model and a daily token limit", async () => {
+    const { loadAiConfig, DEFAULT_MODEL, DEFAULT_DAILY_TOKEN_LIMIT } = await import("../src/config.js");
+    expect(loadAiConfig({})).toBeUndefined();
+    expect(loadAiConfig({ ANTHROPIC_API_KEY: "k" })).toEqual({ apiKey: "k", modelName: DEFAULT_MODEL, dailyTokenLimit: DEFAULT_DAILY_TOKEN_LIMIT });
+    expect(loadAiConfig({ ANTHROPIC_API_KEY: "k", MODEL_WHAT_NOW: "other", DAILY_TOKEN_LIMIT: "5000" })).toMatchObject({ modelName: "other", dailyTokenLimit: 5000 });
+    expect(() => loadAiConfig({ ANTHROPIC_API_KEY: "k", DAILY_TOKEN_LIMIT: "0" })).toThrow(/DAILY_TOKEN_LIMIT/);
+  });
+});

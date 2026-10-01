@@ -6,6 +6,9 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { Sealer } from "./crypto/sealer.js";
 import type { GoogleOAuth } from "./google/oauth.js";
 import type { Store } from "./store/types.js";
+import { appApiRouter } from "./app-api/routes.js";
+import { Sessions } from "./app-api/session.js";
+import type { ModelClient } from "./ai/model.js";
 import { GoogleAccess } from "./auth/google-access.js";
 import { errorPage } from "./auth/pages.js";
 import { HealthOAuthProvider } from "./auth/provider.js";
@@ -28,6 +31,8 @@ export interface AppDeps {
   now?: () => number;
   /** fetch for Google Health API calls; tests replace it. */
   healthFetch?: Fetch;
+  /** The model behind the app's suggestions; absent when no API key is configured. */
+  ai?: { model: ModelClient; modelName: string; dailyTokenLimit: number };
 }
 
 export interface App {
@@ -45,6 +50,7 @@ export function createApp(deps: AppDeps): App {
   const provider = new HealthOAuthProvider({ ...deps, tokens, now });
   const links = new ReconnectLinks(deps.store, deps.jwtSecret, deps.publicUrl, now);
   const googleAccess = new GoogleAccess(deps.store, deps.sealer, deps.google, links, now);
+  const sessions = new Sessions(deps.jwtSecret, deps.publicUrl.protocol === "https:", now);
 
   const app = express();
   // Cloud Run and Firebase Hosting sit in front of the service.
@@ -71,10 +77,20 @@ export function createApp(deps: AppDeps): App {
     authRoutes({
       ...deps,
       links,
+      sessions,
       now,
       onGoogleTokenReplaced: (userId) => googleAccess.forget(userId),
     }),
   );
+
+  // The app's browser API (US-01m3rvr64zrzczabckjf6crb2z, US-01m3rwa0cvrtcapqk0k3h6mqvc): session cookie, never the MCP token.
+  app.use("/api/app", appApiRouter({
+    store: deps.store,
+    sessions,
+    apiFor: (userId) => new HealthApi(() => googleAccess.accessToken(userId), deps.healthFetch),
+    ...(deps.ai ? { ai: deps.ai } : {}),
+    now,
+  }));
 
   // A 4xx on /mcp is decided by the SDK (protocol checks) or the bearer check, neither of which logs
   // why; this records the reason. BR-01m3eb1d1eddbp6nd8cm0nnjtm: protocol fields only, no payload.

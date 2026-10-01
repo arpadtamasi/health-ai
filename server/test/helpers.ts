@@ -76,7 +76,7 @@ export class FakeGoogle implements GoogleOAuth {
   }
 }
 
-export function makeTestApp(opts: { now?: () => number } = {}) {
+export function makeTestApp(opts: { now?: () => number; ai?: NonNullable<Parameters<typeof createApp>[0]["ai"]> } = {}) {
   const store = new MemoryStore();
   store.allow("owner@example.com", true);
   store.allow("tester@example.com");
@@ -93,6 +93,7 @@ export function makeTestApp(opts: { now?: () => number } = {}) {
     google,
     healthFetch: health.fetch,
     ...(opts.now ? { now: opts.now } : {}),
+    ...(opts.ai ? { ai: opts.ai } : {}),
   });
   return { ...built, store, google, health, sealer, http: request(built.app) };
 }
