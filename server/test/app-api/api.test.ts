@@ -80,7 +80,7 @@ describe("settings and state", () => {
   it("onboards on the first save with consent, keeps the consent time on later saves", async () => {
     const t = makeTestApp({ now: () => NOW });
     const { cookie } = await appSignIn(t);
-    expect((await t.http.get("/api/app/me").set("cookie", cookie)).body).toEqual({ email: "tester@example.com", onboarded: false });
+    expect((await t.http.get("/api/app/me").set("cookie", cookie)).body).toEqual({ email: "tester@example.com", onboarded: false, language: null });
     const saved = await t.http.put("/api/app/settings").set("cookie", cookie).set(HEADER).send(settings);
     expect(saved.status).toBe(200);
     expect(saved.body.settings.onboardedAt).toBe(NOW);
@@ -198,6 +198,18 @@ describe("the chat", () => {
     expect((await t.http.get("/api/app/me").set("cookie", cookie)).body.onboarded).toBe(true);
     // 200+40 per model turn, two turns
     expect(await t.store.getTokenUsage("sub-tester", "2026-09-30")).toBe(480);
+  });
+
+  it("saves the language the person starts in, before any setup, and tells the app", async () => {
+    const model = agentModel(toolCall("set_language", { language: "hu" }), reply("Szia! Van valami, amit nem ehetsz?"));
+    const t = makeTestApp({ now: () => NOW, ai: { model, modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    expect((await t.http.get("/api/app/me").set("cookie", cookie)).body.language).toBeNull();
+    const r = await talk(t, cookie, { message: "Szia, éhes vagyok" });
+    expect(r.body.language).toBe("hu");
+    expect(r.body.events[0]).toEqual({ type: "language", language: "hu" });
+    expect((await t.http.get("/api/app/me").set("cookie", cookie)).body).toMatchObject({ language: "hu", onboarded: false });
   });
 
   it("counts the tokens of the suggestion call inside the chat turn too", async () => {

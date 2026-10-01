@@ -1,5 +1,5 @@
 import type {
-  AllowEntry, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -17,6 +17,7 @@ export class MemoryStore implements Store {
   readonly intents = new Map<string, IntentRecord>();
   readonly appSettings = new Map<string, AppSettings>();
   readonly tokenUsage = new Map<string, number>();
+  readonly appPrefs = new Map<string, AppPrefs>();
 
   allow(email: string, owner = false): void {
     this.allowList.set(email.toLowerCase(), { email: email.toLowerCase(), owner });
@@ -84,6 +85,8 @@ export class MemoryStore implements Store {
 
   async getAppSettings(userId: string) { return this.appSettings.get(userId); }
   async putAppSettings(s: AppSettings) { this.appSettings.set(s.userId, s); }
+  async getAppPrefs(userId: string) { return this.appPrefs.get(userId); }
+  async putAppPrefs(p: AppPrefs) { this.appPrefs.set(p.userId, p); }
   async getTokenUsage(userId: string, day: string) { return this.tokenUsage.get(`${userId}|${day}`) ?? 0; }
   async addTokenUsage(userId: string, day: string, tokens: number) {
     const key = `${userId}|${day}`;
@@ -94,6 +97,7 @@ export class MemoryStore implements Store {
 
   async deleteUserData(userId: string) {
     this.appSettings.delete(userId);
+    this.appPrefs.delete(userId);
     for (const k of [...this.tokenUsage.keys()]) if (k.startsWith(`${userId}|`)) this.tokenUsage.delete(k);
     this.users.delete(userId);
     for (const [k, g] of this.grants) if (g.userId === userId) this.grants.delete(k);

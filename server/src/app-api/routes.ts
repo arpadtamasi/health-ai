@@ -88,7 +88,8 @@ export function appApiRouter(deps: AppApiDeps): Router {
       return;
     }
     const settings = await deps.store.getAppSettings(user.id);
-    res.json({ email: user.email, onboarded: settings?.onboardedAt !== undefined });
+    const prefs = await deps.store.getAppPrefs(user.id);
+    res.json({ email: user.email, onboarded: settings?.onboardedAt !== undefined, language: prefs?.language ?? null });
   });
 
   router.get("/settings", async (req, res) => {
@@ -225,7 +226,8 @@ export function appApiRouter(deps: AppApiDeps): Router {
       outputTokens: result.usage.outputTokens + env.extraUsage.outputTokens,
     });
     const settings = await deps.store.getAppSettings(userId);
-    res.json({ events: result.events, needsConsent: settings !== undefined && settings.consentAt === undefined, onboarded: settings?.onboardedAt !== undefined });
+    const prefs = await deps.store.getAppPrefs(userId);
+    res.json({ events: result.events, needsConsent: settings !== undefined && settings.consentAt === undefined, onboarded: settings?.onboardedAt !== undefined, language: prefs?.language ?? null });
   });
 
   // The notice and the consent are the person's own tap, never the model's: this ends the setup.

@@ -6,6 +6,7 @@ import type { Block, ModelClient, ToolSpec, Turn } from "./model.js";
 import type { WhatNowResult } from "./whatNow.js";
 import type { DayState, ImageInput, Option, Usage } from "./types.js";
 import { gaps } from "./pace.js";
+import { LANGUAGES, type Language } from "../store/types.js";
 
 export interface SettingsPatch {
   calories?: number;
@@ -25,6 +26,11 @@ export interface AgentEnv {
   saveSettings(patch: SettingsPatch): Promise<{ ok: true } | { ok: false; error: string }>;
   suggest(input: { optionsText?: string; images?: ImageInput[] }): Promise<WhatNowResult | { kind: "not_ready" }>;
   /** `left` is what remains of today's goals after this meal, so the model never has to calculate it. */
+  /** The person's own date and time, so the model never guesses it. */
+  clock(): Promise<Clock | undefined>;
+  /** The saved language, if any. */
+  language(): Promise<Language | undefined>;
+  setLanguage(language: Language): Promise<void>;
   logMeal(meal: { name: string; kcal: number; carbs: number; protein: number }): Promise<{ id: string | null; left?: { calories: number; carbs: number; protein: number } }>;
 }
 
@@ -34,13 +40,26 @@ export type ChatEvent =
   | { type: "logged"; name: string; kcal: number; id: string | null }
   | { type: "settings_saved" }
   /** Short answers the person can tap instead of typing. */
-  | { type: "replies"; replies: string[] };
+  | { type: "replies"; replies: string[] }
+  /** The person's language was saved; the app switches its own texts to it. */
+  | { type: "language"; language: Language };
 
 export interface ChatTurn { role: "user" | "assistant"; text: string }
 
-const SYSTEM = [
+export interface Clock {
+  /** The person's own local date and time, from their time zone. */
+  date: string;
+  time: string;
+  weekday: string;
+  timeZone: string;
+}
+
+const systemFor = (saved: Language | undefined, clock: Clock | undefined) => [
   "You are the chat of Health AI, a small app that helps one person decide what to eat right now, from what they already ate today and what is in front of them.",
-  "Reply in the language the person writes in. Be short: one to three sentences. No lists unless asked, no headings, no emoji.",
+  clock ? `The person's local time now is ${clock.weekday} ${clock.date} ${clock.time} (${clock.timeZone}). Use it for the time of day (breakfast, lunch, dinner) and for "today"; never guess the time.` : "",
+  "Reply in the language the person writes in. " + (saved
+    ? `Their saved language is "${saved}": keep answering in it, unless they clearly start writing in another or ask for another; then call set_language.`
+    : "No language is saved yet: when the person writes in Hungarian (hu) or English (en), call set_language once so the app remembers it.") + " Be short: one to three sentences. No lists unless asked, no headings, no emoji.",
   "You are a tracker and suggestion aid for adults, not a doctor: never give medical advice, never suggest a daily goal below 1,200 kcal.",
   "Use the tools; do not do arithmetic yourself. Call get_today when you need the person's goals, what they ate or whether they are set up.",
   "SETUP: until the person has settings (get_today says onboarded is false or there is no state), have a short conversation, one question at a time: foods to avoid (allergies, dislikes; \"none\" is a valid answer), the daily calorie goal, and the hours they usually eat.",
@@ -52,7 +71,7 @@ const SYSTEM = [
   "LOGGING: when the person's latest message says they ate something, call log_meal for exactly that, naming the food in the language the person writes in and giving honest estimates for calories, carbs and protein, and say what you logged.",
   "Never log a food you suggested, a food from an earlier message, or anything the person did not just say they ate: the app logs the cards they tap itself.",
   "After log_meal, use the numbers the tool returns for what is left today; never work them out yourself.",
-].join("\n");
+].filter(Boolean).join("\n");
 
 const tool = (name: string, description: string, properties: Record<string, unknown>, required: string[] = []): ToolSpec => ({
   name, description, inputSchema: { type: "object", properties, required },
@@ -72,6 +91,9 @@ const TOOLS: ToolSpec[] = [
   tool("suggest_options", "Three ranked options to eat now, from the photo attached to this message or from options the person typed.", {
     optionsText: { type: "string", description: "Only when the person typed the options; leave out when there is a photo." },
   }),
+  tool("set_language", "Save the language the person speaks, so the chat and the app's own texts use it from now on.", {
+    language: { type: "string", enum: [...LANGUAGES] },
+  }, ["language"]),
   tool("quick_replies", "Show 2 to 4 short answers the person can tap instead of typing, for the question you are asking.", {
     replies: { type: "array", items: { type: "string" }, description: "Each at most 24 characters, in the person's language." },
   }, ["replies"]),
@@ -106,7 +128,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const t = await env.today();
           if (!t.state) return JSON.stringify({ onboarded: t.onboarded, setupDone: false });
           const g = gaps(t.state);
-          return JSON.stringify({ onboarded: t.onboarded, setupDone: true, goals: t.state.goals, eaten: t.state.eaten, paceGap: g, window: t.state.window, avoid: t.state.constraints, localTimeMinutes: t.state.minutesNow });
+          return JSON.stringify({ onboarded: t.onboarded, setupDone: true, goals: t.state.goals, eaten: t.state.eaten, paceGap: g, window: t.state.window, avoid: t.state.constraints, localTimeMinutes: t.state.minutesNow, now: await env.clock().catch(() => undefined) });
         }
         case "estimate_calories": {
           const sex = args["sex"], activity = args["activity"], aim = args["aim"];
@@ -139,6 +161,13 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           }
           return JSON.stringify({ shown: [], reason: r.reason });
         }
+        case "set_language": {
+          const l = args["language"];
+          if (typeof l !== "string" || !(LANGUAGES as readonly string[]).includes(l)) return JSON.stringify({ error: `Supported languages: ${LANGUAGES.join(", ")}` });
+          await env.setLanguage(l as Language);
+          events.push({ type: "language", language: l as Language });
+          return JSON.stringify({ saved: true });
+        }
         case "quick_replies": {
           const list = Array.isArray(args["replies"]) ? args["replies"].filter((r): r is string => typeof r === "string") : [];
           const replies = [...new Set(list.map((r) => r.trim()).filter((r) => r.length > 0 && r.length <= 24))].slice(0, 4);
@@ -162,9 +191,10 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
     }
   };
 
+  const system = systemFor(await env.language().catch(() => undefined), await env.clock().catch(() => undefined));
   for (let step = 0; step < MAX_STEPS; step++) {
     const sent = step === 0 ? [...turns] : turns.map((t) => ({ ...t, content: t.content.map((b): Block => (b.type === "image" ? { type: "text", text: "(photo attached)" } : b)) }));
-    const res = await deps.model.converse({ model: deps.modelName, system: SYSTEM, turns: sent, tools: TOOLS, maxTokens: 800 });
+    const res = await deps.model.converse({ model: deps.modelName, system, turns: sent, tools: TOOLS, maxTokens: 800 });
     usage.inputTokens += res.usage.inputTokens;
     usage.outputTokens += res.usage.outputTokens;
     for (const b of res.content) if (b.type === "text" && b.text.trim()) events.push({ type: "text", text: b.text.trim() });

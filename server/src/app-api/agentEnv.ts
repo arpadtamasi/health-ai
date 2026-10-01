@@ -1,12 +1,12 @@
 // The tools of the chat agent, bound to one signed-in user: the app's settings, today's log and the Google Health write.
-import type { AgentEnv, SettingsPatch } from "../ai/agent.js";
+import type { AgentEnv, Clock, SettingsPatch } from "../ai/agent.js";
 import type { AiModel } from "../ai/model.js";
 import type { DayState, Usage } from "../ai/types.js";
 import { whatNow } from "../ai/whatNow.js";
 import type { HealthApi } from "../health/api.js";
 import type { AppSettings, Store } from "../store/types.js";
-import { logNutrition } from "./meal.js";
-import { loadToday } from "./today.js";
+import { logNutrition, timeZoneOf } from "./meal.js";
+import { loadToday, localClock } from "./today.js";
 
 export const CALORIE_RANGE = { min: 500, max: 10000 };
 
@@ -36,6 +36,17 @@ export function makeAgentEnv(d: AgentEnvDeps): AgentEnv & { extraUsage: Usage } 
 
   return {
     extraUsage,
+
+    async clock(): Promise<Clock> {
+      const timeZone = await timeZoneOf(d.api);
+      const nowMs = d.now();
+      const { date, minutes } = localClock(nowMs, timeZone);
+      const weekday = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "long" }).format(new Date(nowMs));
+      return { date, time: `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`, weekday, timeZone };
+    },
+
+    async language() { return (await d.store.getAppPrefs(d.userId))?.language; },
+    async setLanguage(language) { await d.store.putAppPrefs({ userId: d.userId, language, updatedAt: d.now() }); },
 
     async today() {
       const s = await d.store.getAppSettings(d.userId);

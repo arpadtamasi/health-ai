@@ -14,11 +14,14 @@ import { OptionCard, type Option } from "../components/food";
 import { PaceStrip, type PaceItem } from "../components/chat";
 import { UiIcon } from "../components/icons";
 import { pace } from "../pace";
+import { isLang, useT, type Lang, type Texts } from "../i18n";
 import { tokens as T } from "../theme/tokens";
 import { CameraScreen } from "./CameraScreen";
 
 const c = T.color;
-const FIRST_REPLIES = ["None", "Nuts", "Lactose", "Gluten"];
+
+/** The adapter lives outside React, so the current texts and the language switch reach it through this box. */
+const box: { t: Texts | null; setLang: (l: Lang) => void } = { t: null, setLang: () => undefined };
 
 interface Meta { replies?: string[]; needsConsent?: boolean; onboarded?: boolean }
 
@@ -41,11 +44,12 @@ const adapter: ChatModelAdapter = {
         else if (e.type === "options") parts.push({ type: "tool-call", toolCallId: `opts-${i}`, toolName: "show_options", args: {}, argsText: "{}", result: e.options });
         else if (e.type === "logged") parts.push({ type: "tool-call", toolCallId: `log-${i}`, toolName: "logged", args: {}, argsText: "{}", result: { name: e.name, kcal: e.kcal, id: e.id } });
       });
+      if (isLang(r.language)) box.setLang(r.language);
       const replies = [...r.events].reverse().find((e): e is Extract<ChatEvent, { type: "replies" }> => e.type === "replies")?.replies;
       return { content: parts.length ? parts : [{ type: "text" as const, text: "…" }], metadata: { custom: { replies, needsConsent: r.needsConsent, onboarded: r.onboarded } satisfies Meta } };
     } catch (e) {
-      const msg = e instanceof ApiError && e.code === "daily_limit" ? "Daily limit reached. The chat and the camera are back tomorrow."
-        : e instanceof ApiError && e.code === "ai_unavailable" ? "The chat is not available right now." : "Something went wrong. Please try again.";
+      const tx = box.t!;
+      const msg = e instanceof ApiError && e.code === "daily_limit" ? tx.errDailyLimit : e instanceof ApiError && e.code === "ai_unavailable" ? tx.errUnavailable : tx.errGeneric;
       return { content: [{ type: "text" as const, text: msg }] };
     }
   },
@@ -67,6 +71,7 @@ function OptionsPart({ result, onChoose }: { result: unknown; onChoose: (o: Opti
 }
 
 function Message({ onChoose, onUndo }: { onChoose: (o: Option) => void; onUndo: (id: string | null) => void }) {
+  const { t } = useT();
   const role = useAuiState((s) => s.message.role);
   return (
     <MessagePrimitive.Root style={{ paddingVertical: T.space.xs, gap: T.space.s }}>
@@ -77,7 +82,7 @@ function Message({ onChoose, onUndo }: { onChoose: (o: Option) => void; onUndo: 
           if (part.type === "tool-call" && part.toolName === "show_options") return <OptionsPart result={part.result} onChoose={onChoose} />;
           if (part.type === "tool-call" && part.toolName === "logged") {
             const r = part.result as { name: string; kcal: number; id: string | null };
-            return <Bubble role="assistant"><Text style={{ color: c.onSurface, fontSize: T.font.base }}>Logged {r.name} ({r.kcal} kcal).</Text><View style={{ marginTop: 6, alignSelf: "flex-start" }}><Chip label="Undo" onPress={() => onUndo(r.id)} /></View></Bubble>;
+            return <Bubble role="assistant"><Text style={{ color: c.onSurface, fontSize: T.font.base }}>{t.logged(r.name, r.kcal)}</Text><View style={{ marginTop: 6, alignSelf: "flex-start" }}><Chip label={t.undo} onPress={() => onUndo(r.id)} /></View></Bubble>;
           }
           return null;
         }}
@@ -87,6 +92,9 @@ function Message({ onChoose, onUndo }: { onChoose: (o: Option) => void; onUndo: 
 }
 
 function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: () => void }) {
+  const { t, setLang } = useT();
+  box.t = t;
+  box.setLang = setLang;
   const aui = useAui();
   const [state, setState] = useState<DayState | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -110,14 +118,14 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
   const items: PaceItem[] = useMemo(() => {
     if (!state) return [];
     const raw = [
-      { label: "Calories", unit: "", goal: state.goals.calories, result: pace(state.goals.calories, state.eaten.calories, state.minutes, state.window) },
-      { label: "Carbs", unit: " g", goal: state.goals.carbs, result: pace(state.goals.carbs, state.eaten.carbs, state.minutes, state.window) },
-      { label: "Protein", unit: " g", goal: state.goals.protein, result: pace(state.goals.protein, state.eaten.protein, state.minutes, state.window) },
+      { label: t.calories, unit: "", goal: state.goals.calories, result: pace(state.goals.calories, state.eaten.calories, state.minutes, state.window) },
+      { label: t.carbs, unit: " g", goal: state.goals.carbs, result: pace(state.goals.carbs, state.eaten.carbs, state.minutes, state.window) },
+      { label: t.protein, unit: " g", goal: state.goals.protein, result: pace(state.goals.protein, state.eaten.protein, state.minutes, state.window) },
     ];
     const rel = (i: (typeof raw)[number]) => i.result.gap / i.goal;
     const worst = [...raw].sort((a, b) => rel(a) - rel(b))[0]!;
     return raw.map(({ goal: _goal, ...i }) => ({ ...i, highlight: i === worst && i.result.behind }));
-  }, [state]);
+  }, [state, t]);
 
   const choose = async (o: Option) => {
     try {
@@ -131,26 +139,26 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
     if (!id) return;
     try {
       await backend.unlog(id);
-      aui.thread().append({ role: "assistant", content: [{ type: "text", text: "Undone." }] });
+      aui.thread().append({ role: "assistant", content: [{ type: "text", text: t.undone }] });
       await loadState();
-    } catch { aui.thread().append({ role: "assistant", content: [{ type: "text", text: "I could not undo that." }] }); }
+    } catch { aui.thread().append({ role: "assistant", content: [{ type: "text", text: t.undoFailed }] }); }
   };
 
   const photo = (p: { uri: string; base64: string }) => {
     setCameraOpen(false);
-    aui.thread().append({ role: "user", content: [{ type: "image", image: `data:image/jpeg;base64,${p.base64}` }, { type: "text", text: "What can I eat from this?" }] });
+    aui.thread().append({ role: "user", content: [{ type: "image", image: `data:image/jpeg;base64,${p.base64}` }, { type: "text", text: t.photoQuestion }] });
   };
 
   if (cameraOpen) return <CameraScreen onCapture={photo} onCancel={() => setCameraOpen(false)} />;
 
-  const replies = meta.replies?.length ? meta.replies : (ready ? [] : FIRST_REPLIES);
+  const replies = meta.replies?.length ? meta.replies : (ready ? [] : t.firstReplies);
   const showConsent = meta.needsConsent && !consented;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface, paddingHorizontal: T.space.xl, paddingTop: T.space.m, gap: T.space.m }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m, height: 48 }}>
         <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={18} color={c.onPrimary} filled /></View>
-        <Text style={{ fontSize: 18, fontWeight: "600", color: c.onSurface }}>Health AI</Text>
+        <Text style={{ fontSize: 18, fontWeight: "600", color: c.onSurface }}>{t.appName}</Text>
       </View>
       {items.length ? <PaceStrip items={items} /> : null}
       <ThreadPrimitive.Root style={{ flex: 1 }}>
@@ -159,8 +167,8 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
         </ThreadPrimitive.MessagesFlatList>
         {showConsent ? (
           <View style={{ gap: T.space.s, backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l }}>
-            <Text style={{ fontSize: T.font.body, color: c.onSurface }}>I am a tracker and suggestion aid for adults, not medical advice. By continuing you agree that your chat and photos go to the AI provider.</Text>
-            <Button label="Agree and continue" onPress={() => void backend.consent().then(() => { setConsented(true); setReady(true); })} />
+            <Text style={{ fontSize: T.font.body, color: c.onSurface }}>{t.consentText}</Text>
+            <Button label={t.consentButton} onPress={() => void backend.consent().then(() => { setConsented(true); setReady(true); })} />
           </View>
         ) : null}
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: T.space.s, paddingVertical: T.space.s }}>
@@ -170,18 +178,18 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
             </ThreadPrimitive.Suggestion>
           ))}
           {ready && !replies.length ? (
-            <ThreadPrimitive.Suggestion prompt="What should I eat now?" send style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: T.radius.chip, borderWidth: 1, borderColor: c.primary, backgroundColor: c.primaryContainer }}>
-              <Text style={{ fontSize: T.font.body, color: c.onPrimaryContainer }}>What should I eat now?</Text>
+            <ThreadPrimitive.Suggestion prompt={t.whatNow} send style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: T.radius.chip, borderWidth: 1, borderColor: c.primary, backgroundColor: c.primaryContainer }}>
+              <Text style={{ fontSize: T.font.body, color: c.onPrimaryContainer }}>{t.whatNow}</Text>
             </ThreadPrimitive.Suggestion>
           ) : null}
           {ready && !replies.length ? usuals.map((u) => <Chip key={u.name} label={u.name} onPress={() => void choose({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein })} />) : null}
         </View>
         <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "flex-end", gap: T.space.s }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Open the camera" onPress={() => setCameraOpen(true)}
+          <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={() => setCameraOpen(true)}
             style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primaryContainer, alignItems: "center", justifyContent: "center" }}>
             <UiIcon name="camera" size={22} color={c.onPrimaryContainer} />
           </Pressable>
-          <ComposerPrimitive.Input placeholder="Write or speak…" multiline placeholderTextColor={c.onSurfaceVariant}
+          <ComposerPrimitive.Input placeholder={t.placeholder} multiline placeholderTextColor={c.onSurfaceVariant}
             style={[{ flex: 1, backgroundColor: c.surfaceHigh, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 10, maxHeight: 120, fontSize: T.font.base, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
           <ComposerPrimitive.Send style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
             <UiIcon name="arrow-up" size={20} color={c.onPrimary} />
@@ -193,10 +201,10 @@ function Inner({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: ()
 }
 
 export function AssistantChat({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: () => void }) {
+  const { t } = useT();
+  box.t = t;
   const runtime = useLocalRuntime(adapter, {
-    initialMessages: [{ role: "assistant", content: [{ type: "text", text: onboarded
-      ? "Hi! Ask me what to eat, tell me what you ate, or show me a photo."
-      : "Hi! I help you decide what to eat, from what you already ate today. First, a short setup: is there anything I should never suggest, like an allergy or something you dislike?" }] }],
+    initialMessages: [{ role: "assistant", content: [{ type: "text", text: onboarded ? t.greetReady : t.greetSetup }] }],
   });
   return <AssistantRuntimeProvider runtime={runtime}><Inner onboarded={onboarded} onSignedOut={onSignedOut} /></AssistantRuntimeProvider>;
 }

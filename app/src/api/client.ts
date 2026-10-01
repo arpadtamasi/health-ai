@@ -27,8 +27,9 @@ export type ChatEvent =
   | { type: "options"; options: Option[]; basis: string }
   | { type: "logged"; name: string; kcal: number; id: string | null }
   | { type: "settings_saved" }
-  | { type: "replies"; replies: string[] };
-export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean }
+  | { type: "replies"; replies: string[] }
+  | { type: "language"; language: "en" | "hu" };
+export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean; language: "en" | "hu" | null }
 export interface ChatTurn { role: "user" | "assistant"; text: string }
 
 export interface Usual { name: string; kcal: number; carbs: number; protein: number; count: number }
@@ -57,7 +58,7 @@ async function call<T>(method: "GET" | "POST" | "PUT", path: string, body?: unkn
 export const signInUrl = `${API_BASE}/api/auth/start`;
 
 export const api = {
-  me: () => call<{ email: string; onboarded: boolean }>("GET", "/me"),
+  me: () => call<{ email: string; onboarded: boolean; language: "en" | "hu" | null }>("GET", "/me"),
   settings: () => call<{ settings: Settings | null }>("GET", "/settings"),
   saveSettings: (s: Omit<Settings, "onboardedAt"> & { consent?: boolean }) => call<{ settings: Settings }>("PUT", "/settings", s),
   state: () => call<DayState>("GET", "/state"),

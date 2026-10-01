@@ -30,9 +30,12 @@ function scripted(...replies: ConverseResponse[]): ModelClient & { requests: Con
   };
 }
 
-function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logged: unknown[]; suggestedWith: unknown[] } {
+function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logged: unknown[]; suggestedWith: unknown[]; languages: unknown[] } {
   const e = {
-    saved: [] as unknown[], logged: [] as unknown[], suggestedWith: [] as unknown[],
+    saved: [] as unknown[], logged: [] as unknown[], suggestedWith: [] as unknown[], languages: [] as unknown[],
+    clock: () => Promise.resolve({ date: "2026-10-01", time: "16:24", weekday: "Thursday", timeZone: "Europe/Budapest" }),
+    language: () => Promise.resolve(undefined),
+    setLanguage: (l: unknown) => { e.languages.push(l); return Promise.resolve(); },
     today: () => Promise.resolve({ onboarded: true, state }),
     saveSettings: (p: unknown) => { e.saved.push(p); return Promise.resolve({ ok: true as const }); },
     suggest: (i: unknown) => {
@@ -119,6 +122,33 @@ describe("the chat agent", () => {
     const m = scripted(call("t1", "log_meal", { name: "Alma", kcal: 95, carbs: 25, protein: 0 }), say("Naplóztam."));
     await runAgent(deps(m), e, { history: [], message: "ettem egy almát" });
     expect(resultsOf(m.requests[1]!)[0]).toEqual({ logged: true, leftToday: { calories: 1700, carbs: 150, protein: 70 } });
+  });
+
+  it("tells the model the person's own date and time on every request, so it never guesses", async () => {
+    const m = scripted(say("Szia"));
+    await runAgent(deps(m), env(), { history: [], message: "szia" });
+    expect(m.requests[0]!.system).toContain("Thursday 2026-10-01 16:24 (Europe/Budapest)");
+    const none = scripted(say("Hi"));
+    await runAgent(deps(none), env({ clock: () => Promise.reject(new Error("no settings")) }), { history: [], message: "hi" });
+    expect(none.requests[0]!.system).not.toContain("local time now");
+  });
+
+  it("remembers the language the person starts in, and keeps answering in the saved one", async () => {
+    const e = env();
+    const m = scripted(call("t1", "set_language", { language: "hu" }), say("Szia!"));
+    const r = await runAgent(deps(m), e, { history: [], message: "Szia, éhes vagyok" });
+    expect(e.languages).toEqual(["hu"]);
+    expect(r.events[0]).toEqual({ type: "language", language: "hu" });
+    expect(m.requests[0]!.system).toContain("No language is saved yet");
+
+    const saved = scripted(say("Rendben."));
+    await runAgent(deps(saved), env({ language: () => Promise.resolve("hu" as const) }), { history: [], message: "ok" });
+    expect(saved.requests[0]!.system).toContain('Their saved language is "hu"');
+
+    const bad = scripted(call("t1", "set_language", { language: "klingon" }), say("ok"));
+    const rb = await runAgent(deps(bad), env(), { history: [], message: "x" });
+    expect(rb.events.map((x) => x.type)).toEqual(["text"]);
+    expect(resultsOf(bad.requests[1]!)[0]).toHaveProperty("error");
   });
 
   it("reads today with the pace gaps", async () => {

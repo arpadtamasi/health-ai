@@ -1,7 +1,7 @@
 import { Firestore, Timestamp, type CollectionReference, type DocumentData } from "@google-cloud/firestore";
 import { AUTH_CODE_TTL_MS, AUTH_REQUEST_TTL_MS, RECONNECT_LINK_TTL_SECONDS } from "../auth/tokens.js";
 import type {
-  AllowEntry, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -24,6 +24,7 @@ export const COLLECTIONS = {
   feedback: "feedback",
   intents: "intents",
   appSettings: "appSettings",
+  appPrefs: "appPrefs",
   tokenUsage: "tokenUsage",
 } as const;
 
@@ -35,7 +36,7 @@ export const TTL_COLLECTIONS = [
 /** Collections whose documents carry a `userId`; `deleteUserData` empties them for one user. */
 const USER_COLLECTIONS = [
   COLLECTIONS.grants, COLLECTIONS.refreshTokens, COLLECTIONS.authCodes, COLLECTIONS.authRequests,
-  COLLECTIONS.reconnectNonces, COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.appSettings, COLLECTIONS.tokenUsage,
+  COLLECTIONS.reconnectNonces, COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.appSettings, COLLECTIONS.appPrefs, COLLECTIONS.tokenUsage,
 ] as const;
 
 const expireAt = (ms: number) => Timestamp.fromMillis(ms);
@@ -137,6 +138,9 @@ export class FirestoreStore implements Store {
 
   async getAppSettings(userId: string) { return this.get<AppSettings>(COLLECTIONS.appSettings, userId); }
   async putAppSettings(s: AppSettings) { await this.col(COLLECTIONS.appSettings).doc(s.userId).set(s); }
+
+  async getAppPrefs(userId: string) { return this.get<AppPrefs>(COLLECTIONS.appPrefs, userId); }
+  async putAppPrefs(p: AppPrefs) { await this.col(COLLECTIONS.appPrefs).doc(p.userId).set(p); }
 
   async getTokenUsage(userId: string, day: string) {
     const snap = await this.col(COLLECTIONS.tokenUsage).doc(`${userId}|${day}`).get();

@@ -2,10 +2,12 @@ import { Linking, Platform, Text, View } from "react-native";
 import { signInUrl } from "../api/client";
 import { Button } from "../components/ui";
 import { UiIcon } from "../components/icons";
+import { useT } from "../i18n";
 import { tokens as T } from "../theme/tokens";
 
 // The Google sign-in runs on the server; it returns to /app/ with the session cookie.
 export function SignInScreen() {
+  const { t } = useT();
   const go = () => {
     if (Platform.OS === "web") window.location.href = signInUrl;
     else void Linking.openURL(signInUrl);
@@ -15,11 +17,9 @@ export function SignInScreen() {
       <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: T.color.primary, alignItems: "center", justifyContent: "center" }}>
         <UiIcon name="heart" size={28} color={T.color.onPrimary} filled />
       </View>
-      <Text style={{ fontSize: 28, fontWeight: "700", color: T.color.onSurface }}>What should I eat now?</Text>
-      <Text style={{ fontSize: T.font.base, color: T.color.onSurfaceVariant }}>
-        Sign in with the Google account that holds your Fitbit data. I read what you ate today and tell you what to take out of the fridge.
-      </Text>
-      <Button label="Sign in with Google" onPress={go} />
+      <Text style={{ fontSize: 28, fontWeight: "700", color: T.color.onSurface }}>{t.signInTitle}</Text>
+      <Text style={{ fontSize: T.font.base, color: T.color.onSurfaceVariant }}>{t.signInText}</Text>
+      <Button label={t.signInButton} onPress={go} />
     </View>
   );
 }

@@ -110,6 +110,17 @@ export interface AppSettings {
   updatedAt: number;
 }
 
+/** Languages the app speaks: its own texts exist in these, and the chat answers in the saved one. */
+export const LANGUAGES = ["en", "hu"] as const;
+export type Language = (typeof LANGUAGES)[number];
+
+/** Small per-person preferences that exist before the setup is done (so they cannot live in AppSettings). */
+export interface AppPrefs {
+  userId: string;
+  language?: Language;
+  updatedAt: number;
+}
+
 /** A half-open time range [from, to) in epoch milliseconds. */
 export interface TimeRange {
   from: number;
@@ -161,6 +172,9 @@ export interface Store {
    */
   getAppSettings(userId: string): Promise<AppSettings | undefined>;
   putAppSettings(settings: AppSettings): Promise<void>;
+
+  getAppPrefs(userId: string): Promise<AppPrefs | undefined>;
+  putAppPrefs(prefs: AppPrefs): Promise<void>;
 
   /** Model tokens used by one user on one local day (the daily limit counts these). */
   getTokenUsage(userId: string, day: string): Promise<number>;
