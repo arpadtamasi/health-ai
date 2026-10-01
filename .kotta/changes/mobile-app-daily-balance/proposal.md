@@ -12,9 +12,17 @@ A new phone-facing surface next to the chat connector, drafted here as seven use
 
 ## Decided by the owner
 
+- (2026-10-01) The home is a full-screen picture of the day with the biggest gap as the hero and rings for calories, carbs, protein and water; logging starts from one button on it; when the chat starts it slides up over the home, which shrinks to a strip. Water is handled, with a goal set like the food goals.
+- The address of the service is the app: a splash screen while the sign-in state is pending, then the landing page (signed out) or the app (signed in).
+- The app works without Google Health: meals and water live in our own storage and are mirrored to Google Health when it is connected, which is plugged in separately later; earlier entries are not copied for now.
+
 - The pace is the goal spread evenly over a time window the owner sets.
 - Goals and quick-add buttons are kept on our side (so the landing page's "Health values stored by us: None" must be reworded: goals and buttons are personal settings, not health measurements).
 - When the chat changes a goal or a button it says what it changes and applies it with an Undo.
+
+## Added 2026-10-01: home, water, one front door, use without Google Health
+
+Six more user stories (the full-screen home, logging from one button, water, one front door, use without Google Health, connect Google Health afterwards). They were first drafted as a change of their own and merged here, because they name the actor "Phone user" of this change, which the Kotta cannot resolve until this change is accepted ("akadály: belátásod szerint").
 
 ## Open decisions
 

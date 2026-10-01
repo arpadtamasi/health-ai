@@ -6,7 +6,7 @@ actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
   level: stated
   decided_by: human
-  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · Why"]
+  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · Why", ".kotta/changes/mobile-app-daily-balance/conversation.md · P36"]
   quote: "és a naplózást"
   inferred: null
 ---
@@ -29,3 +29,7 @@ Uses the same Google Health write the chat tools use today (nutrition-log).
 ## Implementation notes
 
 Built: tapping an option card writes one nutrition-log entry to Google Health (the name, calories, carbs and protein of the option, now, in the user's UTC offset, with the meal type from the time of day) and the Undo removes it. Note: the id changes if the entry is ever corrected, because Google does not allow editing a logged meal.
+
+## Decided by the owner
+
+- Our own storage keeps more than Google Health gets: for every entry the name, the ingredients the model recognised, the source (photo, typed or button) and that the values are an estimate; Google Health, when connected, gets only the name and the numbers, which is all it takes ("mindkettő ok", to the proposal about the description of the photo).

@@ -7,7 +7,7 @@ accepted: ["unimplemented: typing a meal and changing goals, buttons and constra
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · Why", ".kotta/changes/mobile-app-daily-balance/conversation.md · P15", ".kotta/changes/mobile-app-daily-balance/conversation.md · P16", ".kotta/changes/mobile-app-daily-balance/conversation.md · K9", ".kotta/changes/mobile-app-daily-balance/conversation.md · P18"]
+  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · Why", ".kotta/changes/mobile-app-daily-balance/conversation.md · P15", ".kotta/changes/mobile-app-daily-balance/conversation.md · P16", ".kotta/changes/mobile-app-daily-balance/conversation.md · K9", ".kotta/changes/mobile-app-daily-balance/conversation.md · P18", ".kotta/changes/mobile-app-daily-balance/conversation.md · P39"]
   quote: "a célokat is módosíthassam chatből"
   inferred: "The owner said 'a small chat', that buttons and goals can be changed from it, and asked what to eat; the logging by typing is my reading of the chat use that filled the first week."
 ---
@@ -29,6 +29,7 @@ The first time, the chat asks about allergies and foods to avoid, then the calor
 
 ## Decided by the owner
 
+- Deleting history is done in the chat: the chat has tools to list the latest entries, delete one entry and delete all of the history, and every deletion is confirmed by the person's own tap on a confirmation card, never by the model alone ("a chatben mondhatja, és ez is egy tool"; "ok akkor elfogadom").
 - Constraints, goal and eating window are set in a chat onboarding, not a settings form.
 - The chat covers today's food and the settings only; questions about sleep or heart rate are left out for now ("1 igen").
 - Every message is a model call and counts against one daily limit per user, shared with the camera and "What now", measured in tokens taken from the model response's usage figure, not in calls ("2 igen, nem hívás hanem token").
