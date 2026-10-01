@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@assistant-ui/react-native": "^0.1.44",
     "@expo/metro-runtime": "~57.0.16",
     "expo": "~57.0.26",
     "expo-camera": "~57.0.6",
