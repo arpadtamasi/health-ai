@@ -24,7 +24,8 @@ export interface AgentEnv {
   today(): Promise<AgentToday>;
   saveSettings(patch: SettingsPatch): Promise<{ ok: true } | { ok: false; error: string }>;
   suggest(input: { optionsText?: string; images?: ImageInput[] }): Promise<WhatNowResult | { kind: "not_ready" }>;
-  logMeal(meal: { name: string; kcal: number; carbs: number; protein: number }): Promise<{ id: string | null }>;
+  /** `left` is what remains of today's goals after this meal, so the model never has to calculate it. */
+  logMeal(meal: { name: string; kcal: number; carbs: number; protein: number }): Promise<{ id: string | null; left?: { calories: number; carbs: number; protein: number } }>;
 }
 
 export type ChatEvent =
@@ -45,7 +46,9 @@ const SYSTEM = [
   "Call save_settings only after the person agreed to the values. The person must still tap the Agree button the app shows for the notice and consent; you cannot give consent for them, so say so when you have saved everything.",
   "SUGGESTIONS: when they ask what to eat, or show a photo of a fridge, a menu, a counter or a plate, call suggest_options (the photo of this message is attached automatically; pass optionsText only when they typed options). Then add one short sentence about the biggest gap; the app shows the cards itself, do not repeat them.",
   "If they have not told you what they can choose from and there is no photo, ask them to type it or take a photo.",
-  "LOGGING: when they say what they ate, call log_meal with honest estimates for calories, carbs and protein, and say what you logged.",
+  "LOGGING: when the person's latest message says they ate something, call log_meal for exactly that, with honest estimates for calories, carbs and protein, and say what you logged.",
+  "Never log a food you suggested, a food from an earlier message, or anything the person did not just say they ate: the app logs the cards they tap itself.",
+  "After log_meal, use the numbers the tool returns for what is left today; never work them out yourself.",
 ].join("\n");
 
 const tool = (name: string, description: string, properties: Record<string, unknown>, required: string[] = []): ToolSpec => ({
@@ -136,7 +139,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           if (!nm || kcal === undefined || carbs === undefined || protein === undefined || kcal < 0 || kcal > 5000) return JSON.stringify({ error: "Name, calories, carbs and protein are needed." });
           const r = await env.logMeal({ name: nm, kcal, carbs, protein });
           events.push({ type: "logged", name: nm, kcal: Math.round(kcal), id: r.id });
-          return JSON.stringify({ logged: true });
+          return JSON.stringify({ logged: true, ...(r.left ? { leftToday: r.left } : {}) });
         }
         default:
           return JSON.stringify({ error: `Unknown tool ${name}` });

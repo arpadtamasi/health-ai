@@ -104,6 +104,13 @@ describe("the chat agent", () => {
     expect(r.events[0]).toEqual({ type: "logged", name: "Pogácsa", kcal: 110, id: "users/1/dataTypes/nutrition-log/dataPoints/9" });
   });
 
+  it("hands the model what is left after a logged meal, so it does not calculate", async () => {
+    const e = env({ logMeal: () => Promise.resolve({ id: null, left: { calories: 1700, carbs: 150, protein: 70 } }) });
+    const m = scripted(call("t1", "log_meal", { name: "Alma", kcal: 95, carbs: 25, protein: 0 }), say("Naplóztam."));
+    await runAgent(deps(m), e, { history: [], message: "ettem egy almát" });
+    expect(resultsOf(m.requests[1]!)[0]).toEqual({ logged: true, leftToday: { calories: 1700, carbs: 150, protein: 70 } });
+  });
+
   it("reads today with the pace gaps", async () => {
     const m = scripted(call("t1", "get_today", {}), say("Szénhidrátban le vagy maradva."));
     await runAgent(deps(m), env(), { history: [], message: "hol tartok?" });

@@ -78,7 +78,11 @@ export function makeAgentEnv(d: AgentEnvDeps): AgentEnv & { extraUsage: Usage } 
     async logMeal(meal) {
       const s = await d.store.getAppSettings(d.userId);
       if (!s || s.onboardedAt === undefined) throw new Error("setup is not done");
-      return { id: (await logNutrition(d.api, d.now(), meal)).id };
+      const done = await logNutrition(d.api, d.now(), meal);
+      // Keep today's totals current inside this turn, and hand the model the remainder instead of letting it calculate.
+      const t = await today();
+      t.eaten = { calories: t.eaten.calories + Math.round(meal.kcal), carbs: t.eaten.carbs + Math.round(meal.carbs), protein: t.eaten.protein + Math.round(meal.protein) };
+      return { id: done.id, left: { calories: s.goals.calories - t.eaten.calories, carbs: s.goals.carbs - t.eaten.carbs, protein: s.goals.protein - t.eaten.protein } };
     },
   };
 }
