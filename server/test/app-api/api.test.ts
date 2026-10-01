@@ -1,6 +1,6 @@
 // US-01m3rvr64zrzczabckjf6crb2z (pace), US-01m3rwa0cvrtcapqk0k3h6mqvc (what to eat), US-01m3rw2bqxkqp6v1hg9g02t1zr (chat onboarding and settings).
 import { describe, expect, it } from "vitest";
-import type { ModelClient } from "../../src/ai/model.js";
+import type { AiModel, ConverseResponse } from "../../src/ai/model.js";
 import { localClock, nextDate, sumNutrition } from "../../src/app-api/today.js";
 import { makeTestApp, type TestApp } from "../helpers.js";
 
@@ -33,8 +33,12 @@ function healthHandler(t: TestApp) {
 }
 
 const option = { name: "Chicken with rice", category: "grain", kcal: 560, carbs: 62, protein: 38, ingredients: ["chicken", "rice"], reason: "Closes most of the carb gap." };
-function fakeModel(answer: unknown = { options: [option] }): ModelClient & { calls: number } {
-  const m = { calls: 0, callTool: () => { m.calls++; return Promise.resolve({ toolInput: answer, usage: { inputTokens: 1000, outputTokens: 500 } }); } };
+function fakeModel(answer: unknown = { options: [option] }): AiModel & { calls: number } {
+  const m = {
+    calls: 0,
+    callTool: () => { m.calls++; return Promise.resolve({ toolInput: answer, usage: { inputTokens: 1000, outputTokens: 500 } }); },
+    converse: () => Promise.reject(new Error("not used in this test")),
+  };
   return m;
 }
 
@@ -147,6 +151,74 @@ describe("what-now", () => {
     await t.http.put("/api/app/settings").set("cookie", cookie).set(HEADER).send(settings);
     expect((await ask(t, cookie, {})).status).toBe(400);
     expect((await ask(t, cookie, { image: { mediaType: "image/gif", dataBase64: "AAAA" } })).status).toBe(400);
+  });
+});
+
+function agentModel(...replies: ConverseResponse[]): AiModel & { converseCalls: number } {
+  const m = {
+    converseCalls: 0,
+    callTool: () => Promise.resolve({ toolInput: { options: [option] }, usage: { inputTokens: 1000, outputTokens: 500 } }),
+    converse: () => Promise.resolve(replies[Math.min(m.converseCalls++, replies.length - 1)]!),
+  };
+  return m;
+}
+const reply = (text: string): ConverseResponse => ({ content: [{ type: "text", text }], stopReason: "end_turn", usage: { inputTokens: 200, outputTokens: 40 } });
+const toolCall = (name: string, input: unknown): ConverseResponse => ({ content: [{ type: "tool_use", id: `t-${name}`, name, input }], stopReason: "tool_use", usage: { inputTokens: 200, outputTokens: 40 } });
+
+describe("the chat", () => {
+  const talk = (t: TestApp, cookie: string, body: unknown) => t.http.post("/api/app/chat").set("cookie", cookie).set(HEADER).send(body as object);
+
+  it("needs a session and a model, and refuses an empty message", async () => {
+    const t = makeTestApp({ now: () => NOW });
+    healthHandler(t);
+    expect((await t.http.post("/api/app/chat").set(HEADER).send({ message: "hi" })).status).toBe(401);
+    const { cookie } = await appSignIn(t);
+    expect((await talk(t, cookie, { message: "hi" })).status).toBe(503);
+    const t2 = makeTestApp({ now: () => NOW, ai: { model: agentModel(reply("x")), modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t2);
+    const s2 = await appSignIn(t2);
+    expect((await talk(t2, s2.cookie, { message: "  " })).status).toBe(400);
+  });
+
+  it("sets the person up in conversation, then waits for their own consent tap", async () => {
+    const model = agentModel(toolCall("save_settings", { calories: 2140, window: { startHour: 7, endHour: 22 }, constraints: ["nuts"] }), reply("Elmentettem. Koppints az Elfogadomra."));
+    const t = makeTestApp({ now: () => NOW, ai: { model, modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    const r = await talk(t, cookie, { message: "igen, 2140, 7-22, nincs mogyoró", history: [{ role: "assistant", text: "Jó így?" }] });
+    expect(r.status).toBe(200);
+    expect(r.body.events.map((e: { type: string }) => e.type)).toEqual(["settings_saved", "text"]);
+    expect(r.body).toMatchObject({ needsConsent: true, onboarded: false });
+    const saved = await t.store.getAppSettings("sub-tester");
+    expect(saved).toMatchObject({ goals: { calories: 2140, carbs: 268, protein: 134 }, window: { startHour: 7, endHour: 22 }, constraints: ["nuts"] });
+    expect(saved?.consentAt).toBeUndefined();
+
+    const done = await t.http.post("/api/app/consent").set("cookie", cookie).set(HEADER).send({});
+    expect(done.status).toBe(200);
+    expect((await t.http.get("/api/app/me").set("cookie", cookie)).body.onboarded).toBe(true);
+    // 200+40 per model turn, two turns
+    expect(await t.store.getTokenUsage("sub-tester", "2026-09-30")).toBe(480);
+  });
+
+  it("counts the tokens of the suggestion call inside the chat turn too", async () => {
+    const model = agentModel(toolCall("suggest_options", { optionsText: "rice" }), reply("Szénhidrátból vagy le."));
+    const t = makeTestApp({ now: () => NOW, ai: { model, modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    await t.http.put("/api/app/settings").set("cookie", cookie).set(HEADER).send(settings);
+    const r = await talk(t, cookie, { message: "mit egyek? rizs" });
+    expect(r.body.events.map((e: { type: string }) => e.type)).toEqual(["options", "text"]);
+    expect(await t.store.getTokenUsage("sub-tester", "2026-09-30")).toBe(480 + 1500);
+  });
+
+  it("stops at the daily limit, and consent needs settings first", async () => {
+    const model = agentModel(reply("x"));
+    const t = makeTestApp({ now: () => NOW, ai: { model, modelName: "m", dailyTokenLimit: 240 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    expect((await t.http.post("/api/app/consent").set("cookie", cookie).set(HEADER).send({})).status).toBe(409);
+    expect((await talk(t, cookie, { message: "a" })).status).toBe(200);
+    expect((await talk(t, cookie, { message: "b" })).status).toBe(429);
   });
 });
 

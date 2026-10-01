@@ -1,5 +1,7 @@
 import { Image, Pressable, Text, TextInput, View } from "react-native";
+import { Platform } from "react-native";
 import { tokens as T } from "../theme/tokens";
+import { UiIcon } from "./icons";
 import type { PaceResult } from "../pace";
 
 const c = T.color;
@@ -51,17 +53,23 @@ export function PaceStrip({ items }: { items: PaceItem[] }) {
 export function CameraInput({ value, onChangeText, onSend, onCamera, placeholder = "Write or speak…", disabled = false }:
   { value: string; onChangeText: (t: string) => void; onSend: () => void; onCamera: () => void; placeholder?: string; disabled?: boolean }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
+    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: T.space.s }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Open the camera" disabled={disabled} onPress={onCamera}
         style={{ width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", backgroundColor: c.primaryContainer, opacity: disabled ? 0.5 : 1 }}>
-        <Text style={{ fontSize: 22 }}>📷</Text>
+        <UiIcon name="camera" size={22} color={c.onPrimaryContainer} />
       </Pressable>
-      <View style={{ flex: 1, flexDirection: "row", alignItems: "center", backgroundColor: c.surfaceHigh, borderRadius: 28, paddingLeft: 16, paddingRight: 5, paddingVertical: 5 }}>
-        <TextInput value={value} onChangeText={onChangeText} onSubmitEditing={onSend} placeholder={placeholder} editable={!disabled}
-          placeholderTextColor={c.onSurfaceVariant} style={{ flex: 1, fontSize: T.font.base, color: c.onSurface }} />
+      <View style={{ flex: 1, flexDirection: "row", alignItems: "flex-end", backgroundColor: c.surfaceHigh, borderRadius: 28, paddingLeft: 16, paddingRight: 5, paddingVertical: 5 }}>
+        <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} editable={!disabled} multiline numberOfLines={1}
+          // Long text wraps and the field grows up to about five lines; Enter sends on the web, Shift+Enter adds a line.
+          onKeyPress={(e) => {
+            const ev = e.nativeEvent as unknown as { key: string; shiftKey?: boolean };
+            if (Platform.OS === "web" && ev.key === "Enter" && !ev.shiftKey) { (e as unknown as { preventDefault?: () => void }).preventDefault?.(); onSend(); }
+          }}
+          placeholderTextColor={c.onSurfaceVariant}
+          style={[{ flex: 1, fontSize: T.font.base, color: c.onSurface, maxHeight: 120, paddingTop: 8, paddingBottom: 8 }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
         <Pressable accessibilityRole="button" accessibilityLabel="Send" disabled={disabled} onPress={onSend}
           style={{ width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: disabled ? c.outline : c.primary }}>
-          <Text style={{ color: c.onPrimary, fontSize: 18 }}>↑</Text>
+          <UiIcon name="arrow-up" size={20} color={c.onPrimary} />
         </Pressable>
       </View>
     </View>

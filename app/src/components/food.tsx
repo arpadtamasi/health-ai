@@ -1,11 +1,8 @@
 import { Pressable, Text, View } from "react-native";
-import { foodIcons, tokens as T, type FoodCategory } from "../theme/tokens";
+import { tokens as T } from "../theme/tokens";
+import { FoodIcon, type FoodCategory } from "./icons";
 
 const c = T.color;
-
-export function FoodIcon({ category, size = 24 }: { category: FoodCategory; size?: number }) {
-  return <Text accessibilityElementsHidden style={{ fontSize: size }}>{foodIcons[category] ?? foodIcons.other}</Text>;
-}
 
 export interface Option {
   rank: number;
@@ -28,7 +25,7 @@ export function OptionCard({ option, primary = false, onChoose }: { option: Opti
           <Text style={{ fontWeight: "700", color: primary ? c.primary : c.onSecondaryContainer }}>{option.rank}</Text>
         </View>
         <Text style={{ flex: 1, fontSize: 18, fontWeight: "700", color: fg }}>{option.name}</Text>
-        <FoodIcon category={option.category} />
+        <FoodIcon category={option.category} size={26} color={primary ? c.onPrimary : c.onSurface} />
       </View>
       <Text style={{ fontSize: T.font.body, color: fg }}>{option.kcal} kcal · {option.carbs} g carbs · {option.protein} g protein</Text>
       {option.reason ? <Text style={{ fontSize: T.font.body, color: fg, opacity: 0.9 }}>{option.reason}</Text> : null}

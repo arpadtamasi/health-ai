@@ -8,7 +8,7 @@ import type { GoogleOAuth } from "./google/oauth.js";
 import type { Store } from "./store/types.js";
 import { appApiRouter } from "./app-api/routes.js";
 import { Sessions } from "./app-api/session.js";
-import type { ModelClient } from "./ai/model.js";
+import type { AiModel } from "./ai/model.js";
 import { GoogleAccess } from "./auth/google-access.js";
 import { errorPage } from "./auth/pages.js";
 import { HealthOAuthProvider } from "./auth/provider.js";
@@ -32,7 +32,7 @@ export interface AppDeps {
   /** fetch for Google Health API calls; tests replace it. */
   healthFetch?: Fetch;
   /** The model behind the app's suggestions; absent when no API key is configured. */
-  ai?: { model: ModelClient; modelName: string; dailyTokenLimit: number };
+  ai?: { model: AiModel; modelName: string; dailyTokenLimit: number };
 }
 
 export interface App {

@@ -14,11 +14,3 @@ export const tokens = {
   font: { overline: 12, body: 14, base: 16, title: 22 },
   size: { button: 48, touch: 44 },
 } as const;
-
-// Food icons: the model picks one category per food; this table maps it to an icon. Swap the table to change the set.
-export const foodIcons = {
-  fruit: "🍎", vegetable: "🥦", bread: "🍞", grain: "🍚", meat: "🍗", fish: "🐟", egg: "🥚", dairy: "🥛", sweet: "🍫",
-  drink: "🥤", water: "💧", coffee: "☕", soup: "🍲", salad: "🥗", snack: "🥨", other: "🍽️",
-} as const;
-
-export type FoodCategory = keyof typeof foodIcons;

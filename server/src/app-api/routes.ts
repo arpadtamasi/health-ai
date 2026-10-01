@@ -3,16 +3,17 @@
 // change anything also need the custom header, as CSRF protection.
 import { Router, type Request, type RequestHandler } from "express";
 import express from "express";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { dayKey, TokenBudget, type UsageStore } from "../ai/budget.js";
-import type { ModelClient } from "../ai/model.js";
+import type { AiModel } from "../ai/model.js";
 import { whatNow } from "../ai/whatNow.js";
 import type { HealthApi } from "../health/api.js";
 import type { AppSettings, Store } from "../store/types.js";
 import type { Sessions } from "./session.js";
-import { createdName } from "../mcp/health.js";
-import { loadToday, localClock, mealTypeAt, utcOffsetSeconds } from "./today.js";
+import { runAgent } from "../ai/agent.js";
+import { makeAgentEnv } from "./agentEnv.js";
+import { logNutrition, timeZoneOf } from "./meal.js";
+import { loadToday } from "./today.js";
 
 export const CSRF_HEADER = "x-health-ai";
 const TOKEN_USAGE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
@@ -21,7 +22,7 @@ export interface AppApiDeps {
   store: Store;
   sessions: Sessions;
   apiFor: (userId: string) => HealthApi;
-  ai?: { model: ModelClient; modelName: string; dailyTokenLimit: number };
+  ai?: { model: AiModel; modelName: string; dailyTokenLimit: number };
   now: () => number;
 }
 
@@ -39,6 +40,12 @@ const logBody = z.object({
   protein: z.number().min(0).max(500),
 });
 const POINT_ID = /^(?:users\/[^/]+\/dataTypes\/nutrition-log\/dataPoints\/)?([A-Za-z0-9._~-]{1,200})$/;
+
+const chatBody = z.object({
+  message: z.string().trim().min(1).max(2000),
+  history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000) })).max(40).default([]),
+  image: z.object({ mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]), dataBase64: z.string().max(7_000_000) }).optional(),
+});
 
 const whatNowBody = z.object({
   optionsText: z.string().max(2000).optional(),
@@ -168,25 +175,8 @@ export function appApiRouter(deps: AppApiDeps): Router {
       res.status(409).json({ error: "onboarding_required" });
       return;
     }
-    const api = deps.apiFor(userId);
-    const tzRaw = (await api.getSettings())["timeZone"];
-    const timeZone = typeof tzRaw === "string" && tzRaw ? tzRaw : "UTC";
-    const nowMs = deps.now();
-    const offset = `${utcOffsetSeconds(nowMs, timeZone)}s`;
-    const mealType = mealTypeAt(localClock(nowMs, timeZone).minutes);
-    const id = `hai-${randomUUID()}`;
-    const op = await api.createDataPoint("nutrition-log", {
-      name: `users/me/dataTypes/nutrition-log/dataPoints/${id}`,
-      nutritionLog: {
-        interval: { startTime: new Date(nowMs).toISOString(), endTime: new Date(nowMs + 15 * 60 * 1000).toISOString(), startUtcOffset: offset, endUtcOffset: offset },
-        mealType,
-        foodDisplayName: body.data.name,
-        energy: { kcal: Math.round(body.data.kcal) },
-        totalCarbohydrate: { grams: Math.round(body.data.carbs) },
-        nutrients: [{ nutrient: "PROTEIN", quantity: { grams: Math.round(body.data.protein) } }],
-      },
-    });
-    res.json({ id: createdName(op, "nutrition-log") ?? null, mealType });
+    const done = await logNutrition(deps.apiFor(userId), deps.now(), body.data);
+    res.json({ id: done.id, mealType: done.mealType });
   });
 
   // Undo: removes an entry this service wrote. Names always resolve to users/me, so nobody else's data can be reached.
@@ -198,6 +188,51 @@ export function appApiRouter(deps: AppApiDeps): Router {
       return;
     }
     await deps.apiFor(uid(req)).batchDelete("nutrition-log", [`users/me/dataTypes/nutrition-log/dataPoints/${pointId}`]);
+    res.json({ ok: true });
+  });
+
+  // US-01m3rw2bqxkqp6v1hg9g02t1zr: the app's chat. The client keeps the conversation and sends it back each time.
+  router.post("/chat", async (req, res) => {
+    const userId = uid(req);
+    const body = chatBody.safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({ error: "invalid_request", detail: body.error.issues.map((i) => i.message) });
+      return;
+    }
+    if (!deps.ai) {
+      res.status(503).json({ error: "ai_unavailable" });
+      return;
+    }
+    const api = deps.apiFor(userId);
+    const day = dayKey(new Date(deps.now()), await timeZoneOf(api));
+    const budget = new TokenBudget(usageStoreOf(deps.store, deps.now), deps.ai.dailyTokenLimit);
+    const left = await budget.check(userId, day);
+    if (!left.allowed) {
+      res.status(429).json({ error: "daily_limit", used: left.used, limit: left.limit });
+      return;
+    }
+    const env = makeAgentEnv({ store: deps.store, api, model: deps.ai.model, modelName: deps.ai.modelName, userId, now: deps.now });
+    const result = await runAgent({ model: deps.ai.model, modelName: deps.ai.modelName }, env, {
+      history: body.data.history, message: body.data.message, ...(body.data.image ? { image: body.data.image } : {}),
+    });
+    await budget.record(userId, day, {
+      inputTokens: result.usage.inputTokens + env.extraUsage.inputTokens,
+      outputTokens: result.usage.outputTokens + env.extraUsage.outputTokens,
+    });
+    const settings = await deps.store.getAppSettings(userId);
+    res.json({ events: result.events, needsConsent: settings !== undefined && settings.consentAt === undefined, onboarded: settings?.onboardedAt !== undefined });
+  });
+
+  // The notice and the consent are the person's own tap, never the model's: this ends the setup.
+  router.post("/consent", async (req, res) => {
+    const userId = uid(req);
+    const s = await deps.store.getAppSettings(userId);
+    if (!s) {
+      res.status(409).json({ error: "setup_required" });
+      return;
+    }
+    const at = deps.now();
+    await deps.store.putAppSettings({ ...s, consentAt: s.consentAt ?? at, onboardedAt: s.onboardedAt ?? at, updatedAt: at });
     res.json({ ok: true });
   });
 

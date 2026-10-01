@@ -22,6 +22,14 @@ export type WhatNow =
   | { kind: "options"; options: Option[]; basis: string }
   | { kind: "no_ranking"; reason: "below_floor" | "nothing_fits" | "nothing_visible" };
 
+export type ChatEvent =
+  | { type: "text"; text: string }
+  | { type: "options"; options: Option[]; basis: string }
+  | { type: "logged"; name: string; kcal: number; id: string | null }
+  | { type: "settings_saved" };
+export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean }
+export interface ChatTurn { role: "user" | "assistant"; text: string }
+
 export class ApiError extends Error {
   constructor(readonly status: number, readonly code: string, readonly body: unknown) {
     super(`API ${status} ${code}`);
@@ -53,5 +61,7 @@ export const api = {
   whatNow: (input: { optionsText?: string; image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string } }) => call<WhatNow>("POST", "/what-now", input),
   log: (o: { name: string; kcal: number; carbs: number; protein: number }) => call<{ id: string | null }>("POST", "/log", o),
   unlog: (id: string) => call<{ ok: true }>("POST", "/unlog", { id }),
+  chat: (input: { message: string; history: ChatTurn[]; image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string } }) => call<ChatReply>("POST", "/chat", input),
+  consent: () => call<{ ok: true }>("POST", "/consent", {}),
   logout: () => call<{ ok: true }>("POST", "/logout"),
 };

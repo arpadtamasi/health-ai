@@ -2,7 +2,7 @@
 // (a photo or a typed list) and today's state. The model proposes; a rule check verifies what can be verified
 // (the calorie ceiling and floor, constraints, plausible arithmetic) before anything is shown.
 import { z } from "zod";
-import type { ModelClient, ToolSpec } from "./model.js";
+import type { ToolCaller, ToolSpec } from "./model.js";
 import { gaps, worstMacro } from "./pace.js";
 import { FOOD_CATEGORIES, type DayState, type ImageInput, type Option, type Usage } from "./types.js";
 
@@ -58,7 +58,7 @@ export type WhatNowResult =
   | { kind: "options"; options: Option[]; basis: string; usage: Usage }
   | { kind: "no_ranking"; reason: "below_floor" | "nothing_fits" | "nothing_visible"; usage: Usage };
 
-export interface WhatNowDeps { model: ModelClient; modelName: string }
+export interface WhatNowDeps { model: ToolCaller; modelName: string }
 export interface WhatNowInput { state: DayState; optionsText?: string; images?: ImageInput[] }
 
 type Candidate = Omit<Option, "rank">;

@@ -1,7 +1,7 @@
 // US-01m3rwa0cvrtcapqk0k3h6mqvc (Ask what to eat to catch up), US-01m3rvr64zrzczabckjf6crb2z (pace).
 import { describe, expect, it } from "vitest";
 import { MemoryUsageStore, TokenBudget, dayKey } from "../../src/ai/budget.js";
-import type { ModelClient, ModelRequest } from "../../src/ai/model.js";
+import type { ModelRequest, ToolCaller } from "../../src/ai/model.js";
 import { whatNow } from "../../src/ai/whatNow.js";
 import type { DayState } from "../../src/ai/types.js";
 
@@ -19,7 +19,7 @@ const sandwich = { name: "Wholegrain sandwich", category: "bread", kcal: 430, ca
 const salad = { name: "Egg salad", category: "egg", kcal: 310, carbs: 12, protein: 26, ingredients: ["egg", "lettuce"] };
 const satay = { name: "Peanut satay", category: "meat", kcal: 500, carbs: 20, protein: 30, ingredients: ["chicken", "peanuts"] };
 
-function fake(...answers: unknown[]): ModelClient & { calls: ModelRequest[] } {
+function fake(...answers: unknown[]): ToolCaller & { calls: ModelRequest[] } {
   const calls: ModelRequest[] = [];
   return {
     calls,
@@ -30,7 +30,7 @@ function fake(...answers: unknown[]): ModelClient & { calls: ModelRequest[] } {
     },
   };
 }
-const deps = (m: ModelClient) => ({ model: m, modelName: "claude-haiku-4-5-20251001" });
+const deps = (m: ToolCaller) => ({ model: m, modelName: "claude-haiku-4-5-20251001" });
 
 describe("whatNow", () => {
   it("ranks by how much of the largest gap an option closes (carbs here), at most three", async () => {

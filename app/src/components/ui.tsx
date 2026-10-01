@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Pressable, Text, View, type ViewStyle } from "react-native";
 import { tokens as T } from "../theme/tokens";
+import { FoodIcon, type FoodCategory } from "./icons";
 
 const c = T.color;
 
@@ -20,12 +21,15 @@ export function Button({ label, onPress, kind = "primary", disabled = false }: {
   );
 }
 
-export function Chip({ label, icon, selected = false, onPress }: { label: string; icon?: string; selected?: boolean; onPress?: () => void }) {
+export function Chip({ label, icon, selected = false, onPress }: { label: string; icon?: FoodCategory; selected?: boolean; onPress?: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress}
       style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: T.radius.chip, borderWidth: 1, borderColor: selected ? c.primary : c.outline,
         backgroundColor: selected ? c.primaryContainer : c.surface }}>
-      <Text style={{ fontSize: T.font.body, color: selected ? c.onPrimaryContainer : c.onSurface }}>{icon ? `${icon} ` : ""}{label}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        {icon ? <FoodIcon category={icon} size={16} color={selected ? c.onPrimaryContainer : c.onSurface} /> : null}
+        <Text style={{ fontSize: T.font.body, color: selected ? c.onPrimaryContainer : c.onSurface }}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
