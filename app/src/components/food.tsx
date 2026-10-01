@@ -12,6 +12,7 @@ export interface Option {
   carbs: number;
   protein: number;
   reason?: string;
+  ingredients?: string[];
 }
 
 // US-01m3rwa0cvrtcapqk0k3h6mqvc (Ask what to eat to catch up): tapping a card is the choice.

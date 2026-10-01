@@ -16,8 +16,8 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${St
 
 export interface Toast { text: string; entryId: string | null }
 
-export function StatusScreen({ state, usuals, toast, onLog, onPhoto, onFrequent, onUndo }:
-  { state: DayState | null; usuals: Usual[]; toast: Toast | null; onLog: () => void; onPhoto: () => void; onFrequent: (u: Usual) => void; onUndo: () => void }) {
+export function StatusScreen({ state, usuals, toast, healthConnected, onLog, onPhoto, onFrequent, onUndo, onConnect }:
+  { state: DayState | null; usuals: Usual[]; toast: Toast | null; healthConnected: boolean; onLog: () => void; onPhoto: () => void; onFrequent: (u: Usual) => void; onUndo: () => void; onConnect: () => void }) {
   const { t } = useT();
 
   const view = useMemo(() => {
@@ -33,7 +33,10 @@ export function StatusScreen({ state, usuals, toast, onLog, onPhoto, onFrequent,
     return { rows, worst: worst.result.behind ? worst : null, cal, left: Math.max(0, state.goals.calories - state.eaten.calories) };
   }, [state, t]);
 
-  const frequent = usuals[0];
+  // The buttons come from the history: the most frequent meal and, once there is one, the most frequent water. No water button at the start.
+  const buttons = [usuals.find((u) => u.kind === "meal"), usuals.find((u) => u.kind === "water")].filter((u): u is Usual => u !== undefined);
+  const water = state?.water;
+  const waterFraction = water && water.goalMl > 0 ? Math.min(1, water.ml / water.goalMl) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface, paddingHorizontal: T.space.xl, paddingTop: T.space.m, gap: T.space.m }}>
@@ -70,7 +73,22 @@ export function StatusScreen({ state, usuals, toast, onLog, onPhoto, onFrequent,
                   </Text>
                 </View>
               ))}
+              {water ? (
+                <View style={{ width: "50%", alignItems: "center", gap: 4 }}>
+                  <Ring eaten={waterFraction} plan={waterFraction} behind={false} center={`${water.ml}`} sub={t.waterOf(water.goalMl)} />
+                  <Text style={{ fontSize: 14, fontWeight: "600", color: c.onSurface }}>{t.waterLabel}</Text>
+                  <Text style={{ fontSize: 13, color: c.onSurfaceVariant }}>{water.ml >= water.goalMl ? t.waterDone : t.waterLeft(water.goalMl - water.ml)}</Text>
+                </View>
+              ) : null}
             </View>
+
+            {!healthConnected ? (
+              <View style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
+                <Text style={{ fontSize: T.font.base, fontWeight: "600", color: c.onSurface }}>{t.connectTitle}</Text>
+                <Text style={{ fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.connectText}</Text>
+                <Chip label={t.connectButton} onPress={onConnect} />
+              </View>
+            ) : null}
 
             {toast ? (
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: c.surfaceLow, borderRadius: T.radius.card, paddingVertical: T.space.s, paddingLeft: T.space.l, paddingRight: T.space.s }}>
@@ -88,12 +106,12 @@ export function StatusScreen({ state, usuals, toast, onLog, onPhoto, onFrequent,
           <UiIcon name="plus" size={22} color={c.onPrimary} />
           <Text style={{ fontSize: 17, fontWeight: "700", color: c.onPrimary }}>{t.log}</Text>
         </Pressable>
-        {frequent ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={frequent.name} onPress={() => onFrequent(frequent)}
-            style={{ height: 56, paddingHorizontal: 18, borderRadius: 28, backgroundColor: c.primaryContainer, alignItems: "center", justifyContent: "center", maxWidth: 150 }}>
-            <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: "600", color: c.onPrimaryContainer }}>{frequent.name}</Text>
+        {buttons.map((u) => (
+          <Pressable key={`${u.kind}-${u.name}`} accessibilityRole="button" accessibilityLabel={u.name} onPress={() => onFrequent(u)}
+            style={{ height: 56, paddingHorizontal: 18, borderRadius: 28, backgroundColor: c.primaryContainer, alignItems: "center", justifyContent: "center", maxWidth: 130 }}>
+            <Text numberOfLines={1} style={{ fontSize: 15, fontWeight: "600", color: c.onPrimaryContainer }}>{u.kind === "water" ? `${u.ml} ml` : u.name}</Text>
           </Pressable>
-        ) : null}
+        ))}
         <Pressable accessibilityRole="button" accessibilityLabel={t.photo} onPress={onPhoto}
           style={{ flexDirection: "row", alignItems: "center", gap: 8, height: 56, paddingHorizontal: 18, borderRadius: 28, backgroundColor: c.primaryContainer }}>
           <UiIcon name="camera" size={20} color={c.onPrimaryContainer} />

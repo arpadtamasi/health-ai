@@ -28,9 +28,6 @@
           "cameraPermission": "Health AI uses the camera to read what you can eat (fridge, menu, counter, plate)."
         }
       ]
-    ],
-    "experiments": {
-      "baseUrl": "/app"
-    }
+    ]
   }
 }

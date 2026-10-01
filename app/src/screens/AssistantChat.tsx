@@ -39,6 +39,8 @@ const adapter: ChatModelAdapter = {
       r.events.forEach((e: ChatEvent, i) => {
         if (e.type === "text") parts.push({ type: "text", text: e.text });
         else if (e.type === "options") parts.push({ type: "tool-call", toolCallId: `opts-${i}`, toolName: "show_options", args: {}, argsText: "{}", result: e.options });
+        else if (e.type === "logged_water") parts.push({ type: "tool-call", toolCallId: `water-${i}`, toolName: "logged_water", args: {}, argsText: "{}", result: { ml: e.ml, id: e.id } });
+        else if (e.type === "confirm_delete") parts.push({ type: "tool-call", toolCallId: `del-${i}`, toolName: "confirm_delete", args: {}, argsText: "{}", result: { ids: e.ids, all: e.all, labels: e.labels } });
         else if (e.type === "logged") parts.push({ type: "tool-call", toolCallId: `log-${i}`, toolName: "logged", args: {}, argsText: "{}", result: { name: e.name, kcal: e.kcal, id: e.id } });
       });
       if (isLang(r.language)) box.setLang(r.language);
@@ -67,7 +69,29 @@ function OptionsPart({ result, onChoose }: { result: unknown; onChoose: (o: Opti
   return <View style={{ gap: T.space.s, alignSelf: "stretch" }}>{options.map((o) => <OptionCard key={o.rank} option={o} primary={o.rank === 1} onChoose={onChoose} />)}</View>;
 }
 
-function Message({ onChoose, onUndo }: { onChoose: (o: Option) => void; onUndo: (id: string | null) => void }) {
+interface DeleteAsk { ids: string[]; all: boolean; labels: string[] }
+
+/** The model only proposes a deletion; this card is the person's own tap that carries it out. */
+function ConfirmDelete({ ask, onConfirm }: { ask: DeleteAsk; onConfirm: (a: DeleteAsk) => Promise<boolean> }) {
+  const { t } = useT();
+  const [state, setState] = useState<"ask" | "done" | "failed" | "kept">("ask");
+  return (
+    <View style={{ alignSelf: "stretch", backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
+      <Text style={{ fontSize: T.font.base, fontWeight: "600", color: c.onSurface }}>{ask.all ? t.deleteAllTitle : t.deleteTitle}</Text>
+      {ask.all ? <Text style={{ fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.deleteAllText}</Text> : ask.labels.map((l) => <Text key={l} style={{ fontSize: T.font.body, color: c.onSurfaceVariant }}>{l}</Text>)}
+      {state === "ask" || state === "failed" ? (
+        <View style={{ flexDirection: "row", gap: T.space.s }}>
+          <Chip label={t.deleteConfirm} onPress={() => void onConfirm(ask).then((ok) => setState(ok ? "done" : "failed"))} />
+          <Chip label={t.deleteCancel} onPress={() => setState("kept")} />
+        </View>
+      ) : null}
+      {state === "done" ? <Text style={{ fontSize: T.font.body, color: c.onSurface }}>{t.deleted}</Text> : null}
+      {state === "failed" ? <Text style={{ fontSize: T.font.body, color: c.warn }}>{t.deleteFailed}</Text> : null}
+    </View>
+  );
+}
+
+function Message({ onChoose, onUndo, onDelete }: { onChoose: (o: Option) => void; onUndo: (id: string | null) => void; onDelete: (a: DeleteAsk) => Promise<boolean> }) {
   const { t } = useT();
   const role = useAuiState((s) => s.message.role);
   return (
@@ -81,6 +105,11 @@ function Message({ onChoose, onUndo }: { onChoose: (o: Option) => void; onUndo: 
             const r = part.result as { name: string; kcal: number; id: string | null };
             return <Bubble role="assistant"><Text style={{ color: c.onSurface, fontSize: T.font.base }}>{t.logged(r.name, r.kcal)}</Text><View style={{ marginTop: 6, alignSelf: "flex-start" }}><Chip label={t.undo} onPress={() => onUndo(r.id)} /></View></Bubble>;
           }
+          if (part.type === "tool-call" && part.toolName === "logged_water") {
+            const r = part.result as { ml: number; id: string | null };
+            return <Bubble role="assistant"><Text style={{ color: c.onSurface, fontSize: T.font.base }}>{t.waterLogged(r.ml)}</Text><View style={{ marginTop: 6, alignSelf: "flex-start" }}><Chip label={t.undo} onPress={() => onUndo(r.id)} /></View></Bubble>;
+          }
+          if (part.type === "tool-call" && part.toolName === "confirm_delete") return <ConfirmDelete ask={part.result as DeleteAsk} onConfirm={onDelete} />;
           return null;
         }}
       </MessagePrimitive.Parts>
@@ -136,6 +165,13 @@ function Inner({ onboarded, usuals, photo, onPhotoHandled, onCamera, onStatus, o
       onChanged();
     } catch { /* the card stays; the person can tap again */ }
   };
+  const addWater = async (ml: number) => {
+    try {
+      const { id } = await backend.water(ml);
+      aui.thread().append({ role: "assistant", content: [{ type: "tool-call", toolCallId: `water-${Date.now()}`, toolName: "logged_water", args: {}, argsText: "{}", result: { ml, id } }] });
+      onChanged();
+    } catch { /* the chip stays; the person can tap again */ }
+  };
   const undo = async (id: string | null) => {
     if (!id) return;
     try {
@@ -143,6 +179,14 @@ function Inner({ onboarded, usuals, photo, onPhotoHandled, onCamera, onStatus, o
       aui.thread().append({ role: "assistant", content: [{ type: "text", text: t.undone }] });
       onChanged();
     } catch { aui.thread().append({ role: "assistant", content: [{ type: "text", text: t.undoFailed }] }); }
+  };
+
+  const deleteEntries = async (a: DeleteAsk): Promise<boolean> => {
+    try {
+      if (a.all) await backend.deleteAll(); else await backend.deleteEntries(a.ids);
+      onChanged();
+      return true;
+    } catch { return false; }
   };
 
   const replies = meta.replies?.length ? meta.replies : (ready ? [] : t.firstReplies);
@@ -167,7 +211,7 @@ function Inner({ onboarded, usuals, photo, onPhotoHandled, onCamera, onStatus, o
       </View>
       <ThreadPrimitive.Root style={{ flex: 1 }}>
         <ThreadPrimitive.MessagesFlatList autoScroll style={{ flex: 1 }} contentContainerStyle={{ gap: T.space.s, paddingBottom: T.space.m }}>
-          {() => <Message onChoose={(o) => void choose(o)} onUndo={(id) => void undo(id)} />}
+          {() => <Message onChoose={(o) => void choose(o)} onUndo={(id) => void undo(id)} onDelete={deleteEntries} />}
         </ThreadPrimitive.MessagesFlatList>
         {showConsent ? (
           <View style={{ gap: T.space.s, backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l }}>
@@ -186,7 +230,7 @@ function Inner({ onboarded, usuals, photo, onPhotoHandled, onCamera, onStatus, o
               <Text style={{ fontSize: T.font.body, color: c.onPrimaryContainer }}>{t.whatNow}</Text>
             </ThreadPrimitive.Suggestion>
           ) : null}
-          {ready && !replies.length ? usuals.map((u) => <Chip key={u.name} label={u.name} onPress={() => void choose({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein })} />) : null}
+          {ready && !replies.length ? usuals.map((u) => <Chip key={`${u.kind}-${u.name}`} label={u.kind === "water" ? `${u.ml} ml` : u.name} onPress={() => void (u.kind === "water" ? addWater(u.ml ?? 250) : choose({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein }))} />) : null}
         </View>
         <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "flex-end", gap: T.space.s }}>
           <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={onCamera}

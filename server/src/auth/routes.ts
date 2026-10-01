@@ -10,7 +10,7 @@ import { AUTH_REQUEST_TTL_MS, randomToken, sha256 } from "./tokens.js";
 
 export const GOOGLE_CALLBACK_PATH = "/oauth/google/callback";
 /** Where the browser lands after the app's own sign-in. */
-export const APP_HOME = "/app/";
+export const APP_HOME = "/";
 
 export interface AuthRoutesDeps {
   store: Store;

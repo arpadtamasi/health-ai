@@ -43,13 +43,13 @@ function fakeModel(answer: unknown = { options: [option] }): AiModel & { calls: 
 }
 
 describe("the app's sign-in", () => {
-  it("goes to Google and comes back with an HttpOnly __session cookie, then to /app/", async () => {
+  it("goes to Google and comes back with an HttpOnly __session cookie, then to the app", async () => {
     const t = makeTestApp({ now: () => NOW });
     const { start, cb } = await appSignIn(t);
     expect(start.status).toBe(302);
     expect(String(start.headers["location"])).toContain("accounts.google.test");
     expect(cb.status).toBe(302);
-    expect(cb.headers["location"]).toBe("/app/");
+    expect(cb.headers["location"]).toBe("/");
     const cookie = String(cb.headers["set-cookie"]?.[0]);
     expect(cookie).toMatch(/^__session=.+; Path=\/; HttpOnly; SameSite=Strict/);
   });

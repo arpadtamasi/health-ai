@@ -2,7 +2,8 @@
 // survives a look at the Status; the camera is a third, full-screen step that returns to the Chat with the photo.
 import { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
-import { ApiError, type DayState, type Usual } from "../api/client";
+import { Linking, Platform } from "react-native";
+import { ApiError, connectHealthUrl, type DayState, type Usual } from "../api/client";
 import { backend } from "../backend";
 import { useT } from "../i18n";
 import { tokens as T } from "../theme/tokens";
@@ -12,7 +13,7 @@ import { StatusScreen, type Toast } from "./StatusScreen";
 
 type View_ = "status" | "chat";
 
-export function Home({ onboarded, onSignedOut }: { onboarded: boolean; onSignedOut: () => void }) {
+export function Home({ onboarded, healthConnected, onSignedOut }: { onboarded: boolean; healthConnected: boolean; onSignedOut: () => void }) {
   const { t } = useT();
   const [ready, setReady] = useState(onboarded);
   const [view, setView] = useState<View_>(onboarded ? "status" : "chat");
@@ -37,8 +38,13 @@ export function Home({ onboarded, onSignedOut }: { onboarded: boolean; onSignedO
 
   const frequent = async (u: Usual) => {
     try {
-      const { id } = await backend.log({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein });
-      setToast({ text: t.logged(u.name, u.kcal), entryId: id });
+      if (u.kind === "water") {
+        const { id } = await backend.water(u.ml ?? 250);
+        setToast({ text: t.waterLogged(u.ml ?? 250), entryId: id });
+      } else {
+        const { id } = await backend.log({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein });
+        setToast({ text: t.logged(u.name, u.kcal), entryId: id });
+      }
       await load();
     } catch { /* the Status stays as it is; the person can tap again */ }
   };
@@ -46,6 +52,11 @@ export function Home({ onboarded, onSignedOut }: { onboarded: boolean; onSignedO
     if (toast?.entryId) { try { await backend.unlog(toast.entryId); } catch { return; } }
     setToast(null);
     await load();
+  };
+
+  const connect = () => {
+    if (Platform.OS === "web") window.location.href = connectHealthUrl;
+    else void Linking.openURL(connectHealthUrl);
   };
 
   if (cameraOpen) {
@@ -56,7 +67,7 @@ export function Home({ onboarded, onSignedOut }: { onboarded: boolean; onSignedO
     <View style={{ flex: 1, backgroundColor: T.color.surface }}>
       {ready ? (
         <View style={{ flex: 1, display: view === "status" ? "flex" : "none" }}>
-          <StatusScreen state={state} usuals={usuals} toast={toast} onLog={() => setView("chat")} onPhoto={() => setCameraOpen(true)} onFrequent={(u) => void frequent(u)} onUndo={() => void undoToast()} />
+          <StatusScreen state={state} usuals={usuals} toast={toast} healthConnected={healthConnected} onConnect={connect} onLog={() => setView("chat")} onPhoto={() => setCameraOpen(true)} onFrequent={(u) => void frequent(u)} onUndo={() => void undoToast()} />
         </View>
       ) : null}
       <View style={{ flex: 1, display: view === "chat" ? "flex" : "none" }}>

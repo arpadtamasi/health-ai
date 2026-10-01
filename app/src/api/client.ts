@@ -17,8 +17,7 @@ export interface DayState {
   date: string;
   minutes: number;
   timeZone: string;
-  /** Not sent yet: arrives with the water layer. */
-  water?: { ml: number; goalMl: number };
+  water: { ml: number; goalMl: number };
 }
 export type WhatNow =
   | { kind: "options"; options: Option[]; basis: string }
@@ -28,13 +27,16 @@ export type ChatEvent =
   | { type: "text"; text: string }
   | { type: "options"; options: Option[]; basis: string }
   | { type: "logged"; name: string; kcal: number; id: string | null }
+  | { type: "logged_water"; ml: number; id: string | null }
+  | { type: "confirm_delete"; ids: string[]; all: boolean; labels: string[] }
   | { type: "settings_saved" }
   | { type: "replies"; replies: string[] }
   | { type: "language"; language: "en" | "hu" };
 export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean; language: "en" | "hu" | null }
 export interface ChatTurn { role: "user" | "assistant"; text: string }
 
-export interface Usual { name: string; kcal: number; carbs: number; protein: number; count: number }
+export interface Usual { kind: "meal" | "water"; name: string; kcal: number; carbs: number; protein: number; ml?: number; count: number }
+export interface Me { email: string; onboarded: boolean; language: "en" | "hu" | null; healthConnected: boolean }
 
 export class ApiError extends Error {
   constructor(readonly status: number, readonly code: string, readonly body: unknown) {
@@ -44,11 +46,16 @@ export class ApiError extends Error {
 
 export const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? "";
 
+/** The phone's own time zone, so that "today" and "now" are the person's, wherever they are. */
+function timeZone(): string {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; }
+}
+
 async function call<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}/api/app${path}`, {
     method,
     credentials: "include",
-    headers: { ...(body ? { "content-type": "application/json" } : {}), ...(method !== "GET" ? { "x-health-ai": "1" } : {}) },
+    headers: { "x-timezone": timeZone(), ...(body ? { "content-type": "application/json" } : {}), ...(method !== "GET" ? { "x-health-ai": "1" } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const json = (await res.json().catch(() => ({}))) as { error?: string };
@@ -56,16 +63,21 @@ async function call<T>(method: "GET" | "POST" | "PUT", path: string, body?: unkn
   return json as T;
 }
 
-/** The Google sign-in starts on the server; the browser comes back to /app/ with the session cookie. */
+/** The Google sign-in starts on the server; the browser comes back to the app with the session cookie. */
 export const signInUrl = `${API_BASE}/api/auth/start`;
+/** Connecting Google Health afterwards: the same sign-in, asking for the Health permissions. */
+export const connectHealthUrl = `${API_BASE}/api/auth/connect-health`;
 
 export const api = {
-  me: () => call<{ email: string; onboarded: boolean; language: "en" | "hu" | null }>("GET", "/me"),
+  me: () => call<Me>("GET", "/me"),
   settings: () => call<{ settings: Settings | null }>("GET", "/settings"),
   saveSettings: (s: Omit<Settings, "onboardedAt"> & { consent?: boolean }) => call<{ settings: Settings }>("PUT", "/settings", s),
   state: () => call<DayState>("GET", "/state"),
   whatNow: (input: { optionsText?: string; image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string } }) => call<WhatNow>("POST", "/what-now", input),
-  log: (o: { name: string; kcal: number; carbs: number; protein: number }) => call<{ id: string | null }>("POST", "/log", o),
+  log: (o: { name: string; kcal: number; carbs: number; protein: number; ingredients?: string[]; source?: "photo" | "typed" | "button" | "chat" }) => call<{ id: string | null }>("POST", "/log", o),
+  water: (ml: number) => call<{ id: string | null }>("POST", "/water", { ml }),
+  deleteEntries: (ids: string[]) => call<{ deleted: number }>("POST", "/entries/delete", { ids }),
+  deleteAll: () => call<{ deleted: number }>("POST", "/entries/delete-all", {}),
   unlog: (id: string) => call<{ ok: true }>("POST", "/unlog", { id }),
   chat: (input: { message: string; history: ChatTurn[]; image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string } }) => call<ChatReply>("POST", "/chat", input),
   consent: () => call<{ ok: true }>("POST", "/consent", {}),
