@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { ApiError, type ChatEvent, type DayState } from "../api/client";
+import { ApiError, type ChatEvent, type DayState, type Usual } from "../api/client";
 import { backend } from "../backend";
 import { Button, Chip } from "../components/ui";
 import { OptionCard, type Option } from "../components/food";
 import { CameraInput, ChatBubble, PaceStrip, PhotoBubble, type PaceItem } from "../components/chat";
 import { UiIcon } from "../components/icons";
 import { pace } from "../pace";
-import { usuals } from "../data/mock";
 import { tokens as T } from "../theme/tokens";
 import { CameraScreen } from "./CameraScreen";
 
@@ -19,7 +18,7 @@ type Msg =
   | { id: number; kind: "options"; options: Option[] }
   | { id: number; kind: "undo"; entryId: string | null };
 
-const MOCK = process.env.EXPO_PUBLIC_MOCK === "1";
+const FIRST_REPLIES = ["None", "Nuts", "Lactose", "Gluten"];
 const GREETING = "Hi! I help you decide what to eat, from what you already ate today. First, a short setup: is there anything I should never suggest, like an allergy or something you dislike?";
 const READY = "Hi! Ask me what to eat, tell me what you ate, or show me a photo.";
 
@@ -31,6 +30,8 @@ export function ChatScreen({ onboarded, onSignedOut }: { onboarded: boolean; onS
   const [state, setState] = useState<DayState | null>(null);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [replies, setReplies] = useState<string[]>(onboarded ? [] : FIRST_REPLIES);
+  const [usuals, setUsuals] = useState<Usual[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([{ id: 0, kind: "text", from: "assistant", text: onboarded ? READY : GREETING }]);
   const scroller = useRef<ScrollView>(null);
@@ -44,7 +45,10 @@ export function ChatScreen({ onboarded, onSignedOut }: { onboarded: boolean; onS
   const loadState = useCallback(async () => {
     try { setState(await backend.state()); } catch (e) { if (e instanceof ApiError && e.status === 401) onSignedOut(); }
   }, [onSignedOut]);
-  useEffect(() => { if (ready) void loadState(); }, [ready, loadState]);
+  const loadUsuals = useCallback(async () => {
+    try { setUsuals(await backend.usuals()); } catch { /* the buttons are a convenience: no buttons is fine */ }
+  }, []);
+  useEffect(() => { if (ready) { void loadState(); void loadUsuals(); } }, [ready, loadState, loadUsuals]);
 
   const items: PaceItem[] = useMemo(() => {
     if (!state) return [];
@@ -66,6 +70,8 @@ export function ChatScreen({ onboarded, onSignedOut }: { onboarded: boolean; onS
       else if (e.type === "options") out.push({ id: id(), kind: "options", options: e.options });
       else if (e.type === "logged") out.push({ id: id(), kind: "undo", entryId: e.id });
     }
+    const last = [...events].reverse().find((e): e is Extract<ChatEvent, { type: "replies" }> => e.type === "replies");
+    setReplies(last ? last.replies : []);
     if (out.length) add(...out);
   }, [add]);
 
@@ -91,6 +97,7 @@ export function ChatScreen({ onboarded, onSignedOut }: { onboarded: boolean; onS
     const t = text.trim();
     if (!t || busy) return;
     setDraft("");
+    setReplies([]);
     add({ id: id(), kind: "text", from: "user", text: t });
     void talk(t);
   };
@@ -108,6 +115,7 @@ export function ChatScreen({ onboarded, onSignedOut }: { onboarded: boolean; onS
       const { id: entryId } = await backend.log(o);
       add(say(`Logged ${o.name} (${o.kcal} kcal).`), { id: id(), kind: "undo", entryId });
       await loadState();
+      void loadUsuals();
     } catch { add(say("I could not log that. Please try again.")); } finally { setBusy(false); }
   };
 
@@ -156,10 +164,14 @@ export function ChatScreen({ onboarded, onSignedOut }: { onboarded: boolean; onS
         {busy ? <ChatBubble text="…" /> : null}
       </ScrollView>
       <View style={{ gap: T.space.s }}>
-        {ready ? (
+        {ready || replies.length ? (
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: T.space.s }}>
-            <Chip label="What should I eat now?" selected onPress={() => send("What should I eat now?")} />
-            {MOCK ? usuals.map((u) => <Chip key={u.label} label={u.label} icon={u.category} />) : null}
+            {replies.length ? replies.map((r) => <Chip key={r} label={r} onPress={() => send(r)} />) : (
+              <>
+                <Chip label="What should I eat now?" selected onPress={() => send("What should I eat now?")} />
+                {usuals.map((u) => <Chip key={u.name} label={u.name} onPress={() => void choose({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein })} />)}
+              </>
+            )}
           </View>
         ) : null}
         <CameraInput value={draft} onChangeText={setDraft} onSend={() => send()} onCamera={() => setCameraOpen(true)} disabled={busy || needsConsent} />

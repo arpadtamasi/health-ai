@@ -17,6 +17,12 @@ export function localClock(nowMs: number, timeZone: string): LocalClock {
   return { date: `${get("year")}-${get("month")}-${get("day")}`, minutes: Number(get("hour")) * 60 + Number(get("minute")) };
 }
 
+export function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function nextDate(date: string): string {
   const d = new Date(`${date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 1);
@@ -78,4 +84,48 @@ export function mealTypeAt(minutes: number): "BREAKFAST" | "LUNCH" | "SNACK" | "
   if (minutes < 15 * 60) return "LUNCH";
   if (minutes < 18 * 60) return "SNACK";
   return "DINNER";
+}
+
+export interface Usual { name: string; kcal: number; carbs: number; protein: number; count: number }
+
+/** The foods logged most often: grouped by name (case-insensitive), averaged, at least `minCount` times, most frequent first. */
+export function topUsuals(points: unknown[], limit = 4, minCount = 2): Usual[] {
+  const groups = new Map<string, { name: string; n: number; kcal: number; carbs: number; protein: number }>();
+  for (const p of points) {
+    const n = obj(obj(p)["nutritionLog"]);
+    const name = typeof n["foodDisplayName"] === "string" ? n["foodDisplayName"].trim() : "";
+    if (!name) continue;
+    const macros = sumNutrition([p]);
+    const key = name.toLowerCase();
+    const g = groups.get(key) ?? { name, n: 0, kcal: 0, carbs: 0, protein: 0 };
+    g.n += 1; g.kcal += macros.calories; g.carbs += macros.carbs; g.protein += macros.protein;
+    groups.set(key, g);
+  }
+  return [...groups.values()]
+    .filter((g) => g.n >= minCount)
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
+    .slice(0, limit)
+    .map((g) => ({ name: g.name, kcal: Math.round(g.kcal / g.n), carbs: Math.round(g.carbs / g.n), protein: Math.round(g.protein / g.n), count: g.n }));
+}
+
+/** Entries of the last `days` days written through this service, for the usuals buttons. */
+export async function loadUsuals(api: HealthApi, nowMs: number, days = 30): Promise<Usual[]> {
+  const settings = await api.getSettings();
+  const timeZone = typeof settings["timeZone"] === "string" && settings["timeZone"] ? settings["timeZone"] : "UTC";
+  const today = localClock(nowMs, timeZone).date;
+  const type = findDataType("nutrition-log");
+  if (!type) throw new Error("nutrition-log is missing from the registry");
+  const range = parseRange(addDays(today, -days), nextDate(today));
+  if ("error" in range) throw new Error(range.error);
+  const filter = listFilter(type, range);
+  if (typeof filter !== "string") throw new Error(filter.error);
+  const points: unknown[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < 10; page++) {
+    const res = await api.listDataPoints(type.id, { filter, pageSize: 100, ...(pageToken ? { pageToken } : {}) });
+    if (Array.isArray(res["dataPoints"])) points.push(...res["dataPoints"]);
+    pageToken = typeof res["nextPageToken"] === "string" && res["nextPageToken"] ? res["nextPageToken"] : undefined;
+    if (!pageToken) break;
+  }
+  return topUsuals(points);
 }

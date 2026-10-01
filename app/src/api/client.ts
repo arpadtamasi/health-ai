@@ -26,9 +26,12 @@ export type ChatEvent =
   | { type: "text"; text: string }
   | { type: "options"; options: Option[]; basis: string }
   | { type: "logged"; name: string; kcal: number; id: string | null }
-  | { type: "settings_saved" };
+  | { type: "settings_saved" }
+  | { type: "replies"; replies: string[] };
 export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean }
 export interface ChatTurn { role: "user" | "assistant"; text: string }
+
+export interface Usual { name: string; kcal: number; carbs: number; protein: number; count: number }
 
 export class ApiError extends Error {
   constructor(readonly status: number, readonly code: string, readonly body: unknown) {
@@ -63,5 +66,6 @@ export const api = {
   unlog: (id: string) => call<{ ok: true }>("POST", "/unlog", { id }),
   chat: (input: { message: string; history: ChatTurn[]; image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string } }) => call<ChatReply>("POST", "/chat", input),
   consent: () => call<{ ok: true }>("POST", "/consent", {}),
+  usuals: () => call<{ usuals: Usual[] }>("GET", "/usuals"),
   logout: () => call<{ ok: true }>("POST", "/logout"),
 };

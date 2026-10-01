@@ -32,7 +32,9 @@ export type ChatEvent =
   | { type: "text"; text: string }
   | { type: "options"; options: Option[]; basis: string }
   | { type: "logged"; name: string; kcal: number; id: string | null }
-  | { type: "settings_saved" };
+  | { type: "settings_saved" }
+  /** Short answers the person can tap instead of typing. */
+  | { type: "replies"; replies: string[] };
 
 export interface ChatTurn { role: "user" | "assistant"; text: string }
 
@@ -46,7 +48,8 @@ const SYSTEM = [
   "Call save_settings only after the person agreed to the values. The person must still tap the Agree button the app shows for the notice and consent; you cannot give consent for them, so say so when you have saved everything.",
   "SUGGESTIONS: when they ask what to eat, or show a photo of a fridge, a menu, a counter or a plate, call suggest_options (the photo of this message is attached automatically; pass optionsText only when they typed options). Then add one short sentence about the biggest gap; the app shows the cards itself, do not repeat them.",
   "If they have not told you what they can choose from and there is no photo, ask them to type it or take a photo.",
-  "LOGGING: when the person's latest message says they ate something, call log_meal for exactly that, with honest estimates for calories, carbs and protein, and say what you logged.",
+  "QUICK REPLIES: when you ask a question that has a few common answers, also call quick_replies with 2 to 4 short answers in the person's language: for foods to avoid include \"none\" plus common ones (nuts, lactose, gluten); for the activity level the levels; for the aim lose, keep and gain; for a yes or no question yes and no. Do not call it when the answer is free text, like an age or a weight.",
+  "LOGGING: when the person's latest message says they ate something, call log_meal for exactly that, naming the food in the language the person writes in and giving honest estimates for calories, carbs and protein, and say what you logged.",
   "Never log a food you suggested, a food from an earlier message, or anything the person did not just say they ate: the app logs the cards they tap itself.",
   "After log_meal, use the numbers the tool returns for what is left today; never work them out yourself.",
 ].join("\n");
@@ -69,6 +72,9 @@ const TOOLS: ToolSpec[] = [
   tool("suggest_options", "Three ranked options to eat now, from the photo attached to this message or from options the person typed.", {
     optionsText: { type: "string", description: "Only when the person typed the options; leave out when there is a photo." },
   }),
+  tool("quick_replies", "Show 2 to 4 short answers the person can tap instead of typing, for the question you are asking.", {
+    replies: { type: "array", items: { type: "string" }, description: "Each at most 24 characters, in the person's language." },
+  }, ["replies"]),
   tool("log_meal", "Log a meal the person says they ate, with estimated values for the portion.", {
     name: { type: "string" }, kcal: { type: "number" }, carbs: { type: "number", description: "grams" }, protein: { type: "number", description: "grams" },
   }, ["name", "kcal", "carbs", "protein"]),
@@ -132,6 +138,13 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
             return JSON.stringify({ shown: r.options.map((o) => `${o.rank}. ${o.name} (${o.kcal} kcal, ${o.carbs} g carbs, ${o.protein} g protein)`) });
           }
           return JSON.stringify({ shown: [], reason: r.reason });
+        }
+        case "quick_replies": {
+          const list = Array.isArray(args["replies"]) ? args["replies"].filter((r): r is string => typeof r === "string") : [];
+          const replies = [...new Set(list.map((r) => r.trim()).filter((r) => r.length > 0 && r.length <= 24))].slice(0, 4);
+          if (replies.length < 2) return JSON.stringify({ error: "Give 2 to 4 short answers." });
+          events.push({ type: "replies", replies });
+          return JSON.stringify({ shown: true });
         }
         case "log_meal": {
           const nm = typeof args["name"] === "string" ? args["name"].trim() : "";

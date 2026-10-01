@@ -96,6 +96,16 @@ describe("the chat agent", () => {
     expect(String((resultsOf(m.requests[1]!)[0] as { error: string }).error)).toMatch(/Setup is not done/);
   });
 
+  it("offers short answers as buttons: at most four, short, no repeats", async () => {
+    const m = scripted(call("t1", "quick_replies", { replies: ["Nincs", "Mogyoró", "Laktóz", "Glutén", "Mogyoró", "Valami nagyon hosszú válasz, amit senki nem koppintana"] }), say("Van, amit nem ehetsz?"));
+    const r = await runAgent(deps(m), env(), { history: [], message: "szia" });
+    expect(r.events).toEqual([{ type: "replies", replies: ["Nincs", "Mogyoró", "Laktóz", "Glutén"] }, { type: "text", text: "Van, amit nem ehetsz?" }]);
+    const one = scripted(call("t1", "quick_replies", { replies: ["csak egy"] }), say("ok"));
+    const r2 = await runAgent(deps(one), env(), { history: [], message: "x" });
+    expect(r2.events.map((e) => e.type)).toEqual(["text"]);
+    expect(resultsOf(one.requests[1]!)[0]).toHaveProperty("error");
+  });
+
   it("logs a meal the person says they ate", async () => {
     const e = env();
     const m = scripted(call("t1", "log_meal", { name: "Pogácsa", kcal: 110, carbs: 12, protein: 3 }), say("Naplóztam a pogácsát."));

@@ -1,7 +1,7 @@
 // US-01m3rvr64zrzczabckjf6crb2z (pace), US-01m3rwa0cvrtcapqk0k3h6mqvc (what to eat), US-01m3rw2bqxkqp6v1hg9g02t1zr (chat onboarding and settings).
 import { describe, expect, it } from "vitest";
 import type { AiModel, ConverseResponse } from "../../src/ai/model.js";
-import { localClock, nextDate, sumNutrition } from "../../src/app-api/today.js";
+import { addDays, localClock, nextDate, sumNutrition, topUsuals } from "../../src/app-api/today.js";
 import { makeTestApp, type TestApp } from "../helpers.js";
 
 const NOW = Date.parse("2026-09-30T12:20:00Z"); // 14:20 in Budapest (UTC+2)
@@ -265,6 +265,29 @@ describe("log and undo", () => {
   });
 });
 
+describe("the usuals", () => {
+  const meal = (name: string, kcal: number) => ({ nutritionLog: { foodDisplayName: name, energy: { kcal }, totalCarbohydrate: { grams: 10 }, nutrients: [{ nutrient: "PROTEIN", quantity: { grams: 2 } }] } });
+
+  it("ranks foods by how often they were logged, merges case, needs two entries, and keeps four", () => {
+    const points = [meal("Cappuccino", 90), meal("cappuccino", 100), meal("Cappuccino", 95), meal("Oat bran", 300), meal("oat bran", 320), meal("Apple", 95), meal("Egg", 70), meal("egg", 70), meal("Tea", 5), meal("Tea", 5), meal("Water", 0), meal("Water", 0), meal("Once", 50), {}, null];
+    const u = topUsuals(points);
+    expect(u.map((x) => [x.name, x.count])).toEqual([["Cappuccino", 3], ["Egg", 2], ["Oat bran", 2], ["Tea", 2]]);
+    expect(u[0]).toMatchObject({ kcal: 95, carbs: 10, protein: 2 });
+  });
+
+  it("asks Google for the last 30 days in the user's time zone and answers with the usuals", async () => {
+    const t = makeTestApp({ now: () => NOW });
+    t.health.handler = ({ url }) => url.pathname.endsWith("/settings") ? { json: { timeZone: "Europe/Budapest" } } : { json: { dataPoints: [meal("Cappuccino", 95), meal("Cappuccino", 95)] } };
+    const { cookie } = await appSignIn(t);
+    const r = await t.http.get("/api/app/usuals").set("cookie", cookie);
+    expect(r.body).toEqual({ usuals: [{ name: "Cappuccino", kcal: 95, carbs: 10, protein: 2, count: 2 }] });
+    const filter = t.health.requests.find((q) => q.url.pathname.endsWith("/nutrition-log/dataPoints"))?.url.searchParams.get("filter") ?? "";
+    expect(filter).toContain("2026-08-31");
+    expect(filter).toContain("2026-10-01");
+    expect((await t.http.get("/api/app/usuals")).status).toBe(401);
+  });
+});
+
 describe("today's totals", () => {
   it("sums calories, carbs and protein over the log entries", () => {
     expect(sumNutrition([{ nutritionLog: { energy: { kcal: 95.4 }, totalCarbohydrate: { grams: 10 }, nutrients: [{ nutrient: "PROTEIN", quantity: { grams: 3 } }] } }, {}, null])).toEqual({ calories: 95, carbs: 10, protein: 3 });
@@ -273,5 +296,6 @@ describe("today's totals", () => {
     expect(localClock(Date.parse("2026-09-30T23:30:00Z"), "Europe/Budapest")).toEqual({ date: "2026-10-01", minutes: 90 });
     expect(nextDate("2026-09-30")).toBe("2026-10-01");
     expect(nextDate("2026-12-31")).toBe("2027-01-01");
+    expect(addDays("2026-09-30", -30)).toBe("2026-08-31");
   });
 });

@@ -13,7 +13,7 @@ import type { Sessions } from "./session.js";
 import { runAgent } from "../ai/agent.js";
 import { makeAgentEnv } from "./agentEnv.js";
 import { logNutrition, timeZoneOf } from "./meal.js";
-import { loadToday } from "./today.js";
+import { loadToday, loadUsuals } from "./today.js";
 
 export const CSRF_HEADER = "x-health-ai";
 const TOKEN_USAGE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
@@ -127,6 +127,11 @@ export function appApiRouter(deps: AppApiDeps): Router {
     }
     const today = await loadToday(deps.apiFor(userId), deps.now());
     res.json({ goals: settings.goals, window: settings.window, constraints: settings.constraints, eaten: today.eaten, date: today.clock.date, minutes: today.clock.minutes, timeZone: today.timeZone });
+  });
+
+  // US-01m3rvr6p4vj42j4atck7vyw08 (Log water and repeat items in one tap): the foods logged most often in the last 30 days.
+  router.get("/usuals", async (req, res) => {
+    res.json({ usuals: await loadUsuals(deps.apiFor(uid(req)), deps.now()) });
   });
 
   router.post("/what-now", async (req, res) => {
