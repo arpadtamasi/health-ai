@@ -9,11 +9,12 @@ import type { ChartModel, Hero as HeroModel, Tone } from "../day";
 import { tokens as T } from "../theme/tokens";
 
 const c = T.color;
-export const TONES: Record<Tone, { bg: string; fg: string; plan: string; line: string; dot: string; dotStroke: string; wedge: string }> = {
+/** Built on every call, from the palette of the moment (light or dark). */
+export const tones = (): Record<Tone, { bg: string; fg: string; plan: string; line: string; dot: string; dotStroke: string; wedge: string }> => ({
   behind: { bg: c.primary, fg: "#ffffff", plan: "#ffffffd9", line: "#ffffff", dot: c.primaryContainer, dotStroke: "#ffffff", wedge: "#ffffff38" },
   ok: { bg: c.primaryContainer, fg: c.onPrimaryContainer, plan: "#2a1c00b3", line: c.onPrimaryContainer, dot: c.primary, dotStroke: c.onPrimaryContainer, wedge: "#2a1c0018" },
-  done: { bg: c.ink, fg: "#ffffff", plan: "#ffffffb3", line: c.primaryContainer, dot: c.primaryContainer, dotStroke: c.ink, wedge: "#ffffff22" },
-};
+  done: { bg: c.strong, fg: c.onStrong, plan: `${c.onStrong}b3`, line: c.primaryContainer, dot: c.primaryContainer, dotStroke: c.strong, wedge: `${c.onStrong}22` },
+});
 
 const H = 112;
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
@@ -30,7 +31,7 @@ export interface HeroProps {
 }
 
 export function Hero({ tone, big, text, chart, minutes, window, labels, compact = false }: HeroProps) {
-  const t = TONES[tone];
+  const t = tones()[tone];
   if (compact) {
     return (
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: t.bg, borderRadius: 20, paddingVertical: 10, paddingHorizontal: 16 }}>
@@ -49,7 +50,7 @@ export function Hero({ tone, big, text, chart, minutes, window, labels, compact 
 }
 
 function Chart({ chart, tone, minutes, window, labels }: { chart: ChartModel; tone: Tone; minutes: number; window: HeroProps["window"]; labels: HeroProps["labels"] }) {
-  const t = TONES[tone];
+  const t = tones()[tone];
   const [W, setW] = useState(314);   // the width the hero really has, so that the chart fills it
   const X = (x: number) => x * W;
   const Y = (v: number) => H - Math.min(1, v / chart.goal) * H;

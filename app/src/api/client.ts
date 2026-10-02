@@ -1,5 +1,6 @@
 // The app talks to the same origin on the web (Firebase Hosting rewrites /api/* to Cloud Run), with the __session cookie.
 // Every request that changes anything also sends the custom header, as CSRF protection.
+import { track, withRetry, withTimeout } from "../net";
 import type { DayEntry } from "../day";
 import type { Option } from "../components/food";
 
@@ -58,16 +59,39 @@ function timeZone(): string {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; }
 }
 
-async function call<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}/api/app${path}`, {
+const RETRY_STATUS = new Set([502, 503, 504]);
+const TIMEOUT_MS = 45_000;
+
+async function once<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknown): Promise<T> {
+  const ctl = new AbortController();
+  const res = await withTimeout(fetch(`${API_BASE}/api/app${path}`, {
     method,
     credentials: "include",
+    signal: ctl.signal,
     headers: { "x-timezone": timeZone(), ...(body ? { "content-type": "application/json" } : {}), ...(method !== "GET" ? { "x-health-ai": "1" } : {}) },
     ...(body ? { body: JSON.stringify(body) } : {}),
-  });
+  }), TIMEOUT_MS, () => { ctl.abort(); return new ApiError(0, "timeout", {}); });
   const json = (await res.json().catch(() => ({}))) as { error?: string };
   if (!res.ok) throw new ApiError(res.status, json.error ?? "error", json);
   return json as T;
+}
+
+/**
+ * One call to the API. The service scales to zero, so the first call can be slow (or answer 503 while an instance starts): reads are
+ * repeated once, and the screens learn about a slow call from net.ts. Writes are never repeated here, because a second try could
+ * log a meal twice.
+ */
+function call<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknown): Promise<T> {
+  const attempt = () => once<T>(method, path, body);
+  const work = method === "GET"
+    ? withRetry(attempt, { retries: 1, waitMs: 700, retryable: (e) => (e instanceof ApiError ? RETRY_STATUS.has(e.status) : true) })
+    : attempt();
+  return track(work);
+}
+
+/** Wakes the service before it is needed (when the person opens the app or starts typing); never waits for the answer. */
+export function warmUp(): void {
+  void fetch(`${API_BASE}/health`, { cache: "no-store" }).catch(() => undefined);
 }
 
 /** The Google sign-in starts on the server; the browser comes back to the app with the session cookie. */

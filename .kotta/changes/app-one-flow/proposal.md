@@ -8,11 +8,13 @@ The owner said: "nem megy a fotó meg az egész kicsit clunky, tervezd át az ap
 
 The app becomes one screen: the day against its pace on top (a hero with a chart of the day and bars for protein, carbs, fat and water; a tap on a bar switches what the hero shows), one thread of today's entries and the conversation, and a dock with the usual items, the camera and the text field. A photo logs what it shows and only proposes for a fridge or a menu. Entries are corrected in place, by the card or by telling the assistant. Fat becomes the fourth macro. The hero's colour states the situation. The look is the Paprika design of the kit.
 
-It changes these accepted stories: "Open on a full-screen home that shows the day", "Start logging from one button on the home", "See where I am against the day's pace", "Choose food and quantity with the camera" and "Correct a logged meal", and three of their examples. It adds "Choose what the home shows", "Track fat as the fourth macro" and "See today's entries in the thread", three rules and fifteen examples.
+It changes these accepted stories: "Open on a full-screen home that shows the day", "Start logging from one button on the home", "See where I am against the day's pace", "Choose food and quantity with the camera" and "Correct a logged meal", and three of their examples. It adds "Choose what the home shows", "Track fat as the fourth macro" and "See today's entries in the thread", three rules, one quality scenario and eighteen examples.
 
 The chat is also kept in our own storage during the test (text and answers, not photos, for 90 days), because the owner asked for the full history of the test; this replaces the earlier decision that the chat stays on the phone. See "The chat is kept during the test".
 
-Outside the model but part of the work: the service keeps one instance warm (a few dollars a month) so that the first call is not four seconds.
+The service is allowed to scale to zero (the owner accepts the slow first call), so the app is built for slow answers: it shows the result of an action at once and confirms with the server, draws the last known day from the device, says when the connection is slow, and offers a retry. See "The app stays usable on a slow response". The look follows the phone's light or dark setting, on white with cool grey neutrals (no cream paper).
+
+Outside the model but part of the work: the service may scale to zero (`MIN_INSTANCES=1` keeps one instance warm if it is ever wanted).
 
 ## Open decisions
 

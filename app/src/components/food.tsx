@@ -24,8 +24,8 @@ export function OptionCard({ option, primary = false, onChoose, labels }: { opti
     <Pressable accessibilityRole="button" accessibilityLabel={`${labels.choose} ${option.name}`} onPress={() => onChoose(option)}
       style={{ backgroundColor: primary ? c.primaryContainer : c.surfaceLow, borderRadius: T.radius.card, padding: T.space.m, gap: T.space.s }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m }}>
-        <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: c.ink }}>
-          <Text style={{ fontFamily: T.face.bold, color: "#fff" }}>{option.rank}</Text>
+        <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: c.strong }}>
+          <Text style={{ fontFamily: T.face.bold, color: c.onStrong }}>{option.rank}</Text>
         </View>
         <Text style={{ flex: 1, fontSize: 18, fontFamily: T.face.display, letterSpacing: -0.3, color: fg }}>{option.name}</Text>
         <FoodIcon category={option.category} size={26} color={fg} />

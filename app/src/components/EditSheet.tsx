@@ -33,7 +33,7 @@ export function EditSheet({ entry, timeZone, t, onSave, onDelete, onClose }:
   const step = (d: number) => setPct((p) => Math.min(300, Math.max(10, p + d)));
   return (
     <Modal transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable accessibilityLabel={t.cancel} onPress={onClose} style={{ flex: 1, backgroundColor: "#1f1a1766", justifyContent: "flex-end" }}>
+      <Pressable accessibilityLabel={t.cancel} onPress={onClose} style={{ flex: 1, backgroundColor: c.scrim, justifyContent: "flex-end" }}>
         <Pressable onPress={() => undefined} style={{ backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 28, gap: 10, alignSelf: "center", width: "100%", maxWidth: 480 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
             <Text style={{ fontFamily: T.face.display, fontSize: 20, letterSpacing: -0.4, color: c.onSurface }}>{t.editTitle}</Text>

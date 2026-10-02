@@ -9,10 +9,16 @@ import { Today } from "./src/screens/Today";
 import { SignInScreen, Splash } from "./src/screens/SignInScreen";
 import { detectLang, isLang, LangProvider, type Lang } from "./src/i18n";
 import { tokens as T } from "./src/theme/tokens";
+import { SchemeProvider, useScheme } from "./src/theme/scheme";
 
 type Phase = { name: "loading" } | { name: "signedOut" } | { name: "app"; onboarded: boolean; healthConnected: boolean };
 
 export default function App() {
+  return <SchemeProvider><Shell /></SchemeProvider>;
+}
+
+function Shell() {
+  const scheme = useScheme();
   const [phase, setPhase] = useState<Phase>({ name: "loading" });
   const [lang, setLang] = useState<Lang>(detectLang());
   const [fontsLoaded, fontError] = useFonts({ BricolageGrotesque_600SemiBold, BricolageGrotesque_800ExtraBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
@@ -31,7 +37,7 @@ export default function App() {
           {!waiting && phase.name === "signedOut" ? <SignInScreen /> : null}
           {!waiting && phase.name === "app" ? <Today onboarded={phase.onboarded} healthConnected={phase.healthConnected} onSignedOut={() => setPhase({ name: "signedOut" })} /> : null}
         </View>
-        <StatusBar style="dark" />
+        <StatusBar style={scheme === "dark" ? "light" : "dark"} />
       </View>
     </LangProvider>
   );

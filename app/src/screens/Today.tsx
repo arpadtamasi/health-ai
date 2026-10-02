@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, Platform, Pressable, Text, View } from "react-native";
 import { AssistantRuntimeProvider, ComposerPrimitive, ThreadPrimitive, useAui, useAuiState, useLocalRuntime, type ChatModelAdapter, type ChatModelRunResult } from "@assistant-ui/react-native";
-import { ApiError, connectHealthUrl, type ChatEvent, type DayEntry, type DayState, type EntryPatch, type Usual } from "../api/client";
+import { ApiError, connectHealthUrl, warmUp, type ChatEvent, type DayEntry, type DayState, type EntryPatch, type Usual } from "../api/client";
 import { backend } from "../backend";
 import { Button, Chip } from "../components/ui";
 import { ConfirmDelete, type DeleteAsk } from "../components/ConfirmDelete";
@@ -16,12 +16,15 @@ import { OptionCard, type Option } from "../components/food";
 import { Hero } from "../components/Hero";
 import { UiIcon } from "../components/icons";
 import { PaceBars } from "../components/PaceBars";
-import { barOf, chartOf, judgeHero, METRIC_GOAL, type DayInput, type Metric } from "../day";
+import { barOf, chartOf, judgeHero, METRIC_GOAL, minutesOf, type DayInput, type Metric } from "../day";
 import { heroWords, amountText } from "../heroText";
 import { isLang, useT, type Lang, type Texts } from "../i18n";
 import { takePhoto, type Photo } from "../photo";
 import { tokens as T } from "../theme/tokens";
+import { useScheme } from "../theme/scheme";
 import { Linking } from "react-native";
+import { cacheGet, cacheSet } from "../cache";
+import { netStatus, subscribe } from "../net";
 import { Splash } from "./SignInScreen";
 
 const c = T.color;
@@ -57,7 +60,7 @@ const adapter: ChatModelAdapter = {
       return { content: parts.length ? parts : [{ type: "text" as const, text: "…" }], metadata: { custom: { replies, needsConsent: r.needsConsent, onboarded: r.onboarded } satisfies Meta } };
     } catch (e) {
       const tx = box.t!;
-      const msg = e instanceof ApiError && e.code === "daily_limit" ? tx.errDailyLimit : e instanceof ApiError && e.code === "ai_unavailable" ? tx.errUnavailable : images.length ? tx.photoFailed : tx.errGeneric;
+      const msg = e instanceof ApiError && e.code === "timeout" ? tx.errTimeout : e instanceof ApiError && e.code === "daily_limit" ? tx.errDailyLimit : e instanceof ApiError && e.code === "ai_unavailable" ? tx.errUnavailable : images.length ? tx.photoFailed : tx.errGeneric;
       return { content: [{ type: "text" as const, text: msg }], metadata: { custom: { failedPhoto: images.length > 0 } satisfies Meta } };
     }
   },
@@ -66,9 +69,10 @@ const adapter: ChatModelAdapter = {
 import type { ViewStyle } from "react-native";
 const bubble = (user: boolean): ViewStyle => ({
   alignSelf: user ? ("flex-end" as const) : ("flex-start" as const), maxWidth: "86%" as const, paddingVertical: 10, paddingHorizontal: 14,
-  backgroundColor: user ? c.ink : c.surfaceLow, borderRadius: 18, borderBottomRightRadius: user ? 4 : 18, borderBottomLeftRadius: user ? 18 : 4,
+  backgroundColor: user ? c.strong : c.surfaceLow, borderRadius: 18, borderBottomRightRadius: user ? 4 : 18, borderBottomLeftRadius: user ? 18 : 4,
 });
 
+interface Pending { tid: string; entry: DayEntry; status: "pending" | "failed"; run: () => Promise<string | null> }
 type Part = { type: string; text?: string; image?: string; toolName?: string; result?: unknown };
 interface Item { key: string; time: number; node: React.ReactNode }
 
@@ -77,6 +81,7 @@ type Initial = { role: "user" | "assistant"; content: { type: "text"; text: stri
 
 function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const { t, setLang } = useT();
+  const scheme = useScheme();
   box.t = t;
   box.setLang = setLang;
   const aui = useAui();
@@ -86,11 +91,21 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
 
   const [ready, setReady] = useState(onboarded);
   const [consented, setConsented] = useState(false);
-  const [state, setState] = useState<DayState | null>(null);
-  const [loadedAt, setLoadedAt] = useState(Date.now());
+  // The last day the device knew is drawn at once and confirmed by the server afterwards: the first call after a quiet hour is slow.
+  const cached = useMemo(() => {
+    const c0 = cacheGet<{ state: DayState; entries: DayEntry[]; usuals: Usual[]; at: number }>("day");
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: c0?.state.timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    return c0 && (!c0.state.date || c0.state.date === today) ? c0 : undefined;
+  }, []);
+  const [state, setState] = useState<DayState | null>(cached?.state ?? null);
+  const [loadedAt, setLoadedAt] = useState(cached?.at ?? Date.now());
   const [now, setNow] = useState(Date.now());
-  const [entries, setEntries] = useState<DayEntry[]>([]);
-  const [usuals, setUsuals] = useState<Usual[]>([]);
+  const [entries, setEntries] = useState<DayEntry[]>(cached?.entries ?? []);
+  const [usuals, setUsuals] = useState<Usual[]>(cached?.usuals ?? []);
+  const [pending, setPending] = useState<Pending[]>([]);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [overrides, setOverrides] = useState<Record<string, DayEntry>>({});
+  const [slow, setSlow] = useState(netStatus().slow);
   const [metric, setMetric] = useState<Metric>("kcal");
   const [editing, setEditing] = useState<DayEntry | null>(null);
   const [fresh, setFresh] = useState<Record<string, string>>({});
@@ -102,10 +117,12 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     try {
       const [s, u, e] = await Promise.all([backend.state(), backend.usuals().catch(() => [] as Usual[]), backend.entriesToday().catch(() => [] as DayEntry[])]);
       setState(s); setUsuals(u); setEntries(e); setLoadedAt(Date.now());
+      cacheSet("day", { state: s, usuals: u, entries: e, at: Date.now() });
     } catch (err) { if (err instanceof ApiError && err.status === 401) onSignedOut(); }
   }, [onSignedOut]);
   useEffect(() => { if (ready) void load(); }, [ready, load]);
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(id); }, []);
+  useEffect(() => subscribe((s) => setSlow(s.slow)), []);
 
   // What the chat did (a logged meal, a change) may have changed the day: read it again when the model stops. The events say which
   // entries are new, so that their cards show Edit and Undo.
@@ -125,23 +142,37 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   useEffect(() => { if (wasRunning.current && !running && ready) void loadRef.current(); wasRunning.current = running; }, [running, ready]);
   useEffect(() => { if (lastMeta.onboarded && !ready) { setReady(true); setMetric("kcal"); } }, [lastMeta.onboarded, ready]);
 
+  // ---- what is shown: the server's entries, with what the person just did applied at once (the answer may take seconds) ----
+  const shown: DayEntry[] = useMemo(() => {
+    const own = entries.filter((e) => !hidden.has(e.id)).map((e) => overrides[e.id] ?? e);
+    return [...own, ...pending.map((p) => p.entry)].sort((a, b) => a.at - b.at);
+  }, [entries, hidden, overrides, pending]);
+
   // ---- the day, as the top of the screen shows it ----
   const day: DayInput | null = useMemo(() => {
     if (!state) return null;
     const elapsed = Math.floor((now - loadedAt) / 60000);
+    // The server's totals, corrected by what changed on the screen since they were read.
+    const delta = { calories: 0, carbs: 0, protein: 0, fat: 0, waterMl: 0 };
+    const add = (e: DayEntry, sign: 1 | -1) => { delta.calories += sign * e.kcal; delta.carbs += sign * e.carbs; delta.protein += sign * e.protein; delta.fat += sign * e.fat; delta.waterMl += sign * (e.ml ?? 0); };
+    for (const e of entries) {
+      if (hidden.has(e.id)) add(e, -1);
+      else if (overrides[e.id]) { add(e, -1); add(overrides[e.id]!, 1); }
+    }
+    for (const p of pending) add(p.entry, 1);
     return {
       goals: { calories: state.goals.calories, carbs: state.goals.carbs, protein: state.goals.protein, fat: state.goals.fat, waterMl: state.water.goalMl },
-      eaten: { calories: state.eaten.calories, carbs: state.eaten.carbs, protein: state.eaten.protein, fat: state.eaten.fat, waterMl: state.water.ml },
+      eaten: { calories: state.eaten.calories + delta.calories, carbs: state.eaten.carbs + delta.carbs, protein: state.eaten.protein + delta.protein, fat: state.eaten.fat + delta.fat, waterMl: state.water.ml + delta.waterMl },
       minutes: Math.min(24 * 60 - 1, state.minutes + Math.max(0, elapsed)), window: state.window,
     };
-  }, [state, now, loadedAt]);
+  }, [state, now, loadedAt, entries, hidden, overrides, pending]);
 
   const metricLabel = (m: Metric) => ({ kcal: t.metricKcal, p: t.metricP, c: t.metricC, f: t.metricF, w: t.metricW })[m];
   const header = useMemo(() => {
     if (!day || !state) return null;
-    const hero = judgeHero(day, entries, metric);
+    const hero = judgeHero(day, shown, metric);
     const words = heroWords(hero, day, t);
-    const chart = entries.some((e) => (metric === "w" ? e.kind === "water" : e.kind === "meal")) ? chartOf(day, entries, metric, state.timeZone) : null;
+    const chart = shown.some((e) => (metric === "w" ? e.kind === "water" : e.kind === "meal")) ? chartOf(day, shown, metric, state.timeZone) : null;
     const labels = { kcal: { name: "", value: "" }, p: { name: t.barProtein, value: "" }, c: { name: t.barCarbs, value: "" }, f: { name: t.barFat, value: "" }, w: { name: t.barWater, value: "" } };
     const bars = (["p", "c", "f", "w"] as const).map((m) => {
       const b = barOf(day, m);
@@ -151,28 +182,62 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     const aria = chart ? t.chartAria(metricLabel(metric), amountText(metric, Math.round(chart.total)), chart.planNow !== undefined ? `${t.chartPlan} ${amountText(metric, Math.round(chart.planNow))}` : `${METRIC_GOAL(day.goals, metric)}`) : words.text;
     return { hero, words, chart, bars, labels, aria };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day, entries, metric, state, t]);
+  }, [day, shown, metric, state, t]);
 
-  // ---- actions ----
+  // ---- actions: each one shows its result at once and confirms with the server afterwards ----
   const refresh = async (id?: string | null, note = "") => { if (id) setFresh((f) => ({ ...f, [id]: note })); await load(); };
-  const choose = async (o: Option) => { try { const { id } = await backend.log(o); await refresh(id); } catch { /* the card stays; tap again */ } };
-  const logUsual = async (u: Usual) => {
-    try {
-      const { id } = u.kind === "water" ? await backend.water(u.ml ?? 250) : await backend.log({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein, fat: u.fat });
-      await refresh(id);
-    } catch { /* tap again */ }
+  /** A new entry appears as a pending card at once; the server's answer replaces it, or the card says it failed and offers a retry. */
+  const addPending = (entry: DayEntry, run: () => Promise<string | null>) => {
+    const p: Pending = { tid: entry.id, entry, status: "pending", run };
+    setPending((x) => [...x, p]);
+    void settle(p);
   };
-  const undo = async (e: DayEntry) => { try { await backend.unlog(e.id); setFresh((f) => { const { [e.id]: _, ...rest } = f; return rest; }); await load(); } catch { /* the card stays */ } };
+  const settle = async (p: Pending) => {
+    setPending((x) => x.map((q) => (q.tid === p.tid ? { ...q, status: "pending" } : q)));
+    try {
+      const id = await p.run();
+      await refresh(id);
+      setPending((x) => x.filter((q) => q.tid !== p.tid));
+    } catch { setPending((x) => x.map((q) => (q.tid === p.tid ? { ...q, status: "failed" } : q))); }
+  };
+  const retry = (e: DayEntry, again: boolean) => {
+    const p = pending.find((q) => q.tid === e.id);
+    if (!p) return;
+    if (again) void settle(p); else setPending((x) => x.filter((q) => q.tid !== p.tid));
+  };
+  const tempEntry = (o: Partial<DayEntry> & { name: string }): DayEntry => ({
+    id: `tmp-${Date.now()}-${Math.round(Math.random() * 1e6)}`, kind: "meal", kcal: 0, carbs: 0, protein: 0, fat: 0, at: Date.now(), source: "button", estimate: false, ingredients: [], ...o,
+  });
+  const choose = (o: Option) => addPending(tempEntry({ name: o.name, kcal: o.kcal, carbs: o.carbs, protein: o.protein, fat: o.fat ?? 0, source: "photo", estimate: true }), async () => (await backend.log(o)).id);
+  const logUsual = (u: Usual) => {
+    if (u.kind === "water") addPending(tempEntry({ name: "Water", kind: "water", ml: u.ml ?? 250 }), async () => (await backend.water(u.ml ?? 250)).id);
+    else addPending(tempEntry({ name: u.name, kcal: u.kcal, carbs: u.carbs, protein: u.protein, fat: u.fat }), async () => (await backend.log({ rank: 0, name: u.name, category: "other", kcal: u.kcal, carbs: u.carbs, protein: u.protein, fat: u.fat })).id);
+  };
+  const hide = (id: string, on: boolean) => setHidden((h) => { const n = new Set(h); if (on) n.add(id); else n.delete(id); return n; });
+  const undo = async (e: DayEntry) => {
+    hide(e.id, true);
+    try { await backend.unlog(e.id); setFresh((f) => { const { [e.id]: _, ...rest } = f; return rest; }); await load(); hide(e.id, false); } catch { hide(e.id, false); }
+  };
   const save = async (patch: EntryPatch) => {
     const before = editing;
     setEditing(null);
+    if (before) {
+      const { id: _id, time, mealType, ...vals } = patch;
+      let at = before.at;
+      if (time && state) { const [h, m] = time.split(":").map(Number); at = before.at + (((h ?? 0) * 60 + (m ?? 0)) - minutesOf(before.at, state.timeZone)) * 60000; }
+      setOverrides((o) => ({ ...o, [before.id]: { ...before, ...vals, ...(mealType ? { mealType } : {}), at } }));
+    }
     try {
       await backend.updateEntry(patch);
       const what = [patch.kcal !== undefined && before ? `${before.kcal} → ${patch.kcal} kcal` : "", patch.time ?? "", patch.mealType ? t[`meal${patch.mealType}` as const] : "", patch.name ?? ""].filter(Boolean).join(", ");
       await refresh(patch.id, t.cardChanged(what));
     } catch { /* the entry is as it was */ }
+    setOverrides((o) => { const { [patch.id]: _, ...rest } = o; return rest; });
   };
-  const remove = async (e: DayEntry) => { setEditing(null); try { await backend.deleteEntries([e.id]); await load(); } catch { /* as it was */ } };
+  const remove = async (e: DayEntry) => {
+    setEditing(null); hide(e.id, true);
+    try { await backend.deleteEntries([e.id]); await load(); hide(e.id, false); } catch { hide(e.id, false); }
+  };
   const deleteEntries = async (a: DeleteAsk): Promise<boolean> => { try { if (a.all) await backend.deleteAll(); else await backend.deleteEntries(a.ids); await load(); return true; } catch { return false; } };
   const camera = async () => {
     const p: Photo | undefined = await takePhoto();
@@ -185,7 +250,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     const out: Item[] = [];
     const tz = state?.timeZone ?? "UTC";
     if (!ready) out.push({ key: "greet", time: 0, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }}>{t.greetSetup}</Text></View> });
-    else if (entries.length === 0 && messages.length === 0) out.push({ key: "empty", time: 0, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }}>{t.threadEmpty}</Text></View> });
+    else if (shown.length === 0 && messages.length === 0) out.push({ key: "empty", time: 0, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }}>{t.threadEmpty}</Text></View> });
     if (ready && !healthConnected && !dismissedConnect) {
       out.push({ key: "connect", time: 1, node: (
         <View style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
@@ -194,26 +259,28 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
           <View style={{ flexDirection: "row", gap: T.space.s }}><Chip label={t.connectButton} selected onPress={connect} /><Chip label={t.connectDismiss} onPress={() => setDismissedConnect(true)} /></View>
         </View>) });
     }
-    for (const e of entries) {
-      out.push({ key: `e-${e.id}`, time: e.at, node: <EntryCard entry={e} timeZone={tz} t={t} fresh={e.id in fresh} note={fresh[e.id] || undefined} onEdit={setEditing} onUndo={(x) => void undo(x)} /> });
+    for (const e of shown) {
+      const p = pending.find((q) => q.tid === e.id);
+      out.push({ key: `e-${e.id}`, time: e.at, node: <EntryCard entry={e} timeZone={tz} t={t} fresh={e.id in fresh} note={fresh[e.id] || undefined} status={p?.status} onEdit={setEditing} onUndo={(x) => void undo(x)} onRetry={retry} /> });
     }
     for (const m of messages) {
       const time = m.createdAt ? new Date(m.createdAt).getTime() : Date.now();
       const user = m.role === "user";
       m.content.forEach((p, i) => {
         const key = `m-${m.id}-${i}`;
-        if (p.type === "text" && p.text && !(user && p.text === t.photoQuestion && m.content.some((q) => q.type === "image"))) out.push({ key, time: time + i, node: <View style={bubble(user)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: user ? "#fff" : c.onSurface }}>{p.text}</Text></View> });
+        if (p.type === "text" && p.text && !(user && p.text === t.photoQuestion && m.content.some((q) => q.type === "image"))) out.push({ key, time: time + i, node: <View style={bubble(user)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: user ? c.onStrong : c.onSurface }}>{p.text}</Text></View> });
         else if (p.type === "image" && p.image) out.push({ key, time: time + i, node: <View style={{ ...bubble(true), padding: 6 }}><Image source={{ uri: p.image }} style={{ width: 190, height: 110, borderRadius: 14 }} /></View> });
         else if (p.type === "tool-call" && p.toolName === "show_options") {
           const opts = (p.result as Option[] | undefined) ?? [];
-          out.push({ key, time: time + i, node: <View style={{ gap: T.space.s }}>{opts.map((o) => <OptionCard key={o.rank} option={o} primary={o.rank === 1} onChoose={(x) => void choose(x)} labels={{ choose: "Choose", protein: t.metricP, fat: t.metricF }} />)}</View> });
+          out.push({ key, time: time + i, node: <View style={{ gap: T.space.s }}>{opts.map((o) => <OptionCard key={o.rank} option={o} primary={o.rank === 1} onChoose={(x) => choose(x)} labels={{ choose: "Choose", protein: t.metricP, fat: t.metricF }} />)}</View> });
         } else if (p.type === "tool-call" && p.toolName === "confirm_delete") out.push({ key, time: time + i, node: <ConfirmDelete ask={p.result as DeleteAsk} onConfirm={deleteEntries} /> });
       });
       if (m.metadata?.custom?.failedPhoto) out.push({ key: `f-${m.id}`, time: time + 50, node: <View style={{ flexDirection: "row", gap: 8 }}><Chip label={t.newPhoto} selected onPress={() => void camera()} /><Chip label={t.describe} onPress={() => undefined} /></View> });
     }
+    if (running) out.push({ key: "thinking", time: Number.MAX_SAFE_INTEGER, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurfaceVariant }}>{t.thinking}</Text></View> });
     return out.sort((a, b) => a.time - b.time);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries, messages, fresh, ready, state, t, healthConnected, dismissedConnect]);
+  }, [shown, pending, messages, fresh, ready, state, t, healthConnected, dismissedConnect, running, scheme]);
 
   const hasOptions = messages[messages.length - 1]?.content.some((p) => p.type === "tool-call" && p.toolName === "show_options") ?? false;
   const compact = typing || hasOptions;
@@ -226,6 +293,13 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
         <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={17} color={c.onPrimary} filled /></View>
         <Text style={{ fontFamily: T.face.display, fontSize: 20, letterSpacing: -0.4, color: c.onSurface }}>{t.appName}</Text>
       </View>
+      {slow ? <View style={{ marginHorizontal: T.space.xl, marginBottom: 6, alignSelf: "flex-start", backgroundColor: c.surfaceLow, borderRadius: T.radius.chip, paddingVertical: 6, paddingHorizontal: 14 }}><Text accessibilityLiveRegion="polite" style={{ fontFamily: T.face.semi, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.slowNet}</Text></View> : null}
+      {ready && !state ? (
+        <View style={{ paddingHorizontal: T.space.xl, gap: 10 }}>
+          <View style={{ height: 190, borderRadius: 28, backgroundColor: c.surfaceLow }} />
+          <View style={{ height: 112, borderRadius: 24, backgroundColor: c.surfaceLow }} />
+        </View>
+      ) : null}
       {ready && header && day && state ? (
         <View style={{ paddingHorizontal: T.space.xl, gap: 10 }}>
           <Hero tone={header.hero.tone} big={header.words.big} text={header.words.text} chart={header.chart} minutes={day.minutes} window={day.window} compact={compact}
@@ -247,14 +321,14 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
           <View style={{ flexDirection: "row", gap: 8, flexWrap: "nowrap", overflow: "hidden" }}>
             {replies.length
               ? replies.map((r) => <ThreadPrimitive.Suggestion key={r} prompt={r} send style={{ minHeight: T.size.touch, paddingHorizontal: 16, justifyContent: "center", borderRadius: T.radius.chip, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface }}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }}>{r}</Text></ThreadPrimitive.Suggestion>)
-              : ready ? usuals.slice(0, 4).map((u, i) => <Chip key={`${u.kind}-${u.name}`} selected={i === 0} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : u.name} onPress={() => void logUsual(u)} />) : null}
+              : ready ? usuals.slice(0, 4).map((u, i) => <Chip key={`${u.kind}-${u.name}`} selected={i === 0} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : u.name} onPress={() => logUsual(u)} />) : null}
           </View>
           <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
             <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={() => void camera()}
               style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.primaryContainer, alignItems: "center", justifyContent: "center" }}>
               <UiIcon name="camera" size={22} color={c.onPrimaryContainer} />
             </Pressable>
-            <ComposerPrimitive.Input placeholder={t.placeholder} multiline placeholderTextColor={c.onSurfaceVariant} onFocus={() => setTyping(true)} onBlur={() => setTyping(false)}
+            <ComposerPrimitive.Input placeholder={t.placeholder} multiline placeholderTextColor={c.onSurfaceVariant} onFocus={() => { setTyping(true); warmUp(); }} onBlur={() => setTyping(false)}
               style={[{ flex: 1, backgroundColor: c.surfaceHigh, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, minHeight: 48, maxHeight: 120, fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
             <ComposerPrimitive.Send style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
               <UiIcon name="arrow-up" size={20} color={c.onPrimary} />

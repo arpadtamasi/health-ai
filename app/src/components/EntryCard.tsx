@@ -10,14 +10,14 @@ import { Chip } from "./ui";
 const c = T.color;
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-export function EntryCard({ entry, timeZone, t, fresh, note, onEdit, onUndo }:
-  { entry: DayEntry; timeZone: string; t: Texts; fresh: boolean; note?: string | undefined; onEdit: (e: DayEntry) => void; onUndo: (e: DayEntry) => void }) {
+export function EntryCard({ entry, timeZone, t, fresh, note, status, onEdit, onUndo, onRetry }:
+  { entry: DayEntry; timeZone: string; t: Texts; fresh: boolean; note?: string | undefined; status?: "pending" | "failed" | undefined; onEdit: (e: DayEntry) => void; onUndo: (e: DayEntry) => void; onRetry?: ((e: DayEntry, again: boolean) => void) | undefined }) {
   const water = entry.kind === "water";
-  const own = entry.source !== "google";
+  const own = entry.source !== "google" && !status;
   const meta = [hhmm(minutesOf(entry.at, timeZone)), entry.estimate && !water ? t.estimateTag : "", !own ? t.threadGoogle : ""].filter(Boolean).join(" · ");
   return (
     <Pressable accessibilityRole={own && !water ? "button" : "text"} accessibilityLabel={`${entry.name}`} disabled={!own || water} onPress={() => onEdit(entry)}
-      style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: 14, borderWidth: 2, borderColor: fresh ? c.ink : "transparent" }}>
+      style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: 14, borderWidth: 2, borderColor: status === "failed" ? c.error : fresh ? c.ink : "transparent", opacity: status === "pending" ? 0.65 : 1 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
         <Text style={{ flex: 1, fontFamily: T.face.display, fontSize: 17, letterSpacing: -0.3, color: c.onSurface }}>{water ? t.waterLabel : entry.name}</Text>
         <Text style={{ fontFamily: T.face.display, fontSize: 17, color: c.onSurface }}>{water ? `${entry.ml} ml` : `${entry.kcal} kcal`}</Text>
@@ -25,6 +25,13 @@ export function EntryCard({ entry, timeZone, t, fresh, note, onEdit, onUndo }:
       <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant, marginTop: 2 }}>
         {water ? meta : `${t.macroLine(entry.protein, entry.carbs, entry.fat)}\n${meta}`}
       </Text>
+      {status === "pending" ? <Text style={{ fontFamily: T.face.semi, fontSize: T.font.body, color: c.onSurfaceVariant, marginTop: 4 }}>{t.pendingSaving}</Text> : null}
+      {status === "failed" ? (
+        <View style={{ marginTop: 6 }}>
+          <Text style={{ fontFamily: T.face.bold, fontSize: T.font.body, color: c.error }}>{t.failedSave}</Text>
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}><Chip label={t.retry} selected onPress={() => onRetry?.(entry, true)} /><Chip label={t.discard} onPress={() => onRetry?.(entry, false)} /></View>
+        </View>
+      ) : null}
       {note ? <Text style={{ fontFamily: T.face.bold, fontSize: T.font.body, color: c.goodText, marginTop: 4 }}>{note}</Text> : null}
       {fresh && own ? (
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>

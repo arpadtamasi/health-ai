@@ -1,7 +1,7 @@
 ---
 change: app-one-flow
-generated_at: 2026-10-02T10:26:30.326Z
-delta_hash: sha256:a637245a91e4a76cefc2bdab07a836f6bad68d6a3f871b2af71e1beb0fe517d6
+generated_at: 2026-10-02T10:33:17.839Z
+delta_hash: sha256:bbb7faad99b15c123d54c4ee577fe5374261a7eda75750b0186b3ee742ec1f57
 ready_for_approval: true
 ---
 
@@ -15,10 +15,12 @@ Added:
 - A photo logs what it shows (BR-g5fgz0ne) — business-rule, .kotta/changes/app-one-flow/model/business-rules/a-photo-logs-what-it-shows-g5fgz0ne.md
 - The chat is kept during the test (BR-hxser706) — business-rule, .kotta/changes/app-one-flow/model/business-rules/the-chat-is-kept-during-the-test-hxser706.md
 - The hero's colour states the situation (BR-jzjpe13f) — business-rule, .kotta/changes/app-one-flow/model/business-rules/the-hero-s-colour-states-the-situation-jzjpe13f.md
+- A chip tapped on a cold start shows the card at once (EX-zp4n8py6) — example, .kotta/changes/app-one-flow/model/examples/a-chip-tapped-on-a-cold-start-shows-the-card-at-once-zp4n8py6.md
 - A logged meal appears in the thread in time order (EX-ke81r9ve) — example, .kotta/changes/app-one-flow/model/examples/a-logged-meal-appears-in-the-thread-in-time-order-ke81r9ve.md
 - A lunch logged as a snack is moved with the meal type and time chips (EX-wmmky3rj) — example, .kotta/changes/app-one-flow/model/examples/a-lunch-logged-as-a-snack-is-moved-with-the-meal-type-and-ti-wmmky3rj.md
 - A photo of a fridge proposes and logs nothing (EX-h2ehefty) — example, .kotta/changes/app-one-flow/model/examples/a-photo-of-a-fridge-proposes-and-logs-nothing-h2ehefty.md
 - A photo of a label is read, not estimated (EX-5ra1sxhn) — example, .kotta/changes/app-one-flow/model/examples/a-photo-of-a-label-is-read-not-estimated-5ra1sxhn.md
+- An action that failed is offered again and is never repeated by itself (EX-cpjvzysf) — example, .kotta/changes/app-one-flow/model/examples/an-action-that-failed-is-offered-again-and-is-never-repeated-cpjvzysf.md
 - Deleting the whole history also deletes the conversation (EX-4ntbvm0t) — example, .kotta/changes/app-one-flow/model/examples/deleting-the-whole-history-also-deletes-the-conversation-4ntbvm0t.md
 - Reopening the app shows the conversation again (EX-b7shz36n) — example, .kotta/changes/app-one-flow/model/examples/reopening-the-app-shows-the-conversation-again-b7shz36n.md
 - Tapping the chosen bar again goes back to the calories (EX-pct4gntd) — example, .kotta/changes/app-one-flow/model/examples/tapping-the-chosen-bar-again-goes-back-to-the-calories-pct4gntd.md
@@ -28,8 +30,10 @@ Added:
 - The hero is dark when the day is closed (EX-fsqz9p9v) — example, .kotta/changes/app-one-flow/model/examples/the-hero-is-dark-when-the-day-is-closed-fsqz9p9v.md
 - The hero is red when the calories are 200 under the plan (EX-9km40rqw) — example, .kotta/changes/app-one-flow/model/examples/the-hero-is-red-when-the-calories-are-200-under-the-plan-9km40rqw.md
 - The hero is yellow within 120 kcal of the plan (EX-pe89stx5) — example, .kotta/changes/app-one-flow/model/examples/the-hero-is-yellow-within-120-kcal-of-the-plan-pe89stx5.md
+- The last known day is shown while the server is read (EX-fs0n7r08) — example, .kotta/changes/app-one-flow/model/examples/the-last-known-day-is-shown-while-the-server-is-read-fs0n7r08.md
 - Typing with the keyboard open keeps a one-line status (EX-w3w46qk1) — example, .kotta/changes/app-one-flow/model/examples/typing-with-the-keyboard-open-keeps-a-one-line-status-w3w46qk1.md
 - Yesterday's breakfast with more milk changes the entry (EX-cng4mx53) — example, .kotta/changes/app-one-flow/model/examples/yesterday-s-breakfast-with-more-milk-changes-the-entry-cng4mx53.md
+- The app stays usable on a slow response (QA-m174t194) — quality-attribute, .kotta/changes/app-one-flow/model/quality-attributes/the-app-stays-usable-on-a-slow-response-m174t194.md
 - Choose what the home shows (US-vmmk9nm7) — user-story, .kotta/changes/app-one-flow/model/user-stories/choose-what-the-home-shows-vmmk9nm7.md
 - See today's entries in the thread (US-njsn0wx2) — user-story, .kotta/changes/app-one-flow/model/user-stories/see-today-s-entries-in-the-thread-njsn0wx2.md
 - Track fat as the fourth macro (US-pcqctbhj) — user-story, .kotta/changes/app-one-flow/model/user-stories/track-fat-as-the-fourth-macro-pcqctbhj.md
@@ -89,18 +93,20 @@ No narrative requirement bound to a node says something else than the node.
 
 ## (f) Provenance
 
-29 delta nodes: 5 stated, 24 partly-inferred, 0 inferred.
-Decided by: 5 human, 0 agent-proposed-human-approved, 24 agent-decided.
+33 delta nodes: 5 stated, 28 partly-inferred, 0 inferred.
+Decided by: 5 human, 0 agent-proposed-human-approved, 28 agent-decided.
 
 What the machine decided alone:
 
 - A photo logs what it shows (BR-g5fgz0ne) — Derived from the owner's usage logs; the rule's wording is the assistant's.
 - The chat is kept during the test (BR-hxser706) — The owner said this in the session (not yet in the distilled conversation). The retention of 90 days, leaving the photos out, and deleting the chat with the whole history are the assistant's choices, listed as open decisions.
 - The hero's colour states the situation (BR-jzjpe13f) — The 120 kcal threshold and the 9:00 limit are the assistant's proposal from the critique; to be tuned in use.
+- A chip tapped on a cold start shows the card at once (EX-zp4n8py6) — The numbers are sample values chosen by the assistant.
 - A logged meal appears in the thread in time order (EX-ke81r9ve) — The numbers and the wording are sample values chosen by the assistant.
 - A lunch logged as a snack is moved with the meal type and time chips (EX-wmmky3rj) — The numbers and the wording are sample values chosen by the assistant.
 - A photo of a fridge proposes and logs nothing (EX-h2ehefty) — The numbers and the wording are sample values chosen by the assistant.
 - A photo of a label is read, not estimated (EX-5ra1sxhn) — The numbers and the wording are sample values chosen by the assistant.
+- An action that failed is offered again and is never repeated by itself (EX-cpjvzysf) — The wording is the assistant's.
 - A photo of a plate is logged at once and the portion can be changed (EX-c066ev2b) — The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home.
 - Deleting the whole history also deletes the conversation (EX-4ntbvm0t) — The owner said this in the session (not yet in the distilled conversation). The retention of 90 days, leaving the photos out, and deleting the chat with the whole history are the assistant's choices, listed as open decisions.
 - The dock offers the usual items, the camera and the text field on the home (EX-smp3yxyj) — The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home.
@@ -113,8 +119,10 @@ What the machine decided alone:
 - The hero is red when the calories are 200 under the plan (EX-9km40rqw) — The numbers and the wording are sample values chosen by the assistant.
 - The hero is yellow within 120 kcal of the plan (EX-pe89stx5) — The numbers and the wording are sample values chosen by the assistant.
 - The home shows the day as a pace chart and bars (EX-a79pbphx) — The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home.
+- The last known day is shown while the server is read (EX-fs0n7r08) — The wording is the assistant's.
 - Typing with the keyboard open keeps a one-line status (EX-w3w46qk1) — The numbers and the wording are sample values chosen by the assistant.
 - Yesterday's breakfast with more milk changes the entry (EX-cng4mx53) — The numbers and the wording are sample values chosen by the assistant.
+- The app stays usable on a slow response (QA-m174t194) — The owner said this in the session. The thresholds (a slow-connection notice after 2.5 seconds, a 45 second limit, one retry for reads) are the assistant's choices.
 - Choose what the home shows (US-vmmk9nm7) — The owner asked whether it works this way; what it does for fat and how long the choice lasts is the assistant's proposal.
 - Correct a logged meal (US-z05gja1y) — The need is read from the owner's logs; the edit sheet is the assistant's design.
 - See where I am against the day's pace (US-jf6crb2z) — The chart and the bar grammar come from the assistant's redesign and its critique, which the owner asked for ("béna az öt karika, tudsz kreatív lenni?"); the earlier decisions on goals are kept.

@@ -1,16 +1,44 @@
 // The one place that decides how the app looks: the "Paprika" direction of docs/designs/what-now-ui/tokens.js (tomato red, sunflower
-// yellow, ink on warm paper). Components read only from this file. Red is the brand and the "behind the plan" signal; yellow is
-// "on track"; ink is "the day is done" (BR "The hero's colour states the situation").
+// yellow, ink), on white with cool neutral greys (the cream paper of the first drawings felt old-fashioned), and a dark scheme that
+// follows the phone's setting. Components read `tokens.color` while they render; `applyScheme` changes the values in place, so a
+// re-render is all a scheme change needs (no remount, the conversation stays).
+// Red is the brand and the "behind the plan" signal; yellow is "on track"; the dark "done" hero is the end of the day (BR "The hero's
+// colour states the situation").
+export interface Palette {
+  primary: string; onPrimary: string;
+  primaryContainer: string; onPrimaryContainer: string;
+  surface: string; surfaceLow: string; surfaceHigh: string;
+  onSurface: string; onSurfaceVariant: string; outline: string;
+  good: string; goodText: string; warn: string; behind: string; error: string;
+  /** The strong neutral: selection outlines, plan ticks, the end of a limit bar. */
+  ink: string;
+  /** The person's own message, and the hero once the day is done, with the text on them. */
+  strong: string; onStrong: string;
+  scrim: string;
+}
+
+export const LIGHT: Palette = {
+  primary: "#d7331a", onPrimary: "#ffffff",
+  primaryContainer: "#ffc21a", onPrimaryContainer: "#2a1c00",
+  surface: "#ffffff", surfaceLow: "#f4f4f7", surfaceHigh: "#e8e8ed",
+  onSurface: "#17151b", onSurfaceVariant: "#65636d", outline: "#dcdce3",
+  good: "#10a34f", goodText: "#0b7a39", warn: "#b84a00", behind: "#ff8a00", error: "#c4261a",
+  ink: "#17151b", strong: "#17151b", onStrong: "#ffffff", scrim: "#17151b66",
+};
+
+export const DARK: Palette = {
+  primary: "#e8402a", onPrimary: "#ffffff",
+  primaryContainer: "#ffc21a", onPrimaryContainer: "#2a1c00",
+  surface: "#111014", surfaceLow: "#1c1a21", surfaceHigh: "#2a2830",
+  onSurface: "#f3f1f6", onSurfaceVariant: "#aaa7b4", outline: "#3b3943",
+  good: "#22c768", goodText: "#4ade80", warn: "#ff9d5c", behind: "#ff8a00", error: "#ff7a7a",
+  ink: "#f3f1f6", strong: "#34323c", onStrong: "#f3f1f6", scrim: "#000000aa",
+};
+
+export type Scheme = "light" | "dark";
+
 export const tokens = {
-  color: {
-    primary: "#d7331a", onPrimary: "#ffffff",
-    primaryContainer: "#ffc21a", onPrimaryContainer: "#2a1c00",
-    secondaryContainer: "#1f1a17", onSecondaryContainer: "#ffffff",
-    surface: "#ffffff", surfaceLow: "#f6f2ec", surfaceHigh: "#ebe4da",
-    onSurface: "#1f1a17", onSurfaceVariant: "#6b6158", outline: "#ddd4c8",
-    good: "#10a34f", goodText: "#0b7a39", warn: "#b84a00", behind: "#ff8a00", error: "#c4261a",
-    ink: "#1f1a17",
-  },
+  color: { ...LIGHT } as Palette,
   radius: { card: 22, chip: 999, button: 999, bar: 6 },
   space: { xs: 4, s: 8, m: 12, l: 16, xl: 20 },
   font: { overline: 12, body: 14, base: 16, title: 22 },
@@ -21,3 +49,9 @@ export const tokens = {
   },
   size: { button: 48, touch: 44 },
 } as const;
+
+/** Switches the palette in place. Call it while rendering the root, before the children read the colours. */
+export function applyScheme(scheme: Scheme): void {
+  Object.assign(tokens.color, scheme === "dark" ? DARK : LIGHT);
+  try { if (typeof document !== "undefined") document.body.style.backgroundColor = tokens.color.surface; } catch { /* not a browser */ }
+}
