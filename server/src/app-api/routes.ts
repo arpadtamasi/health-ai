@@ -10,7 +10,7 @@ import type { AiModel } from "../ai/model.js";
 import { whatNow } from "../ai/whatNow.js";
 import type { HealthApi } from "../health/api.js";
 import { DEFAULT_WATER_GOAL_ML, type AppSettings, type Store } from "../store/types.js";
-import { makeAgentEnv } from "./agentEnv.js";
+import { fatGoal, makeAgentEnv } from "./agentEnv.js";
 import { Entries } from "./entries.js";
 import type { Sessions } from "./session.js";
 
@@ -32,6 +32,7 @@ const image = z.object({ mediaType: z.enum(["image/jpeg", "image/png", "image/we
 const settingsBody = z.object({
   goals: z.object({
     calories: z.number().int().min(500).max(10000), carbs: z.number().int().min(0).max(1500), protein: z.number().int().min(0).max(600),
+    fat: z.number().int().min(0).max(600).optional(),
     waterMl: z.number().int().min(500).max(8000).optional(),
   }),
   window: z.object({ startHour: z.number().int().min(0).max(23), endHour: z.number().int().min(1).max(24) }).refine((w) => w.endHour > w.startHour, "The window must end after it starts."),
@@ -44,8 +45,17 @@ const logBody = z.object({
   kcal: z.number().min(0).max(5000),
   carbs: z.number().min(0).max(1000),
   protein: z.number().min(0).max(500),
+  fat: z.number().min(0).max(500).optional(),
   ingredients: z.array(z.string().max(80)).max(40).optional(),
   source: z.enum(["photo", "typed", "button", "chat"]).optional(),
+});
+const updateBody = z.object({
+  id: z.string().min(1).max(300),
+  name: z.string().trim().min(1).max(120).optional(),
+  kcal: z.number().min(0).max(5000).optional(), carbs: z.number().min(0).max(1000).optional(), protein: z.number().min(0).max(500).optional(), fat: z.number().min(0).max(500).optional(),
+  ingredients: z.array(z.string().max(80)).max(40).optional(),
+  time: z.string().regex(/^\d{1,2}:\d{2}$/).optional(),
+  mealType: z.enum(["BREAKFAST", "LUNCH", "SNACK", "DINNER"]).optional(),
 });
 const waterBody = z.object({ ml: z.number().int().min(10).max(5000) });
 const idsBody = z.object({ ids: z.array(z.string().min(1).max(300)).min(1).max(100) });
@@ -54,6 +64,7 @@ const chatBody = z.object({
   message: z.string().trim().min(1).max(2000),
   history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000) })).max(40).default([]),
   image: image.optional(),
+  images: z.array(image).max(4).optional(),
 });
 
 const whatNowBody = z.object({ optionsText: z.string().max(2000).optional(), image: image.optional() })
@@ -126,10 +137,10 @@ export function appApiRouter(deps: AppApiDeps): Router {
     const userId = uid(req);
     const before = await deps.store.getAppSettings(userId);
     const at = deps.now();
-    const { waterMl, ...macros } = parsed.data.goals;
+    const { waterMl, fat, ...macros } = parsed.data.goals;
     const next: AppSettings = {
       userId,
-      goals: { ...macros, ...(waterMl !== undefined ? { waterMl } : {}) },
+      goals: { ...macros, ...(fat !== undefined ? { fat } : {}), ...(waterMl !== undefined ? { waterMl } : {}) },
       window: parsed.data.window,
       constraints: parsed.data.constraints,
       updatedAt: at,
@@ -149,7 +160,7 @@ export function appApiRouter(deps: AppApiDeps): Router {
     }
     const day = await (await entriesOf(userId)).day();
     res.json({
-      goals: settings.goals, window: settings.window, constraints: settings.constraints, eaten: day.eaten,
+      goals: { ...settings.goals, fat: settings.goals.fat ?? fatGoal(settings.goals.calories) }, window: settings.window, constraints: settings.constraints, eaten: day.eaten,
       water: { ml: day.waterMl, goalMl: settings.goals.waterMl ?? DEFAULT_WATER_GOAL_ML },
       date: day.clock.date, minutes: day.clock.minutes, timeZone: day.timeZone,
     });
@@ -222,6 +233,27 @@ export function appApiRouter(deps: AppApiDeps): Router {
     res.json(await (await entriesOf(userId)).logWater(body.data.ml));
   });
 
+  // Everything logged today, oldest first, for the thread of the home.
+  router.get("/entries/today", async (req, res) => {
+    res.json({ entries: await (await entriesOf(uid(req))).today() });
+  });
+
+  // Corrects a logged meal in place (the card's Edit; the chat does the same with its update_entry tool).
+  router.post("/entries/update", async (req, res) => {
+    const parsed = updateBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid_request", detail: parsed.error.issues.map((i) => i.message) });
+      return;
+    }
+    const { id, ...patch } = parsed.data;
+    const done = await (await entriesOf(uid(req))).update(id, patch);
+    if (!done) {
+      res.status(404).json({ error: "not_found" });
+      return;
+    }
+    res.json({ entry: done });
+  });
+
   // The foods and drinks logged most often, as one-tap buttons.
   router.get("/usuals", async (req, res) => {
     res.json({ usuals: await (await entriesOf(uid(req))).usuals() });
@@ -274,7 +306,7 @@ export function appApiRouter(deps: AppApiDeps): Router {
     }
     const env = makeAgentEnv({ store: deps.store, entries, model: deps.ai.model, modelName: deps.ai.modelName, userId, now: deps.now });
     const result = await runAgent({ model: deps.ai.model, modelName: deps.ai.modelName }, env, {
-      history: body.data.history, message: body.data.message, ...(body.data.image ? { image: body.data.image } : {}),
+      history: body.data.history, message: body.data.message, images: [...(body.data.images ?? []), ...(body.data.image ? [body.data.image] : [])],
     });
     await budget.record(userId, dk, {
       inputTokens: result.usage.inputTokens + env.extraUsage.inputTokens,

@@ -30,9 +30,9 @@ function scripted(...replies: ConverseResponse[]): ModelClient & { requests: Con
   };
 }
 
-function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logged: unknown[]; suggestedWith: unknown[]; languages: unknown[] } {
+function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logged: unknown[]; suggestedWith: unknown[]; languages: unknown[]; updates: { id: string | undefined; patch: unknown }[] } {
   const e = {
-    saved: [] as unknown[], logged: [] as unknown[], suggestedWith: [] as unknown[], languages: [] as unknown[], water: [] as number[],
+    updates: [] as { id: string | undefined; patch: unknown }[], saved: [] as unknown[], logged: [] as unknown[], suggestedWith: [] as unknown[], languages: [] as unknown[], water: [] as number[],
     clock: () => Promise.resolve({ date: "2026-10-01", time: "16:24", weekday: "Thursday", timeZone: "Europe/Budapest" }),
     language: () => Promise.resolve(undefined),
     setLanguage: (l: unknown) => { e.languages.push(l); return Promise.resolve(); },
@@ -44,6 +44,7 @@ function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logge
         options: [{ rank: 1, name: "Chicken with rice", category: "grain" as const, kcal: 560, carbs: 62, protein: 38, ingredients: ["chicken", "rice"] }] });
     },
     logMeal: (m: unknown) => { e.logged.push(m); return Promise.resolve({ id: "users/1/dataTypes/nutrition-log/dataPoints/9" }); },
+    updateEntry: (id: string | undefined, patch: unknown) => { e.updates.push({ id, patch }); return Promise.resolve({ ok: true as const, id: id ?? "e-last", name: "Bran", kcal: 415, left: { calories: 1000, carbs: 100, protein: 80, fat: 30 } }); },
     logWater: (ml: number) => { e.water.push(ml); return Promise.resolve({ id: "w1", left: { waterMl: 1500 } }); },
     recentEntries: () => Promise.resolve([{ id: "e1", kind: "meal" as const, name: "Apple", detail: "95 kcal", when: "Wed 12:00" }, { id: "e2", kind: "water" as const, name: "Water", detail: "250 ml", when: "Wed 13:00" }]),
     ...over,
@@ -87,7 +88,7 @@ describe("the chat agent", () => {
     const e = env();
     const image = { mediaType: "image/jpeg" as const, dataBase64: "AAAA" };
     const m = scripted(call("t1", "suggest_options", {}), say("Szénhidrátból vagy le."));
-    const r = await runAgent(deps(m), e, { history: [], message: "mit egyek?", image });
+    const r = await runAgent(deps(m), e, { history: [], message: "mit egyek?", images: [image] });
     expect(e.suggestedWith).toEqual([{ images: [image] }]);
     expect(r.events.map((x) => x.type)).toEqual(["options", "text"]);
     expect(m.requests[0]!.turns.at(-1)!.content.some((b) => b.type === "image")).toBe(true);
@@ -146,6 +147,58 @@ describe("the chat agent", () => {
     const m = scripted(call("t1", "list_entries", {}), say("Ezeket látom."));
     await runAgent(deps(m), env(), { history: [], message: "mit naplóztam?" });
     expect((resultsOf(m.requests[1]!)[0]!["entries"] as unknown[]).length).toBe(2);
+  });
+
+  it("logs a photo of food at once, as a photo entry, with the fat, and never asks first", async () => {
+    const e = env();
+    const image = { mediaType: "image/jpeg" as const, dataBase64: "AAAA" };
+    const m = scripted(call("t1", "log_meal", { name: "Sült oldalas, rizs", kcal: 640, carbs: 62, protein: 38, fat: 26, ingredients: ["oldalas", "rizs"] }), say("Felírtam, becslés."));
+    const r = await runAgent(deps(m), e, { history: [], message: "mit ettem", images: [image] });
+    expect(e.logged).toEqual([{ name: "Sült oldalas, rizs", kcal: 640, carbs: 62, protein: 38, fat: 26, ingredients: ["oldalas", "rizs"], source: "photo" }]);
+    expect(r.events[0]).toMatchObject({ type: "logged", kcal: 640 });
+    expect(m.requests[0]!.turns.at(-1)!.content.filter((b) => b.type === "image")).toHaveLength(1);
+  });
+
+  it("takes the numbers of a label exactly: fromLabel makes it not an estimate", async () => {
+    const e = env();
+    const m = scripted(call("t1", "log_meal", { name: "Alpro Peach", kcal: 86, carbs: 11, protein: 4.5, fat: 2.5, fromLabel: true }), say("Felírtam a címke alapján."));
+    await runAgent(deps(m), e, { history: [], message: "", images: [{ mediaType: "image/jpeg", dataBase64: "AAAA" }] });
+    expect(e.logged[0]).toMatchObject({ estimate: false, source: "photo" });
+  });
+
+  it("sends several photos of one message to the model together", async () => {
+    const e = env();
+    const m = scripted(say("Két képet látok."));
+    const img = { mediaType: "image/jpeg" as const, dataBase64: "AAAA" };
+    await runAgent(deps(m), e, { history: [], message: "mérleg és csomag", images: [img, img] });
+    expect(m.requests[0]!.turns.at(-1)!.content.filter((b) => b.type === "image")).toHaveLength(2);
+  });
+
+  it("corrects the latest meal in place with update_entry and shows a changed card, never a second log", async () => {
+    const e = env();
+    const m = scripted(call("t1", "update_entry", { kcal: 415, protein: 17, ingredients: ["korpa", "tej 250 g"] }), say("Átírtam: 250 g tej."));
+    const r = await runAgent(deps(m), e, { history: [], message: "több tejjel" });
+    expect(e.logged).toEqual([]);
+    expect(e.updates).toEqual([{ id: undefined, patch: { kcal: 415, protein: 17, ingredients: ["korpa", "tej 250 g"] } }]);
+    expect(r.events[0]).toEqual({ type: "updated", id: "e-last", name: "Bran", kcal: 415 });
+    expect(resultsOf(m.requests[1]!)[0]).toMatchObject({ updated: true, leftToday: { fat: 30 } });
+  });
+
+  it("passes a time and a meal type to update_entry and refuses an empty correction", async () => {
+    const e = env();
+    const m = scripted(call("t1", "update_entry", { id: "e1", time: "13:00", mealType: "LUNCH" }), say("Átraktam ebédnek."));
+    await runAgent(deps(m), e, { history: [], message: "ebéd volt" });
+    expect(e.updates).toEqual([{ id: "e1", patch: { time: "13:00", mealType: "LUNCH" } }]);
+    const empty = scripted(call("t1", "update_entry", {}), say("?"));
+    await runAgent(deps(empty), env(), { history: [], message: "x" });
+    expect(resultsOf(empty.requests[1]!)[0]).toHaveProperty("error");
+  });
+
+  it("saves a fat goal through save_settings", async () => {
+    const e = env();
+    const m = scripted(call("t1", "save_settings", { fat: 80 }), say("Mentettem."));
+    await runAgent(deps(m), e, { history: [], message: "zsír 80 g" });
+    expect(e.saved).toEqual([{ fat: 80 }]);
   });
 
   it("hands the model what is left after a logged meal, so it does not calculate", async () => {

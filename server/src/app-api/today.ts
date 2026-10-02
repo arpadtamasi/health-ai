@@ -34,18 +34,19 @@ const obj = (x: unknown): Record<string, unknown> => (x && typeof x === "object"
 
 /** Calories, carbs and protein summed over nutrition-log data points. */
 export function sumNutrition(points: unknown[]): Macros {
-  const total: Macros = { calories: 0, carbs: 0, protein: 0 };
+  const total = { calories: 0, carbs: 0, protein: 0, fat: 0 };
   for (const p of points) {
     const n = obj(obj(p)["nutritionLog"]);
     total.calories += num(obj(n["energy"])["kcal"]);
     total.carbs += num(obj(n["totalCarbohydrate"])["grams"]);
+    total.fat += num(obj(n["totalFat"])["grams"]);
     const nutrients = Array.isArray(n["nutrients"]) ? n["nutrients"] : [];
     for (const item of nutrients) {
       const o = obj(item);
       if (o["nutrient"] === "PROTEIN") total.protein += num(obj(o["quantity"])["grams"]);
     }
   }
-  return { calories: Math.round(total.calories), carbs: Math.round(total.carbs), protein: Math.round(total.protein) };
+  return { calories: Math.round(total.calories), carbs: Math.round(total.carbs), protein: Math.round(total.protein), fat: Math.round(total.fat) };
 }
 
 /** Millilitres drunk, summed over hydration-log data points. */

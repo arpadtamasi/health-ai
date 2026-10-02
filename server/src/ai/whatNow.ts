@@ -16,6 +16,7 @@ const proposed = z.object({
     kcal: z.number().nonnegative(),
     carbs: z.number().nonnegative(),
     protein: z.number().nonnegative(),
+    fat: z.number().nonnegative().optional(),
     ingredients: z.array(z.string()),
     reason: z.string().optional(),
   })),
@@ -34,7 +35,7 @@ const TOOL: ToolSpec = {
           properties: {
             name: { type: "string" },
             category: { type: "string", enum: [...FOOD_CATEGORIES] },
-            kcal: { type: "number" }, carbs: { type: "number", description: "grams" }, protein: { type: "number", description: "grams" },
+            kcal: { type: "number" }, carbs: { type: "number", description: "grams" }, protein: { type: "number", description: "grams" }, fat: { type: "number", description: "grams" },
             ingredients: { type: "array", items: { type: "string" }, description: "every ingredient you can tell or infer" },
             reason: { type: "string", description: "one short sentence on why it fits today's gap" },
           },
@@ -96,7 +97,7 @@ function describe(state: DayState): string {
   const g = gaps(state);
   const worst = worstMacro(state);
   return [
-    `Today so far: ${state.eaten.calories} kcal, ${state.eaten.carbs} g carbs, ${state.eaten.protein} g protein (goal ${state.goals.calories} kcal, ${state.goals.carbs} g, ${state.goals.protein} g).`,
+    `Today so far: ${state.eaten.calories} kcal, ${state.eaten.carbs} g carbs, ${state.eaten.protein} g protein${state.goals.fat !== undefined ? `, ${state.eaten.fat ?? 0} g fat` : ""} (goal ${state.goals.calories} kcal, ${state.goals.carbs} g, ${state.goals.protein} g${state.goals.fat !== undefined ? `, ${state.goals.fat} g fat; fat is a limit, so prefer lean options when little is left` : ""}).`,
     `Against the pace of the day: ${g.calories} kcal, ${g.carbs} g carbs, ${g.protein} g protein (negative means behind). ${worst ? `Furthest behind: ${worst}.` : "Not behind on anything."}`,
     `Avoid: ${state.constraints.length ? state.constraints.join(", ") : "nothing"}.`,
   ].join("\n");
@@ -117,7 +118,7 @@ export async function whatNow(deps: WhatNowDeps, input: WhatNowInput): Promise<W
     if (!parsed.success) continue;
     if (parsed.data.options.length === 0) return { kind: "no_ranking", reason: "nothing_visible", usage };
     sawAny = true;
-    const kept = checkCandidates(parsed.data.options.map(({ reason, ...rest }) => ({ ...rest, ...(reason ? { reason } : {}) })), input.state);
+    const kept = checkCandidates(parsed.data.options.map(({ reason, fat, ...rest }) => ({ ...rest, ...(fat !== undefined ? { fat } : {}), ...(reason ? { reason } : {}) })), input.state);
     if (kept.length > 0) {
       const ranked = rankCandidates(kept, input.state);
       const logged = input.state.eaten.calories > 0 ? "today's log" : "an empty log";

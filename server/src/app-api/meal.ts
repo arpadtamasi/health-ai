@@ -16,10 +16,11 @@ export async function mirrorMeal(api: HealthApi, e: Entry, timeZone: string): Pr
     name: `users/me/dataTypes/nutrition-log/dataPoints/hai-${randomUUID()}`,
     nutritionLog: {
       interval: { startTime: new Date(e.at).toISOString(), endTime: new Date(e.at + 15 * 60 * 1000).toISOString(), startUtcOffset: offset, endUtcOffset: offset },
-      mealType: mealTypeFor(e.at, timeZone),
+      mealType: e.mealType ?? mealTypeFor(e.at, timeZone),
       foodDisplayName: e.name,
       energy: { kcal: Math.round(e.kcal) },
       totalCarbohydrate: { grams: Math.round(e.carbs) },
+      ...(e.fat ? { totalFat: { grams: Math.round(e.fat) } } : {}),
       nutrients: [{ nutrient: "PROTEIN", quantity: { grams: Math.round(e.protein) } }],
     },
   });

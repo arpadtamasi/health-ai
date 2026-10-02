@@ -8,6 +8,8 @@ export interface Macros {
   calories: number;
   carbs: number;
   protein: number;
+  /** Grams of fat; absent in older data. */
+  fat?: number;
 }
 
 export interface DayState {
@@ -29,6 +31,7 @@ export interface Option {
   kcal: number;
   carbs: number;
   protein: number;
+  fat?: number;
   ingredients: string[];
   reason?: string;
 }

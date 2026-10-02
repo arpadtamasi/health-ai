@@ -100,7 +100,7 @@ export interface IntentRecord {
 /** What the app needs to know about a person besides Google data: goals, eating window, foods to avoid, consent. */
 export interface AppSettings {
   userId: string;
-  goals: { calories: number; carbs: number; protein: number; /** Daily water goal in millilitres; the default applies when absent. */ waterMl?: number };
+  goals: { calories: number; carbs: number; protein: number; /** Fat goal in grams; derived from the calories when absent. */ fat?: number; /** Daily water goal in millilitres; the default applies when absent. */ waterMl?: number };
   window: { startHour: number; endHour: number };
   /** Allergies and foods to avoid, as the person said them. */
   constraints: string[];
@@ -137,6 +137,10 @@ export interface Entry {
   kcal: number;
   carbs: number;
   protein: number;
+  /** Grams of fat; entries from before fat was tracked have none. */
+  fat?: number;
+  /** Set when the person or the assistant fixed the meal type; otherwise it follows the time of day. */
+  mealType?: "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER";
   /** Millilitres, for water. */
   ml?: number;
   /** The ingredients the model recognised, for meals that came from a photo or from the chat. */

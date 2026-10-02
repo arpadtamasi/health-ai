@@ -323,7 +323,7 @@ describe("water", () => {
     const { t, cookie } = await ready();
     expect((await t.http.get("/api/app/usuals").set("cookie", cookie)).body.usuals).toEqual([]);
     await t.http.post("/api/app/water").set("cookie", cookie).set(HEADER).send({ ml: 250 });
-    expect((await t.http.get("/api/app/usuals").set("cookie", cookie)).body.usuals).toEqual([{ kind: "water", name: "250 ml", ml: 250, kcal: 0, carbs: 0, protein: 0, count: 1 }]);
+    expect((await t.http.get("/api/app/usuals").set("cookie", cookie)).body.usuals).toEqual([{ kind: "water", name: "250 ml", ml: 250, kcal: 0, carbs: 0, protein: 0, fat: 0, count: 1 }]);
   });
 });
 
@@ -352,7 +352,7 @@ describe("the usuals", () => {
 
 describe("today's totals", () => {
   it("sums calories, carbs and protein over the log entries", () => {
-    expect(sumNutrition([{ nutritionLog: { energy: { kcal: 95.4 }, totalCarbohydrate: { grams: 10 }, nutrients: [{ nutrient: "PROTEIN", quantity: { grams: 3 } }] } }, {}, null])).toEqual({ calories: 95, carbs: 10, protein: 3 });
+    expect(sumNutrition([{ nutritionLog: { energy: { kcal: 95.4 }, totalCarbohydrate: { grams: 10 }, totalFat: { grams: 4 }, nutrients: [{ nutrient: "PROTEIN", quantity: { grams: 3 } }] } }, {}, null])).toEqual({ calories: 95, carbs: 10, protein: 3, fat: 4 });
   });
   it("reads the clock and the date in the time zone, and steps a date", () => {
     expect(localClock(Date.parse("2026-09-30T23:30:00Z"), "Europe/Budapest")).toEqual({ date: "2026-10-01", minutes: 90 });
@@ -511,5 +511,75 @@ describe("the local day", () => {
 
   it("sums millilitres from the hydration log", () => {
     expect(sumHydration([{ hydrationLog: { amountConsumed: { milliliters: 250 } } }, { hydrationLog: { amountConsumed: { milliliters: 400.4 } } }, {}, null])).toBe(650);
+  });
+});
+
+
+describe("fat, today's thread and corrections in place", () => {
+  async function ready() {
+    const t = makeTestApp({ now: () => NOW });
+    const { cookie } = await noHealthSignIn(t);
+    await t.http.put("/api/app/settings").set("cookie", cookie).set(HEADER).send(settings);
+    return { t, cookie };
+  }
+  async function noHealthSignIn(t: TestApp) {
+    t.google.codes.set("g-plain2", { sub: "sub-plain", email: "tester@example.com", accessToken: "at", expiresIn: 3600, grantedScopes: ["openid", "email"] });
+    const start = await t.http.get("/api/auth/start");
+    const state = new URL(String(start.headers["location"])).searchParams.get("state");
+    const cb = await t.http.get("/oauth/google/callback").query({ code: "g-plain2", state });
+    return { cookie: String(cb.headers["set-cookie"]?.[0] ?? "").split(";")[0] ?? "" };
+  }
+
+  it("keeps a fat goal (a quarter of the calories by default) and counts the fat of what was logged", async () => {
+    const { t, cookie } = await ready();
+    const before = await t.http.get("/api/app/state").set("cookie", cookie);
+    expect(before.body.goals.fat).toBe(Math.round((settings.goals.calories * 0.25) / 9));
+    await t.http.post("/api/app/log").set("cookie", cookie).set(HEADER).send({ name: "Eggs", kcal: 155, carbs: 1, protein: 13, fat: 11 });
+    const after = await t.http.get("/api/app/state").set("cookie", cookie);
+    expect(after.body.eaten).toMatchObject({ calories: 155, protein: 13, fat: 11 });
+  });
+
+  it("lists today's entries oldest first, with their fat, and not yesterday's", async () => {
+    const { t, cookie } = await ready();
+    await t.store.putEntry({ id: "old", userId: "sub-plain", kind: "meal", name: "Yesterday", kcal: 300, carbs: 1, protein: 1, ingredients: [], source: "typed", estimate: true, at: NOW - 30 * 3600_000 });
+    await t.http.post("/api/app/log").set("cookie", cookie).set(HEADER).send({ name: "Lunch", kcal: 500, carbs: 60, protein: 30, fat: 12 });
+    await t.http.post("/api/app/water").set("cookie", cookie).set(HEADER).send({ ml: 250 });
+    const list = (await t.http.get("/api/app/entries/today").set("cookie", cookie)).body.entries as { name: string; fat: number; kind: string }[];
+    expect(list.map((e) => e.name)).toEqual(["Lunch", "Water"]);
+    expect(list[0]).toMatchObject({ kind: "meal", fat: 12 });
+  });
+
+  it("corrects an entry in place: same id, new values, new time, fixed meal type, no second entry", async () => {
+    const { t, cookie } = await ready();
+    const id = (await t.http.post("/api/app/log").set("cookie", cookie).set(HEADER).set("x-timezone", "Europe/Budapest").send({ name: "Bran with milk", kcal: 315, carbs: 67, protein: 14, fat: 8 })).body.id as string;
+    const r = await t.http.post("/api/app/entries/update").set("cookie", cookie).set(HEADER).send({ id, kcal: 415, protein: 17, time: "07:05", mealType: "LUNCH" });
+    expect(r.status).toBe(200);
+    expect(r.body.entry).toMatchObject({ id, kcal: 415, protein: 17, mealType: "LUNCH" });
+    const list = (await t.http.get("/api/app/entries/today").set("cookie", cookie).set("x-timezone", "Europe/Budapest")).body.entries as { id: string; at: number }[];
+    expect(list).toHaveLength(1);
+    const local = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Budapest", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(list[0]!.at));
+    expect(local).toBe("07:05");
+    expect((await t.http.post("/api/app/entries/update").set("cookie", cookie).set(HEADER).send({ id: "nope", kcal: 1 })).status).toBe(404);
+    expect((await t.http.post("/api/app/entries/update").set("cookie", cookie).send({ id, kcal: 1 })).status).toBe(403);
+  });
+
+  it("replaces the Google Health copy when a connected person's entry is corrected", async () => {
+    const t = makeTestApp({ now: () => NOW });
+    let n = 0;
+    t.health.handler = ({ url, body }) => {
+      if (url.pathname.endsWith("/settings")) return { json: { timeZone: "Europe/Budapest" } };
+      if (url.search === "" && url.pathname.endsWith("/nutrition-log/dataPoints")) return { json: { name: "operations/1", done: true, response: { ...(body as object), name: `users/9/dataTypes/nutrition-log/dataPoints/c${++n}` } } };
+      return { json: { dataPoints: [] } };
+    };
+    const { cookie } = await appSignIn(t);
+    await t.http.put("/api/app/settings").set("cookie", cookie).set(HEADER).send(settings);
+    const id = (await t.http.post("/api/app/log").set("cookie", cookie).set(HEADER).send({ name: "Bran", kcal: 315, carbs: 67, protein: 14, fat: 8 })).body.id as string;
+    await t.http.post("/api/app/entries/update").set("cookie", cookie).set(HEADER).send({ id, kcal: 415 });
+    const calls = t.health.requests.map((r) => `${r.method} ${r.url.pathname}`);
+    expect(calls.some((c) => c.includes(":batchDelete"))).toBe(true);
+    expect((await t.store.getEntry("sub-tester", id))?.googleName).toBe("users/9/dataTypes/nutrition-log/dataPoints/c2");
+    const sent = t.health.requests.filter((r) => r.method === "POST" && r.url.pathname.endsWith("/nutrition-log/dataPoints")).map((r) => r.body as { nutritionLog: { totalFat?: { grams: number }; energy: { kcal: number } } });
+    expect(sent[0]!.nutritionLog.totalFat).toEqual({ grams: 8 });
+    expect(sent[1]!.nutritionLog.energy.kcal).toBe(415);
   });
 });

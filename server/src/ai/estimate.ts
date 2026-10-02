@@ -19,6 +19,8 @@ export interface Estimate {
   target: number;
   carbs: number;
   protein: number;
+  /** Grams of fat: the rest of the default split, a quarter of the calories at 9 kcal per gram. */
+  fat: number;
   /** A daily water goal: about 30 ml per kilogram of body weight, between 1.5 and 4.5 litres, in steps of 100 ml. */
   waterMl: number;
   /** True when the floor raised the target above what the aim alone would give. */
@@ -36,6 +38,7 @@ export function estimateCalories(input: { sex: Sex; age: number; heightCm: numbe
     // The default split of the goal: about half the calories from carbs and a quarter from protein, 4 kcal per gram.
     carbs: Math.round((target * 0.5) / 4),
     protein: Math.round((target * 0.25) / 4),
+    fat: Math.round((target * 0.25) / 9),
     waterMl: Math.min(4500, Math.max(1500, Math.round((weightKg * 30) / 100) * 100)),
     flooredAtMinimum: target > wanted,
   };
