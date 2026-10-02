@@ -70,6 +70,9 @@ const chatBody = z.object({
 const whatNowBody = z.object({ optionsText: z.string().max(2000).optional(), image: image.optional() })
   .refine((b) => b.optionsText || b.image, "Give a photo or a list of options.");
 
+/** How long the test keeps the chat: 90 days, like the testers' feedback. */
+export const CHAT_RETENTION_MS = 90 * 24 * 3600 * 1000;
+
 const validZone = (z: string) => { try { new Intl.DateTimeFormat("en", { timeZone: z }); return true; } catch { return false; } };
 
 /** A usage store backed by the persistent Store, so the daily limit survives restarts and instances. */
@@ -281,7 +284,10 @@ export function appApiRouter(deps: AppApiDeps): Router {
     res.json({ deleted: await (await entriesOf(uid(req))).remove(parsed.data.ids) });
   });
   router.post("/entries/delete-all", async (req, res) => {
-    res.json({ deleted: await (await entriesOf(uid(req))).removeAll() });
+    const userId = uid(req);
+    const deleted = await (await entriesOf(userId)).removeAll();
+    await deps.store.deleteAllChat(userId);
+    res.json({ deleted });
   });
 
   // US-01m3rw2bqxkqp6v1hg9g02t1zr: the app's chat. The client keeps the conversation and sends it back each time.
@@ -308,6 +314,15 @@ export function appApiRouter(deps: AppApiDeps): Router {
     const result = await runAgent({ model: deps.ai.model, modelName: deps.ai.modelName }, env, {
       history: body.data.history, message: body.data.message, images: [...(body.data.images ?? []), ...(body.data.image ? [body.data.image] : [])],
     });
+    // BR "The chat is kept during the test": the person's message and the assistant's answer are stored (text and events, never the
+    // photos), expire after the retention period, and go with the person's data when they delete it. A failed save never fails the chat.
+    try {
+      const at = deps.now();
+      const nImages = (body.data.images?.length ?? 0) + (body.data.image ? 1 : 0);
+      const expireAt = at + CHAT_RETENTION_MS;
+      await deps.store.putChat({ id: `${at}-1u`, userId, at, role: "user", text: body.data.message, ...(nImages ? { images: nImages } : {}), expireAt });
+      await deps.store.putChat({ id: `${at}-2a`, userId, at: at + 1, role: "assistant", events: result.events, usage: result.usage, expireAt });
+    } catch { /* the chat itself went through */ }
     await budget.record(userId, dk, {
       inputTokens: result.usage.inputTokens + env.extraUsage.inputTokens,
       outputTokens: result.usage.outputTokens + env.extraUsage.outputTokens,
@@ -315,6 +330,13 @@ export function appApiRouter(deps: AppApiDeps): Router {
     const settings = await deps.store.getAppSettings(userId);
     const prefs = await deps.store.getAppPrefs(userId);
     res.json({ events: result.events, needsConsent: settings !== undefined && settings.consentAt === undefined, onboarded: settings?.onboardedAt !== undefined, language: prefs?.language ?? null });
+  });
+
+  // The conversation so far, so that reopening the app (or another device) shows it again.
+  router.get("/chat/history", async (req, res) => {
+    const limit = Math.min(200, Math.max(1, Number(req.query["limit"]) || 60));
+    const records = await deps.store.listChat(uid(req), limit);
+    res.json({ turns: records.map((r) => ({ role: r.role, at: r.at, ...(r.text !== undefined ? { text: r.text } : {}), ...(r.images ? { images: r.images } : {}), ...(r.events ? { events: r.events } : {}) })) });
   });
 
   // The notice and the consent are the person's own tap, never the model's: this ends the setup.

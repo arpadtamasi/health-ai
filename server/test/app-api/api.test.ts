@@ -583,3 +583,52 @@ describe("fat, today's thread and corrections in place", () => {
     expect(sent[1]!.nutritionLog.energy.kcal).toBe(415);
   });
 });
+
+
+describe("the chat is kept during the test", () => {
+  const talk = (t: TestApp, cookie: string, body: unknown) => t.http.post("/api/app/chat").set("cookie", cookie).set(HEADER).send(body as object);
+  async function chatApp() {
+    const t = makeTestApp({ now: () => NOW, ai: { model: agentModel(reply("Szia! Mit ettél?")), modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    return { t, cookie };
+  }
+
+  it("stores each message and the assistant's answer, and gives them back oldest first", async () => {
+    const { t, cookie } = await chatApp();
+    await talk(t, cookie, { message: "Szia", history: [] });
+    const h = await t.http.get("/api/app/chat/history").set("cookie", cookie);
+    expect(h.body.turns.map((x: { role: string }) => x.role)).toEqual(["user", "assistant"]);
+    expect(h.body.turns[0]).toMatchObject({ text: "Szia" });
+    expect(h.body.turns[1].events).toEqual([{ type: "text", text: "Szia! Mit ettél?" }]);
+    expect((await t.http.get("/api/app/chat/history")).status).toBe(401);
+  });
+
+  it("keeps how many photos came but never the photo, and sets an expiry 90 days out", async () => {
+    const { t, cookie } = await chatApp();
+    const image = { mediaType: "image/jpeg", dataBase64: "AAAA" };
+    await talk(t, cookie, { message: "(fotó)", images: [image, image] });
+    const rec = await t.store.listChat("sub-tester", 10);
+    expect(rec[0]).toMatchObject({ role: "user", images: 2 });
+    expect(JSON.stringify(rec)).not.toContain("AAAA");
+    expect(rec[0]!.expireAt - NOW).toBe(90 * 24 * 3600 * 1000);
+  });
+
+  it("is emptied with the whole history and with delete-my-data, for that person only", async () => {
+    const { t, cookie } = await chatApp();
+    await talk(t, cookie, { message: "Szia" });
+    await t.store.putChat({ id: "x", userId: "someone-else", at: NOW, role: "user", text: "hi", expireAt: NOW + 1 });
+    await t.http.post("/api/app/entries/delete-all").set("cookie", cookie).set(HEADER).send({});
+    expect(await t.store.listChat("sub-tester", 10)).toEqual([]);
+    await talk(t, cookie, { message: "Újra" });
+    await t.store.deleteUserData("sub-tester");
+    expect(await t.store.listChat("sub-tester", 10)).toEqual([]);
+    expect(await t.store.listChat("someone-else", 10)).toHaveLength(1);
+  });
+
+  it("does not fail the chat when the save fails", async () => {
+    const { t, cookie } = await chatApp();
+    t.store.putChat = () => Promise.reject(new Error("firestore down"));
+    expect((await talk(t, cookie, { message: "Szia" })).status).toBe(200);
+  });
+});

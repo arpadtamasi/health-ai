@@ -1,7 +1,7 @@
 import { Firestore, Timestamp, type CollectionReference, type DocumentData } from "@google-cloud/firestore";
 import { AUTH_CODE_TTL_MS, AUTH_REQUEST_TTL_MS, RECONNECT_LINK_TTL_SECONDS } from "../auth/tokens.js";
 import type {
-  AllowEntry, AppPrefs, AppSettings, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, ChatRecord, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -28,9 +28,12 @@ export const COLLECTIONS = {
   tokenUsage: "tokenUsage",
 } as const;
 
+/** The chat messages of a person, a subcollection of the user document. */
+export const CHAT_COLLECTION = "chat";
+
 export const TTL_COLLECTIONS = [
   COLLECTIONS.authRequests, COLLECTIONS.authCodes, COLLECTIONS.refreshTokens, COLLECTIONS.reconnectNonces,
-  COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.tokenUsage,
+  COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.tokenUsage, CHAT_COLLECTION,
 ] as const;
 
 /** Collections whose documents carry a `userId`; `deleteUserData` empties them for one user. */
@@ -160,6 +163,21 @@ export class FirestoreStore implements Store {
     return gone;
   }
 
+  // The chat lives under the person's user document too; TTL on `expireAt` for the collection group "chat".
+  private chat(userId: string) { return this.col(COLLECTIONS.users).doc(userId).collection(CHAT_COLLECTION); }
+  async putChat(r: ChatRecord) { await this.chat(r.userId).doc(r.id).set({ ...r, expireAt: expireAt(r.expireAt) }); }
+  async listChat(userId: string, limit: number) {
+    const snaps = await this.chat(userId).orderBy("at", "desc").limit(limit).get();
+    return snaps.docs.map((d) => { const x = d.data(); return { ...x, expireAt: (x["expireAt"] as Timestamp).toMillis() } as ChatRecord; }).reverse();
+  }
+  async deleteAllChat(userId: string) {
+    const snaps = await this.chat(userId).get();
+    const writer = this.db.bulkWriter();
+    for (const d of snaps.docs) void writer.delete(d.ref);
+    await writer.close();
+    return snaps.size;
+  }
+
   async getAppPrefs(userId: string) { return this.get<AppPrefs>(COLLECTIONS.appPrefs, userId); }
   async putAppPrefs(p: AppPrefs) { await this.col(COLLECTIONS.appPrefs).doc(p.userId).set(p); }
 
@@ -184,6 +202,7 @@ export class FirestoreStore implements Store {
       for (const d of snaps.docs) void writer.delete(d.ref);
     }
     for (const d of (await this.entries(userId).get()).docs) void writer.delete(d.ref);
+    for (const d of (await this.chat(userId).get()).docs) void writer.delete(d.ref);
     void writer.delete(this.col(COLLECTIONS.users).doc(userId));
     await writer.close();
   }

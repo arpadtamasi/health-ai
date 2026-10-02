@@ -1,16 +1,23 @@
-// The one place that decides how the app looks. Same shape as docs/designs/what-now-ui/tokens.js:
-// when the design variant is chosen, paste its tokens here. Components read only from this file.
+// The one place that decides how the app looks: the "Paprika" direction of docs/designs/what-now-ui/tokens.js (tomato red, sunflower
+// yellow, ink on warm paper). Components read only from this file. Red is the brand and the "behind the plan" signal; yellow is
+// "on track"; ink is "the day is done" (BR "The hero's colour states the situation").
 export const tokens = {
   color: {
-    primary: "#6c3cf0", onPrimary: "#ffffff",
-    primaryContainer: "#ffd23f", onPrimaryContainer: "#2b1d00",
-    secondaryContainer: "#ff3d8b", onSecondaryContainer: "#ffffff",
-    surface: "#ffffff", surfaceLow: "#f4f4f8", surfaceHigh: "#e8e8ef",
-    onSurface: "#15122b", onSurfaceVariant: "#5d5a75", outline: "#d6d6e0",
-    good: "#00c896", warn: "#ff5a00", behind: "#ff7a00", error: "#e0245e",
+    primary: "#d7331a", onPrimary: "#ffffff",
+    primaryContainer: "#ffc21a", onPrimaryContainer: "#2a1c00",
+    secondaryContainer: "#1f1a17", onSecondaryContainer: "#ffffff",
+    surface: "#ffffff", surfaceLow: "#f6f2ec", surfaceHigh: "#ebe4da",
+    onSurface: "#1f1a17", onSurfaceVariant: "#6b6158", outline: "#ddd4c8",
+    good: "#10a34f", goodText: "#0b7a39", warn: "#b84a00", behind: "#ff8a00", error: "#c4261a",
+    ink: "#1f1a17",
   },
-  radius: { card: 20, chip: 10, button: 24, bar: 4 },
+  radius: { card: 22, chip: 999, button: 999, bar: 6 },
   space: { xs: 4, s: 8, m: 12, l: 16, xl: 20 },
   font: { overline: 12, body: 14, base: 16, title: 22 },
+  /** Loaded in App.tsx (expo-font); the names are the ones the @expo-google-fonts packages register. */
+  face: {
+    display: "BricolageGrotesque_800ExtraBold", displaySemi: "BricolageGrotesque_600SemiBold",
+    body: "Figtree_400Regular", medium: "Figtree_500Medium", semi: "Figtree_600SemiBold", bold: "Figtree_700Bold",
+  },
   size: { button: 48, touch: 44 },
 } as const;

@@ -1,7 +1,7 @@
 ---
 change: app-one-flow
-generated_at: 2026-10-02T10:14:27.332Z
-delta_hash: sha256:4c03dfb0f9056892680ff7911da9bf313b415025740e409375abea30c0c8aa5f
+generated_at: 2026-10-02T10:26:30.326Z
+delta_hash: sha256:a637245a91e4a76cefc2bdab07a836f6bad68d6a3f871b2af71e1beb0fe517d6
 ready_for_approval: true
 ---
 
@@ -13,11 +13,14 @@ Written by `kotta plan`. Every conflict below is a candidate awaiting a human's 
 
 Added:
 - A photo logs what it shows (BR-g5fgz0ne) — business-rule, .kotta/changes/app-one-flow/model/business-rules/a-photo-logs-what-it-shows-g5fgz0ne.md
+- The chat is kept during the test (BR-hxser706) — business-rule, .kotta/changes/app-one-flow/model/business-rules/the-chat-is-kept-during-the-test-hxser706.md
 - The hero's colour states the situation (BR-jzjpe13f) — business-rule, .kotta/changes/app-one-flow/model/business-rules/the-hero-s-colour-states-the-situation-jzjpe13f.md
 - A logged meal appears in the thread in time order (EX-ke81r9ve) — example, .kotta/changes/app-one-flow/model/examples/a-logged-meal-appears-in-the-thread-in-time-order-ke81r9ve.md
 - A lunch logged as a snack is moved with the meal type and time chips (EX-wmmky3rj) — example, .kotta/changes/app-one-flow/model/examples/a-lunch-logged-as-a-snack-is-moved-with-the-meal-type-and-ti-wmmky3rj.md
 - A photo of a fridge proposes and logs nothing (EX-h2ehefty) — example, .kotta/changes/app-one-flow/model/examples/a-photo-of-a-fridge-proposes-and-logs-nothing-h2ehefty.md
 - A photo of a label is read, not estimated (EX-5ra1sxhn) — example, .kotta/changes/app-one-flow/model/examples/a-photo-of-a-label-is-read-not-estimated-5ra1sxhn.md
+- Deleting the whole history also deletes the conversation (EX-4ntbvm0t) — example, .kotta/changes/app-one-flow/model/examples/deleting-the-whole-history-also-deletes-the-conversation-4ntbvm0t.md
+- Reopening the app shows the conversation again (EX-b7shz36n) — example, .kotta/changes/app-one-flow/model/examples/reopening-the-app-shows-the-conversation-again-b7shz36n.md
 - Tapping the chosen bar again goes back to the calories (EX-pct4gntd) — example, .kotta/changes/app-one-flow/model/examples/tapping-the-chosen-bar-again-goes-back-to-the-calories-pct4gntd.md
 - Tapping the protein bar puts protein in the hero (EX-04evety1) — example, .kotta/changes/app-one-flow/model/examples/tapping-the-protein-bar-puts-protein-in-the-hero-04evety1.md
 - The dock offers yesterday's breakfast (EX-dw1xzwcx) — example, .kotta/changes/app-one-flow/model/examples/the-dock-offers-yesterday-s-breakfast-dw1xzwcx.md
@@ -73,6 +76,7 @@ The machine's candidates are mechanical and narrow. Contradictions the agent fou
 - judged: *Ask what to eat to catch up* says a photo of "the fridge, a menu or anything" is a way to ask; it stays true for a fridge or a menu (the new rule keeps proposing there), but "or anything" now has to be read as: a plate, a label or a scale is logged instead. The story's own text is not changed, so the human should say whether it is meant to stay as it is.
 - judged: *Ask and log through a small chat* describes the chat as the base of the app with a pace strip on top; the new home is one thread with a hero and bars on top, which refines the strip, so I read it as consistent.
 - judged: *See where I am against the day's pace* in its changed form no longer says the largest gap is the highlighted subject; the hero now follows the calories by default and the person chooses another bar. The earlier example *Pace figure compares eaten calories with the plan for the time of day* is unaffected.
+- judged: *The chat is kept during the test* contradicts the owner's earlier decision, written in the accepted story *Choose food and quantity with the camera*, that the chat history lives on the phone only and that we keep no chat text; the changed version of that story no longer says so, and the owner's new instruction ("és a teszt alatt teljes chat history kell firestore-ba") is the reason. The consent text changes with it.
 <!-- /kotta:judged -->
 
 ## (d) Silences
@@ -85,19 +89,22 @@ No narrative requirement bound to a node says something else than the node.
 
 ## (f) Provenance
 
-26 delta nodes: 5 stated, 21 partly-inferred, 0 inferred.
-Decided by: 5 human, 0 agent-proposed-human-approved, 21 agent-decided.
+29 delta nodes: 5 stated, 24 partly-inferred, 0 inferred.
+Decided by: 5 human, 0 agent-proposed-human-approved, 24 agent-decided.
 
 What the machine decided alone:
 
 - A photo logs what it shows (BR-g5fgz0ne) — Derived from the owner's usage logs; the rule's wording is the assistant's.
+- The chat is kept during the test (BR-hxser706) — The owner said this in the session (not yet in the distilled conversation). The retention of 90 days, leaving the photos out, and deleting the chat with the whole history are the assistant's choices, listed as open decisions.
 - The hero's colour states the situation (BR-jzjpe13f) — The 120 kcal threshold and the 9:00 limit are the assistant's proposal from the critique; to be tuned in use.
 - A logged meal appears in the thread in time order (EX-ke81r9ve) — The numbers and the wording are sample values chosen by the assistant.
 - A lunch logged as a snack is moved with the meal type and time chips (EX-wmmky3rj) — The numbers and the wording are sample values chosen by the assistant.
 - A photo of a fridge proposes and logs nothing (EX-h2ehefty) — The numbers and the wording are sample values chosen by the assistant.
 - A photo of a label is read, not estimated (EX-5ra1sxhn) — The numbers and the wording are sample values chosen by the assistant.
 - A photo of a plate is logged at once and the portion can be changed (EX-c066ev2b) — The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home.
+- Deleting the whole history also deletes the conversation (EX-4ntbvm0t) — The owner said this in the session (not yet in the distilled conversation). The retention of 90 days, leaving the photos out, and deleting the chat with the whole history are the assistant's choices, listed as open decisions.
 - The dock offers the usual items, the camera and the text field on the home (EX-smp3yxyj) — The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home.
+- Reopening the app shows the conversation again (EX-b7shz36n) — The owner said this in the session (not yet in the distilled conversation). The retention of 90 days, leaving the photos out, and deleting the chat with the whole history are the assistant's choices, listed as open decisions.
 - Tapping the chosen bar again goes back to the calories (EX-pct4gntd) — The numbers and the wording are sample values chosen by the assistant.
 - Tapping the protein bar puts protein in the hero (EX-04evety1) — The numbers and the wording are sample values chosen by the assistant.
 - The dock offers yesterday's breakfast (EX-dw1xzwcx) — The numbers and the wording are sample values chosen by the assistant.

@@ -1,8 +1,12 @@
 // The app talks to the same origin on the web (Firebase Hosting rewrites /api/* to Cloud Run), with the __session cookie.
 // Every request that changes anything also sends the custom header, as CSRF protection.
+import type { DayEntry } from "../day";
 import type { Option } from "../components/food";
 
-export interface Macros { calories: number; carbs: number; protein: number }
+export type { DayEntry };
+export interface EntryPatch { id: string; name?: string; kcal?: number; carbs?: number; protein?: number; fat?: number; time?: string; mealType?: "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"; ingredients?: string[] }
+
+export interface Macros { calories: number; carbs: number; protein: number; fat: number }
 export interface Settings {
   goals: Macros;
   window: { startHour: number; endHour: number };
@@ -28,14 +32,17 @@ export type ChatEvent =
   | { type: "options"; options: Option[]; basis: string }
   | { type: "logged"; name: string; kcal: number; id: string | null }
   | { type: "logged_water"; ml: number; id: string | null }
+  | { type: "updated"; id: string; name: string; kcal: number }
   | { type: "confirm_delete"; ids: string[]; all: boolean; labels: string[] }
   | { type: "settings_saved" }
   | { type: "replies"; replies: string[] }
   | { type: "language"; language: "en" | "hu" };
 export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean; language: "en" | "hu" | null }
+/** A stored message of the conversation (the server keeps the chat during the test). */
+export interface HistoryTurn { role: "user" | "assistant"; at: number; text?: string; images?: number; events?: ChatEvent[] }
 export interface ChatTurn { role: "user" | "assistant"; text: string }
 
-export interface Usual { kind: "meal" | "water"; name: string; kcal: number; carbs: number; protein: number; ml?: number; count: number }
+export interface Usual { kind: "meal" | "water"; name: string; kcal: number; carbs: number; protein: number; fat: number; ml?: number; count: number }
 export interface Me { email: string; onboarded: boolean; language: "en" | "hu" | null; healthConnected: boolean }
 
 export class ApiError extends Error {
@@ -74,12 +81,15 @@ export const api = {
   saveSettings: (s: Omit<Settings, "onboardedAt"> & { consent?: boolean }) => call<{ settings: Settings }>("PUT", "/settings", s),
   state: () => call<DayState>("GET", "/state"),
   whatNow: (input: { optionsText?: string; image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string } }) => call<WhatNow>("POST", "/what-now", input),
-  log: (o: { name: string; kcal: number; carbs: number; protein: number; ingredients?: string[]; source?: "photo" | "typed" | "button" | "chat" }) => call<{ id: string | null }>("POST", "/log", o),
+  log: (o: { name: string; kcal: number; carbs: number; protein: number; fat?: number; ingredients?: string[]; source?: "photo" | "typed" | "button" | "chat" }) => call<{ id: string | null }>("POST", "/log", o),
   water: (ml: number) => call<{ id: string | null }>("POST", "/water", { ml }),
   deleteEntries: (ids: string[]) => call<{ deleted: number }>("POST", "/entries/delete", { ids }),
   deleteAll: () => call<{ deleted: number }>("POST", "/entries/delete-all", {}),
   unlog: (id: string) => call<{ ok: true }>("POST", "/unlog", { id }),
-  chat: (input: { message: string; history: ChatTurn[]; image?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string } }) => call<ChatReply>("POST", "/chat", input),
+  entriesToday: () => call<{ entries: DayEntry[] }>("GET", "/entries/today"),
+  updateEntry: (patch: EntryPatch) => call<{ entry: DayEntry }>("POST", "/entries/update", patch),
+  chat: (input: { message: string; history: ChatTurn[]; images?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string }[] }) => call<ChatReply>("POST", "/chat", input),
+  chatHistory: () => call<{ turns: HistoryTurn[] }>("GET", "/chat/history?limit=60"),
   consent: () => call<{ ok: true }>("POST", "/consent", {}),
   usuals: () => call<{ usuals: Usual[] }>("GET", "/usuals"),
   logout: () => call<{ ok: true }>("POST", "/logout"),

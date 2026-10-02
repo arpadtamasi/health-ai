@@ -154,6 +154,25 @@ export interface Entry {
   googleName?: string;
 }
 
+/**
+ * One message of the app's chat, kept during the test (BR "The chat is kept during the test"): the person's text, or the
+ * assistant's answer as the events it produced. Never holds a photo, only how many were sent. Expires after the retention period.
+ */
+export interface ChatRecord {
+  id: string;
+  userId: string;
+  at: number;
+  role: "user" | "assistant";
+  text?: string;
+  /** How many photos came with a user message; the photos themselves are not kept. */
+  images?: number;
+  /** The assistant's events (text, options, logged, updated, ...), as sent to the app. */
+  events?: unknown[];
+  usage?: { inputTokens: number; outputTokens: number };
+  /** Firestore TTL field. */
+  expireAt: number;
+}
+
 /** A half-open time range [from, to) in epoch milliseconds. */
 export interface TimeRange {
   from: number;
@@ -216,6 +235,11 @@ export interface Store {
   deleteEntry(userId: string, id: string): Promise<void>;
   /** Removes every entry of one person and returns what was removed (the caller removes the Google Health copies). */
   deleteAllEntries(userId: string): Promise<Entry[]>;
+
+  putChat(record: ChatRecord): Promise<void>;
+  /** The latest messages of one person, oldest first. */
+  listChat(userId: string, limit: number): Promise<ChatRecord[]>;
+  deleteAllChat(userId: string): Promise<number>;
 
   /** Model tokens used by one user on one local day (the daily limit counts these). */
   getTokenUsage(userId: string, day: string): Promise<number>;

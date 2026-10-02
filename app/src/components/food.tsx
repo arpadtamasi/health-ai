@@ -11,25 +11,29 @@ export interface Option {
   kcal: number;
   carbs: number;
   protein: number;
+  fat?: number;
   reason?: string;
   ingredients?: string[];
 }
 
-// US-01m3rwa0cvrtcapqk0k3h6mqvc (Ask what to eat to catch up): tapping a card is the choice.
-export function OptionCard({ option, primary = false, onChoose }: { option: Option; primary?: boolean; onChoose: (o: Option) => void }) {
-  const fg = primary ? c.onPrimary : c.onSurface;
+// US-01m3rwa0cvrtcapqk0k3h6mqvc (Ask what to eat to catch up): tapping a card is the choice. The top pick is yellow, so that red
+// stays the brand and the "behind" signal.
+export function OptionCard({ option, primary = false, onChoose, labels }: { option: Option; primary?: boolean; onChoose: (o: Option) => void; labels: { choose: string; protein: string; fat: string } }) {
+  const fg = primary ? c.onPrimaryContainer : c.onSurface;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Choose ${option.name}`} onPress={() => onChoose(option)}
-      style={{ backgroundColor: primary ? c.primary : c.surfaceLow, borderRadius: T.radius.card, padding: T.space.m, gap: T.space.s }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${labels.choose} ${option.name}`} onPress={() => onChoose(option)}
+      style={{ backgroundColor: primary ? c.primaryContainer : c.surfaceLow, borderRadius: T.radius.card, padding: T.space.m, gap: T.space.s }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m }}>
-        <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: primary ? c.onPrimary : c.secondaryContainer }}>
-          <Text style={{ fontWeight: "700", color: primary ? c.primary : c.onSecondaryContainer }}>{option.rank}</Text>
+        <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: c.ink }}>
+          <Text style={{ fontFamily: T.face.bold, color: "#fff" }}>{option.rank}</Text>
         </View>
-        <Text style={{ flex: 1, fontSize: 18, fontWeight: "700", color: fg }}>{option.name}</Text>
-        <FoodIcon category={option.category} size={26} color={primary ? c.onPrimary : c.onSurface} />
+        <Text style={{ flex: 1, fontSize: 18, fontFamily: T.face.display, letterSpacing: -0.3, color: fg }}>{option.name}</Text>
+        <FoodIcon category={option.category} size={26} color={fg} />
       </View>
-      <Text style={{ fontSize: T.font.body, color: fg }}>{option.kcal} kcal · {option.carbs} g carbs · {option.protein} g protein</Text>
-      {option.reason ? <Text style={{ fontSize: T.font.body, color: fg, opacity: 0.9 }}>{option.reason}</Text> : null}
+      <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: fg }}>
+        {option.kcal} kcal · {option.protein} g {labels.protein}{option.fat !== undefined ? ` · ${option.fat} g ${labels.fat}` : ""}
+      </Text>
+      {option.reason ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: fg }}>{option.reason}</Text> : null}
     </Pressable>
   );
 }

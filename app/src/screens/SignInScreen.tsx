@@ -33,15 +33,15 @@ export function SignInScreen() {
       <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
         <UiIcon name="heart" size={28} color={c.onPrimary} filled />
       </View>
-      <Text style={{ fontSize: 30, fontWeight: "700", color: c.onSurface }}>{t.signInTitle}</Text>
-      <Text style={{ fontSize: T.font.base, color: c.onSurfaceVariant }}>{t.signInText}</Text>
+      <Text style={{ fontFamily: T.face.display, fontSize: 40, lineHeight: 42, letterSpacing: -0.8, color: c.onSurface }}>{t.signInTitle}</Text>
+      <Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurfaceVariant }}>{t.signInText}</Text>
       <Button label={t.signInButton} onPress={go} />
-      <Text style={{ fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.signInOnly}</Text>
+      <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.signInOnly}</Text>
 
       <View style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
-        <Text style={{ fontSize: T.font.base, fontWeight: "600", color: c.onSurface }}>{t.claudeTitle}</Text>
-        <Text style={{ fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.claudeText}</Text>
-        <Text selectable style={{ fontSize: T.font.body, color: c.onSurface, fontFamily: Platform.OS === "web" ? "monospace" : undefined }}>{mcpUrl()}</Text>
+        <Text style={{ fontFamily: T.face.display, fontSize: 17, color: c.onSurface }}>{t.claudeTitle}</Text>
+        <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.claudeText}</Text>
+        <Text selectable style={{ fontFamily: Platform.OS === "web" ? "monospace" : undefined, fontSize: T.font.body, color: c.onSurface, }}>{mcpUrl()}</Text>
         {Platform.OS === "web" ? <View style={{ alignSelf: "flex-start" }}><Chip label={copied ? t.copied : t.copy} onPress={copy} /></View> : null}
       </View>
     </ScrollView>

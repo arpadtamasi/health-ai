@@ -1,5 +1,5 @@
 import type {
-  AllowEntry, AppPrefs, AppSettings, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, ChatRecord, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -19,6 +19,7 @@ export class MemoryStore implements Store {
   readonly tokenUsage = new Map<string, number>();
   readonly appPrefs = new Map<string, AppPrefs>();
   readonly entries = new Map<string, Entry>();
+  readonly chat = new Map<string, ChatRecord>();
 
   allow(email: string, owner = false): void {
     this.allowList.set(email.toLowerCase(), { email: email.toLowerCase(), owner });
@@ -98,6 +99,16 @@ export class MemoryStore implements Store {
     return gone;
   }
 
+  async putChat(r: ChatRecord) { this.chat.set(`${r.userId}|${r.id}`, r); }
+  async listChat(userId: string, limit: number) {
+    return [...this.chat.values()].filter((r) => r.userId === userId).sort((a, b) => a.at - b.at || a.id.localeCompare(b.id)).slice(-limit);
+  }
+  async deleteAllChat(userId: string) {
+    const gone = [...this.chat.keys()].filter((k) => k.startsWith(`${userId}|`));
+    for (const k of gone) this.chat.delete(k);
+    return gone.length;
+  }
+
   async getAppPrefs(userId: string) { return this.appPrefs.get(userId); }
   async putAppPrefs(p: AppPrefs) { this.appPrefs.set(p.userId, p); }
   async getTokenUsage(userId: string, day: string) { return this.tokenUsage.get(`${userId}|${day}`) ?? 0; }
@@ -112,6 +123,7 @@ export class MemoryStore implements Store {
     this.appSettings.delete(userId);
     this.appPrefs.delete(userId);
     for (const k of [...this.entries.keys()]) if (k.startsWith(`${userId}|`)) this.entries.delete(k);
+    for (const k of [...this.chat.keys()]) if (k.startsWith(`${userId}|`)) this.chat.delete(k);
     for (const k of [...this.tokenUsage.keys()]) if (k.startsWith(`${userId}|`)) this.tokenUsage.delete(k);
     this.users.delete(userId);
     for (const [k, g] of this.grants) if (g.userId === userId) this.grants.delete(k);

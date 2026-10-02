@@ -10,21 +10,22 @@ export function Button({ label, onPress, kind = "primary", disabled = false }: {
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}
       style={{ minHeight: T.size.button, borderRadius: T.radius.button, alignItems: "center", justifyContent: "center", paddingHorizontal: T.space.xl,
         backgroundColor: primary ? c.primary : "transparent", opacity: disabled ? 0.5 : 1 }}>
-      <Text style={{ color: primary ? c.onPrimary : c.primary, fontWeight: "600", fontSize: T.font.base }}>{label}</Text>
+      <Text style={{ color: primary ? c.onPrimary : c.primary, fontFamily: T.face.semi, fontSize: T.font.base }}>{label}</Text>
     </Pressable>
   );
 }
 
-export function Chip({ label, icon, selected = false, onPress }: { label: string; icon?: FoodCategory; selected?: boolean; onPress?: () => void }) {
+/** A pill, at least 44 px tall: the dock and the card actions are what a thumb hits ten times a day. */
+export function Chip({ label, icon, selected = false, onPress, tone = "neutral" }: { label: string; icon?: FoodCategory; selected?: boolean; onPress?: () => void; tone?: "neutral" | "danger" }) {
+  const fg = selected ? c.onPrimaryContainer : tone === "danger" ? c.error : c.onSurface;
   return (
     <Pressable accessibilityRole="button" onPress={onPress}
-      style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: T.radius.chip, borderWidth: 1, borderColor: selected ? c.primary : c.outline,
-        backgroundColor: selected ? c.primaryContainer : c.surface }}>
+      style={{ minHeight: T.size.touch, paddingHorizontal: 16, borderRadius: T.radius.chip, borderWidth: 1, justifyContent: "center",
+        borderColor: selected ? c.primaryContainer : c.outline, backgroundColor: selected ? c.primaryContainer : c.surface }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        {icon ? <FoodIcon category={icon} size={16} color={selected ? c.onPrimaryContainer : c.onSurface} /> : null}
-        <Text style={{ fontSize: T.font.body, color: selected ? c.onPrimaryContainer : c.onSurface }}>{label}</Text>
+        {icon ? <FoodIcon category={icon} size={16} color={fg} /> : null}
+        <Text numberOfLines={1} style={{ fontFamily: selected ? T.face.semi : T.face.body, fontSize: T.font.body, color: fg }}>{label}</Text>
       </View>
     </Pressable>
   );
 }
-
