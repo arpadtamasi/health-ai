@@ -136,12 +136,21 @@ export function makeAgentEnv(d: AgentEnvDeps): AgentEnv & { extraUsage: Usage } 
       return { ok: true as const, id: done.id, name: done.name, kcal: done.kcal, ...(s ? { left: { calories: s.goals.calories - t.eaten.calories, carbs: s.goals.carbs - t.eaten.carbs, protein: s.goals.protein - t.eaten.protein, fat: (s.goals.fat ?? fatGoal(s.goals.calories)) - (t.eaten.fat ?? 0) } } : {}) };
     },
 
+    async todayEntries() {
+      const t = await day();
+      const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: t.timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+      return (await d.entries.today()).map((e) => ({
+        id: e.id, kind: e.kind, name: e.kind === "water" ? "Water" : e.name, time: fmt.format(new Date(e.at)), kcal: e.kcal, protein: e.protein, carbs: e.carbs, fat: e.fat,
+        ...(e.ml !== undefined ? { ml: e.ml } : {}), source: e.source,
+      }));
+    },
+
     async recentEntries() {
       const t = await day();
       const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: t.timeZone, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
       return (await d.entries.recent()).map((e) => ({
         id: e.id, kind: e.kind, name: e.kind === "water" ? "Water" : e.name,
-        detail: e.kind === "water" ? `${e.ml} ml` : `${e.kcal} kcal`, when: fmt.format(new Date(e.at)),
+        detail: e.kind === "water" ? `${e.ml} ml` : `${e.kcal} kcal, protein ${e.protein} g, carbs ${e.carbs} g, fat ${e.fat ?? 0} g`, when: fmt.format(new Date(e.at)),
       }));
     },
   };

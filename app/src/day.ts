@@ -86,7 +86,7 @@ export interface BarModel {
   eaten: number; goal: number;
   /** 0..100 */
   fill: number;
-  /** 0..100: where the plan stands now; for a limit, the cap at 100. */
+  /** 0..100: where the plan stands now (for fat, how much of the limit the pace would have used by now). */
   tick: number;
   /** Amount still to go (a minimum) or left under the cap (a limit); negative never. */
   left: number;
@@ -99,7 +99,8 @@ export function barOf(d: DayInput, metric: Metric): BarModel {
   const plan = dayFraction(d.minutes, d.window) * 100;
   const fill = goal > 0 ? Math.min(100, (eaten / goal) * 100) : 0;
   return {
-    metric, limit, eaten, goal, fill, tick: limit ? 100 : plan,
+    // The tick is where the plan stands now; a limit also has its cap at the end of the bar.
+    metric, limit, eaten, goal, fill, tick: plan,
     left: Math.max(0, Math.round(goal - eaten)),
     behind: !limit && fill < plan - 8, done: !limit && eaten >= goal,
   };
@@ -119,8 +120,8 @@ export interface ChartModel {
   /** Running total at now. */
   total: number;
   goal: number;
-  /** Plan for now (undefined for a limit, which has a cap instead). */
-  planNow: number | undefined;
+  /** What the plan has used by now; for a limit this is the pace of spending it, with the cap drawn as well. */
+  planNow: number;
   nowX: number;
   limit: boolean;
 }
@@ -134,5 +135,5 @@ export function chartOf(d: DayInput, entries: DayEntry[], metric: Metric, timeZo
   let total = 0;
   const steps = relevant.map((e) => { total += value(e); return { x: x(minutesOf(e.at, timeZone)), total }; });
   const limit = metric === "f";
-  return { metric, steps, total, goal, planNow: limit ? undefined : goal * dayFraction(d.minutes, d.window), nowX: x(d.minutes), limit };
+  return { metric, steps, total, goal, planNow: goal * dayFraction(d.minutes, d.window), nowX: x(d.minutes), limit };
 }

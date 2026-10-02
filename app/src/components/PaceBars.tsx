@@ -22,8 +22,8 @@ function Bar({ bar, label, value, selected, onPress }: { bar: BarModel; label: s
     <Pressable accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={`${label}: ${value}`} onPress={onPress}
       style={{ flex: 1, minHeight: T.size.touch, paddingHorizontal: 10, paddingVertical: 8, margin: -8, borderRadius: 16, backgroundColor: selected ? c.surface : "transparent", borderWidth: 2, borderColor: selected ? c.ink : "transparent" }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={{ fontFamily: selected ? T.face.bold : T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{label}</Text>
-        <Text style={{ fontFamily: T.face.bold, fontSize: T.font.meta, color: textColor, ...T.numeric }}>{value}</Text>
+        <Text numberOfLines={1} style={{ flexShrink: 1, fontFamily: selected ? T.face.bold : T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{label}</Text>
+        <Text numberOfLines={1} style={{ flexShrink: 0, marginLeft: 6, fontFamily: T.face.bold, fontSize: T.font.meta, color: textColor, ...T.numeric }}>{value}</Text>
       </View>
       <View style={{ marginTop: 6, height: H }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
         {w > 0 ? (
@@ -35,8 +35,9 @@ function Bar({ bar, label, value, selected, onPress }: { bar: BarModel; label: s
             </Defs>
             <Rect x={0} y={0} width={w} height={H} rx={6} fill={c.surfaceHigh} />
             <Rect x={0} y={0} width={px(bar.limit ? Math.min(bar.fill, 96) : bar.fill)} height={H} rx={6} fill={fillColor} />
-            {bar.behind ? <Rect x={px(bar.fill)} y={0} width={Math.max(0, px(bar.tick - bar.fill))} height={H} fill="url(#hatch)" /> : null}
-            {bar.limit ? <Rect x={w - 5} y={0} width={5} height={H} rx={2} fill={c.ink} /> : <Rect x={Math.min(w - 3, px(bar.tick) - 1)} y={0} width={3} height={H} fill={c.ink} />}
+            {bar.behind && !bar.limit ? <Rect x={px(bar.fill)} y={0} width={Math.max(0, px(bar.tick - bar.fill))} height={H} fill="url(#hatch)" /> : null}
+            <Rect x={Math.min(w - 3, px(bar.tick) - 1)} y={0} width={3} height={H} fill={c.ink} />
+            {bar.limit ? <Rect x={w - 5} y={0} width={5} height={H} rx={2} fill={c.ink} /> : null}
           </Svg>
         ) : null}
       </View>

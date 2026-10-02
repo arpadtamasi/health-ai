@@ -16,7 +16,7 @@ export const tones = (): Record<Tone, { bg: string; fg: string; plan: string; li
   done: { bg: c.strong, fg: c.onStrong, plan: `${c.onStrong}b3`, line: c.primaryContainer, dot: c.primaryContainer, dotStroke: c.strong, wedge: `${c.onStrong}22` },
 });
 
-const H = 112;
+const H = 64;
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 export interface HeroProps {
@@ -59,7 +59,7 @@ function Chart({ chart, tone, minutes, window, labels }: { chart: ChartModel; to
   for (const s of chart.steps) { path += ` L${X(s.x)} ${Y(prev)} L${X(s.x)} ${Y(s.total)}`; prev = s.total; }
   const nx = X(chart.nowX);
   path += ` L${nx} ${Y(chart.total)}`;
-  const wedge = chart.planNow !== undefined ? `${path} L${nx} ${Y(chart.planNow)} L0 ${H} Z` : "";
+  const wedge = `${path} L${nx} ${Y(chart.planNow)} L0 ${H} Z`;
   const endNear = nx > W - 50;
   const font = T.face.bold;
   return (
@@ -67,15 +67,14 @@ function Chart({ chart, tone, minutes, window, labels }: { chart: ChartModel; to
       <Svg width={W} height={H + 22} style={{ overflow: "visible" }}>
         {wedge ? <Path d={wedge} fill={t.wedge} /> : null}
         <Line x1={0} y1={H} x2={W} y2={H} stroke={t.fg} strokeOpacity={0.4} />
-        {chart.limit
-          ? <>
-              <Line x1={0} y1={1.5} x2={W} y2={1.5} stroke={t.fg} strokeWidth={5} strokeLinecap="round" />
-              <SvgText x={W * 0.3} y={22} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor="middle">{labels.cap}</SvgText>
-            </>
-          : <>
-              <Line x1={0} y1={H} x2={W} y2={0} stroke={t.plan} strokeWidth={2.5} strokeDasharray="2 6" strokeLinecap="round" />
-              <SvgText x={W * 0.3} y={Y(0.3 * chart.goal) - 12} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor="middle">{labels.plan}</SvgText>
-            </>}
+        {chart.limit ? (
+          <>
+            <Line x1={0} y1={1.5} x2={W} y2={1.5} stroke={t.fg} strokeWidth={5} strokeLinecap="round" />
+            <SvgText x={W} y={22} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor="end">{labels.cap}</SvgText>
+          </>
+        ) : null}
+        <Line x1={0} y1={H} x2={W} y2={0} stroke={t.plan} strokeWidth={2.5} strokeDasharray="2 6" strokeLinecap="round" />
+        <SvgText x={W * 0.3} y={Y(0.3 * chart.goal) - 10} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor="middle">{labels.plan}</SvgText>
         <Line x1={nx} y1={0} x2={nx} y2={H} stroke={t.fg} strokeOpacity={0.45} />
         <Path d={path} fill="none" stroke={t.line} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
         {chart.steps.map((s, i) => <Circle key={i} cx={X(s.x)} cy={Y(s.total)} r={5.5} fill={t.dot} stroke={t.dotStroke} strokeWidth={2} />)}

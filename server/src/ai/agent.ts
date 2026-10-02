@@ -41,6 +41,8 @@ export interface AgentEnv {
   /** Changes a logged meal in place; without an id, the latest meal of today. */
   updateEntry(id: string | undefined, patch: EntryPatchInput): Promise<{ ok: true; id: string; name: string; kcal: number; left?: { calories: number; carbs: number; protein: number; fat?: number } } | { ok: false; error: string }>;
   logWater(ml: number): Promise<{ id: string | null; left?: { waterMl: number } }>;
+  /** What the person logged today, oldest first, with the numbers: so that the model can say what used up a limit. */
+  todayEntries(): Promise<{ id: string; kind: "meal" | "water"; name: string; time: string; kcal: number; protein: number; carbs: number; fat: number; ml?: number; source: string }[]>;
   /** The latest entries of the person, newest first, with the ids a deletion needs. */
   recentEntries(): Promise<{ id: string; kind: "meal" | "water"; name: string; detail: string; when: string }[]>;
 }
@@ -77,7 +79,8 @@ const systemFor = (saved: Language | undefined, clock: Clock | undefined) => [
     ? `Their saved language is "${saved}": keep answering in it, unless they clearly start writing in another or ask for another; then call set_language.`
     : "No language is saved yet: when the person writes in Hungarian (hu) or English (en), call set_language once so the app remembers it.") + " Be short: one to three sentences. No lists unless asked, no headings, no emoji.",
   "You are a tracker and suggestion aid for adults, not a doctor: never give medical advice, never suggest a daily goal below 1,200 kcal.",
-  "Use the tools; do not do arithmetic yourself. Call get_today when you need the person's goals, what they ate or whether they are set up.",
+  "Use the tools; do not do arithmetic yourself. Call get_today when you need the person's goals, what they ate or whether they are set up: it lists every entry of today with its calories, protein, carbs and fat, so use it to answer \"what did I eat\", \"what used up my fat\" and similar questions, naming the items and their numbers.",
+  "Never say you will look something up and then stop: if you need the information, call the tool in the same turn and answer with it.",
   "SETUP: until the person has settings (get_today says onboarded is false or there is no state), have a short conversation, one question at a time: foods to avoid (allergies, dislikes; \"none\" is a valid answer), the daily calorie goal, and the hours they usually eat.",
   "If they do not know their calorie goal, ask what you still need (sex, age, height, weight, how active they are, whether they want to lose, keep or gain weight), call estimate_calories, say the result is an estimate, and ask them to confirm before you save it.",
   "Call save_settings only after the person agreed to the values. The person must still tap the Agree button the app shows for the notice and consent; you cannot give consent for them, so say so when you have saved everything.",
@@ -168,7 +171,8 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const t = await env.today();
           if (!t.state) return JSON.stringify({ onboarded: t.onboarded, setupDone: false });
           const g = gaps(t.state);
-          return JSON.stringify({ onboarded: t.onboarded, setupDone: true, goals: t.state.goals, eaten: t.state.eaten, paceGap: g, window: t.state.window, avoid: t.state.constraints, water: t.state.water, localTimeMinutes: t.state.minutesNow, now: await env.clock().catch(() => undefined) });
+          const todayEntries = await env.todayEntries().catch(() => []);
+          return JSON.stringify({ onboarded: t.onboarded, setupDone: true, todayEntries, goals: t.state.goals, eaten: t.state.eaten, paceGap: g, window: t.state.window, avoid: t.state.constraints, water: t.state.water, localTimeMinutes: t.state.minutesNow, now: await env.clock().catch(() => undefined) });
         }
         case "estimate_calories": {
           const sex = args["sex"], activity = args["activity"], aim = args["aim"];

@@ -73,6 +73,8 @@ const bubble = (user: boolean): ViewStyle => ({
 });
 
 interface Pending { tid: string; entry: DayEntry; status: "pending" | "failed"; run: () => Promise<string | null> }
+/** The part of a long entry name before its first bracket or comma, so that a chip stays a chip. */
+const shortName = (n: string) => (n.split(/ \(|, | \+ /)[0] ?? n).trim().slice(0, 28);
 type Part = { type: string; text?: string; image?: string; toolName?: string; result?: unknown };
 interface Item { key: string; time: number; node: React.ReactNode }
 
@@ -282,6 +284,9 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, pending, messages, fresh, ready, state, t, healthConnected, dismissedConnect, running, scheme]);
 
+  // Cards and images settle in after the first layout: look at the newest once more shortly after.
+  useEffect(() => { const id = setTimeout(() => list.current?.scrollToEnd({ animated: false }), 120); return () => clearTimeout(id); }, [items.length]);
+
   const hasOptions = messages[messages.length - 1]?.content.some((p) => p.type === "tool-call" && p.toolName === "show_options") ?? false;
   const compact = typing || hasOptions;
   const replies = lastMeta.replies?.length ? lastMeta.replies : ready ? [] : t.firstReplies;
@@ -312,7 +317,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
       <ThreadPrimitive.Root style={{ flex: 1 }}>
         <FlatList ref={list} data={items} keyExtractor={(i) => i.key} renderItem={({ item }) => <View style={{ paddingVertical: 4 }}>{item.node}</View>}
           style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: T.space.xl, paddingTop: 8, paddingBottom: 8 }}
-          onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })} />
+          onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })} onLayout={() => list.current?.scrollToEnd({ animated: false })} />
         {showConsent ? (
           <View style={{ marginHorizontal: T.space.xl, gap: T.space.s, backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l }}>
             <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{t.consentText}</Text>
@@ -323,7 +328,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
           <View style={{ flexDirection: "row", gap: 8, flexWrap: "nowrap", overflow: "hidden" }}>
             {replies.length
               ? replies.map((r) => <ThreadPrimitive.Suggestion key={r} prompt={r} send style={{ minHeight: T.size.touch, paddingHorizontal: 16, justifyContent: "center", borderRadius: T.radius.chip, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface }}><Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{r}</Text></ThreadPrimitive.Suggestion>)
-              : ready ? usuals.slice(0, 3).map((u, i) => <Chip key={`${u.kind}-${u.name}`} selected={i === 0} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : u.name} onPress={() => logUsual(u)} />) : null}
+              : ready ? usuals.slice(0, 3).map((u, i) => <Chip key={`${u.kind}-${u.name}`} selected={i === 0} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : shortName(u.name)} onPress={() => logUsual(u)} />) : null}
           </View>
           <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
             <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={() => void camera()}

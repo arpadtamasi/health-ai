@@ -45,6 +45,7 @@ function env(over: Partial<AgentEnv> = {}): AgentEnv & { saved: unknown[]; logge
     },
     logMeal: (m: unknown) => { e.logged.push(m); return Promise.resolve({ id: "users/1/dataTypes/nutrition-log/dataPoints/9" }); },
     updateEntry: (id: string | undefined, patch: unknown) => { e.updates.push({ id, patch }); return Promise.resolve({ ok: true as const, id: id ?? "e-last", name: "Bran", kcal: 415, left: { calories: 1000, carbs: 100, protein: 80, fat: 30 } }); },
+    todayEntries: () => Promise.resolve([{ id: "e1", kind: "meal" as const, name: "Eggs and ham", time: "06:05", kcal: 246, protein: 18, carbs: 1, fat: 18, source: "google" }]),
     logWater: (ml: number) => { e.water.push(ml); return Promise.resolve({ id: "w1", left: { waterMl: 1500 } }); },
     recentEntries: () => Promise.resolve([{ id: "e1", kind: "meal" as const, name: "Apple", detail: "95 kcal", when: "Wed 12:00" }, { id: "e2", kind: "water" as const, name: "Water", detail: "250 ml", when: "Wed 13:00" }]),
     ...over,
@@ -233,6 +234,13 @@ describe("the chat agent", () => {
     const rb = await runAgent(deps(bad), env(), { history: [], message: "x" });
     expect(rb.events.map((x) => x.type)).toEqual(["text"]);
     expect(resultsOf(bad.requests[1]!)[0]).toHaveProperty("error");
+  });
+
+  it("hands the model today's entries with their numbers, so it can say what used up the fat", async () => {
+    const m = scripted(call("t1", "get_today", {}), say("A tojás és a sonka vitte el: 18 g zsír."));
+    await runAgent(deps(m), env(), { history: [], message: "mi vitte el a zsírkeretet?" });
+    const today = resultsOf(m.requests[1]!)[0] as { todayEntries: { name: string; fat: number }[] };
+    expect(today.todayEntries).toEqual([expect.objectContaining({ name: "Eggs and ham", fat: 18, time: "06:05" })]);
   });
 
   it("reads today with the pace gaps", async () => {

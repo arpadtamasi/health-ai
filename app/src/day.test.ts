@@ -52,7 +52,7 @@ test("fat is a limit: the hero says how much is left, and the bar has a cap inst
   assert.deepEqual([h.kind, h.amount, h.tone], ["fatLeft", 8, "ok"]);
   const bar = barOf(d, "f");
   assert.equal(bar.limit, true);
-  assert.equal(bar.tick, 100);
+  assert.ok(bar.tick > 60 && bar.tick < 80, String(bar.tick));   // the pace tick is there too, the cap is the end of the bar
   assert.equal(bar.left, 8);
   assert.equal(judgeHero(day(10 * 60, { fat: 90 }), [], "f").tone, "behind");
 });
@@ -71,7 +71,8 @@ test("the chart is a staircase of what was logged up to now, per metric", () => 
   assert.ok(c.nowX > c.steps[1]!.x);
   assert.equal(c.limit, false);
   assert.deepEqual(chartOf(day(15 * 60, {}), entries, "p", tz).steps.map((s) => s.total), [17, 55]);
-  assert.equal(chartOf(day(15 * 60, {}), entries, "f", tz).planNow, undefined);
+  assert.equal(chartOf(day(15 * 60, {}), entries, "f", tz).limit, true);
+  assert.ok(chartOf(day(15 * 60, {}), entries, "f", tz).planNow > 0);
 });
 
 test("the minutes of an instant are read in the person's own time zone", () => {

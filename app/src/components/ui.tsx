@@ -20,7 +20,7 @@ export function Chip({ label, icon, selected = false, onPress, tone = "neutral" 
   const fg = selected ? c.onPrimaryContainer : tone === "danger" ? c.error : c.onSurface;
   return (
     <Pressable accessibilityRole="button" onPress={onPress}
-      style={{ minHeight: T.size.touch, paddingHorizontal: 16, borderRadius: T.radius.chip, borderWidth: 1, justifyContent: "center",
+      style={{ minHeight: T.size.touch, maxWidth: 220, flexShrink: 1, paddingHorizontal: 16, borderRadius: T.radius.chip, borderWidth: 1, justifyContent: "center",
         borderColor: selected ? c.primaryContainer : c.outline, backgroundColor: selected ? c.primaryContainer : c.surface }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         {icon ? <FoodIcon category={icon} size={16} color={fg} /> : null}
