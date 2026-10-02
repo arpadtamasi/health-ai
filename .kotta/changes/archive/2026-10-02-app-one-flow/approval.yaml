@@ -1,0 +1,75 @@
+change: app-one-flow
+approved_by: rp
+approved_at: 2026-10-02T10:50:49.837Z
+approval_basis: sha256:bbb7faad99b15c123d54c4ee577fe5374261a7eda75750b0186b3ee742ec1f57
+approved:
+  added:
+    - id: BR-01m3y1prykkz2yqtf6g5fgz0ne
+      title: A photo logs what it shows
+    - id: BR-01m3y2d5dkmsvqxp9ahxser706
+      title: The chat is kept during the test
+    - id: BR-01m3y1ps4jpv3g7r0njzjpe13f
+      title: The hero's colour states the situation
+    - id: EX-01m3y2sndaek9kpja0zp4n8py6
+      title: A chip tapped on a cold start shows the card at once
+    - id: EX-01m3y1pve0wkbm75jfke81r9ve
+      title: A logged meal appears in the thread in time order
+    - id: EX-01m3y1psv757h8gqc5wmmky3rj
+      title: A lunch logged as a snack is moved with the meal type and time chips
+    - id: EX-01m3y1psg7sgp6019wh2ehefty
+      title: A photo of a fridge proposes and logs nothing
+    - id: EX-01m3y1psa8q9g7vq4b5ra1sxhn
+      title: A photo of a label is read, not estimated
+    - id: EX-01m3y2snkn5ckbaackcpjvzysf
+      title: An action that failed is offered again and is never repeated by itself
+    - id: EX-01m3y2d5qsdtn4859z4ntbvm0t
+      title: Deleting the whole history also deletes the conversation
+    - id: EX-01m3y2d5jng87ap6mmb7shz36n
+      title: Reopening the app shows the conversation again
+    - id: EX-01m3y1pt5w7j5jqnjppct4gntd
+      title: Tapping the chosen bar again goes back to the calories
+    - id: EX-01m3y1pt0jf372my3204evety1
+      title: Tapping the protein bar puts protein in the hero
+    - id: EX-01m3y1pv8jmdbqay69dw1xzwcx
+      title: The dock offers yesterday's breakfast
+    - id: EX-01m3y1ptc4mfsg0c8vbcjm3w2z
+      title: The fat bar shows the cap and not a pace
+    - id: EX-01m3y1pv379hwqmt3jfsqz9p9v
+      title: The hero is dark when the day is closed
+    - id: EX-01m3y1pthj3qcq57gf9km40rqw
+      title: The hero is red when the calories are 200 under the plan
+    - id: EX-01m3y1ptvks1k8pxkzpe89stx5
+      title: The hero is yellow within 120 kcal of the plan
+    - id: EX-01m3y2snsqw3e3th7rfs0n7r08
+      title: The last known day is shown while the server is read
+    - id: EX-01m3y1pvkekmsy4pdbw3w46qk1
+      title: Typing with the keyboard open keeps a one-line status
+    - id: EX-01m3y1psnt7qhveb7gcng4mx53
+      title: Yesterday's breakfast with more milk changes the entry
+    - id: QA-01m3y2sn77z4s7pszem174t194
+      title: The app stays usable on a slow response
+    - id: US-01m3y1prd5e73v389tvmmk9nm7
+      title: Choose what the home shows
+    - id: US-01m3y1prs26ph5khvjnjsn0wx2
+      title: See today's entries in the thread
+    - id: US-01m3y1prjp83txn88npcqctbhj
+      title: Track fat as the fourth macro
+  changed:
+    - id: EX-01m3rvsqvrfkzhj564c066ev2b
+      title: A photo of a plate is logged at once and the portion can be changed
+    - id: EX-01m3w51d5bqfv5qhk9smp3yxyj
+      title: The dock offers the usual items, the camera and the text field on the
+        home
+    - id: EX-01m3w51cz41qvfw0mfa79pbphx
+      title: The home shows the day as a pace chart and bars
+    - id: US-01m3rvr6am99nrrbycxfw4r6v4
+      title: Choose food and quantity with the camera
+    - id: US-01m3rvr6vsnzps8jrdz05gja1y
+      title: Correct a logged meal
+    - id: US-01m3w51bs6krjxa2rgb86qkft7
+      title: Open on a full-screen home that shows the day
+    - id: US-01m3rvr64zrzczabckjf6crb2z
+      title: See where I am against the day's pace
+    - id: US-01m3w51bzh8h6t8npn6k80r782
+      title: Start logging from one button on the home
+  removed: []

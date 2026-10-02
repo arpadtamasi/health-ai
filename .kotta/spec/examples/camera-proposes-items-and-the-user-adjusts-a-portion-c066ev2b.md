@@ -1,25 +1,25 @@
 ---
 id: EX-01m3rvsqvrfkzhj564c066ev2b
 form: example
-title: "Camera proposes items and the user adjusts a portion"
-subjects: [US-01m3rvr6am99nrrbycxfw4r6v4]
+title: "A photo of a plate is logged at once and the portion can be changed"
+subjects: [US-01m3rvr6am99nrrbycxfw4r6v4, BR-01m3y1prykkz2yqtf6g5fgz0ne]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · What changes"]
+  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
   quote: null
-  inferred: "The concrete numbers are sample values chosen for the mockups, not the owner's data."
+  inferred: "The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home."
 ---
-# Camera proposes items and the user adjusts a portion
+# A photo of a plate is logged at once and the portion can be changed
 
 ## Given
 
-The phone user photographs a plate of salmon, rice and a side salad.
+The person photographs a plate of salmon, rice and a side salad.
 
 ## When
 
-The photo is analysed and the user drags the rice portion.
+They send the photo with no text.
 
 ## Then
 
-Each item shows a proposed portion and its calories, the total and the calories left after this meal change with the slider, and nothing is logged yet.
+One estimate card is logged with the items and their amounts; changing the rice amount on the card changes the entry and the day's totals.

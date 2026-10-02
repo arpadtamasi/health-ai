@@ -4,32 +4,24 @@ form: user-story
 title: "See where I am against the day's pace"
 actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
-  level: stated
-  decided_by: human
-  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · Why", ".kotta/changes/mobile-app-daily-balance/conversation.md · P15", ".kotta/changes/mobile-app-daily-balance/conversation.md · P16", ".kotta/changes/mobile-app-daily-balance/conversation.md · K9"]
-  quote: "ma épp szénhidráttal vagyok lemaradva"
-  inferred: "Which macros to show (calories, carbs, protein) is my reading of the owner's remark; the time window and the storage on our side were answered by the owner."
+  level: partly-inferred
+  decided_by: agent-decided
+  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  quote: null
+  inferred: "The chart and the bar grammar come from the assistant's redesign and its critique, which the owner asked for (\"béna az öt karika, tudsz kreatív lenni?\"); the earlier decisions on goals are kept."
 ---
 # See where I am against the day's pace
 
 ## Story
 
-As a phone user, I want the app to open on a chat with the day's pace always visible on top (calories, carbs and protein against the time of day), so that I know at a glance what I am short of, for example carbs today, and can ask what to do about it in the same place.
+As a phone user, I want the top of the home to show one number and one picture of my pace (what I ate against the plan for this time of day, and the gap between them) and a bar for each of protein, carbs, fat and water, so that I know at a glance what I am short of.
 
 ## Value
 
-The first screen answers "what am I behind on right now", not only "what is left". The owner's own example: "ma épp szénhidráttal vagyok lemaradva". The largest gap is highlighted; the calories left today and the water so far stay visible beneath.
+The first view answers "what am I behind on right now", not only "what is left". The owner's example: "ma épp szénhidráttal vagyok lemaradva".
 
 ## Notes
 
-Screenshot: ![Chat with the pace strip](screens/chat-10-home.png)
+The picture is a chart from 7:00 to 22:00: the plan is a dashed diagonal, what was eaten is a staircase with a dot for every meal, the area between them is the gap, and a line marks now. Minimum bars (protein, carbs, water) say how much is still to go, with a tick where the plan stands now and a hatched part for the lag; the fat bar is a limit: it says how much is left of the cap. Calories are the default subject of the hero; see "Choose what the home shows".
 
-## Decided by the owner
-
-- The chat is the base of the app, with the pace strip on top and a camera button in the input bar ("inkább chat lenne az alap és ott lenne egy kamera gomb"; "erősen hagyatkoznék a chatre").
-- Carbs and protein goals start from a default split of the calorie goal (about half from carbs, a quarter from protein), changeable in the settings or by chat ("8 igen").
-- Activity does not raise the day's allowance; the goal is fixed ("9 egyetértek").
-
-## Implementation notes
-
-Built (2026-09-30): the server reads today's nutrition-log in the user's own time zone (taken from the Google Health settings) and the app computes the pace from it: the goal is spread evenly over the eating window, and the macro furthest behind relative to its own goal is highlighted. A test reproduces the owner's example (14:20, 1,900 kcal, 720 eaten: 209 kcal under the pace). Not built: what the pace shows before the window starts or after it ends beyond the plan being 0 or the whole goal.
+Carbs and protein goals start from a default split of the calorie goal, and the activity does not raise the day's allowance (both as decided earlier).

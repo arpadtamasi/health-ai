@@ -3,31 +3,25 @@ id: US-01m3w51bs6krjxa2rgb86qkft7
 form: user-story
 title: "Open on a full-screen home that shows the day"
 actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
-accepted: ["unimplemented: the full-screen Status and the Chat/Status switch are drawn but not built; the app opens on the chat today"]
 provenance:
   level: stated
   decided_by: human
-  sources: [".kotta/changes/mobile-app-daily-balance/conversation.md · SZ12", ".kotta/changes/mobile-app-daily-balance/conversation.md · P31", ".kotta/changes/mobile-app-daily-balance/conversation.md · P32"]
-  quote: "nagyon kicsi az az állapotjelző a tetején; alapállapotban full screen jó lenne, valami jobb grafikával"
+  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  quote: "nem megy a fotó meg az egész kicsit clunky; tervezd át az appot; a beszélgetéseimből akarom megtakarítani, amit lehet"
   inferred: null
 ---
 # Open on a full-screen home that shows the day
 
 ## Story
 
-As a phone user, I want the app to have two states, Status and Chat: Status is a full-screen picture of my day (calories, carbs, protein and water against the pace of the day, with the biggest gap as the hero), and Chat is a full chat with quick buttons in it, so that I see where I stand at a glance and act on it in one place.
+As a phone user, I want the app to be one screen: on top the day against its pace (a hero with one big figure and a chart of the day, and a bar for each of protein, carbs, fat and water), under it one thread of everything I logged today and my conversation with the assistant, and at the bottom a dock with my usual items, the camera and the text field, so that I see where I stand, act on it and check what I logged without changing screens.
 
 ## Value
 
-The strip at the top of the chat is too small to be the main thing. The day's picture is what the owner opens the app for ("ahol állok"); the chat is how they act on it.
+Logging and asking happen ten times a day. A Status screen, a Log button and a separate Chat made every one of them a trip, and the owner checked what was logged in Google Health's own screen because the app did not list it.
 
 ## Notes
 
-Screenshots: ![Status](screens/home-20-status.png) ![Chat](screens/home-21-chat.png)
+Screenshots: the storyboard `docs/designs/redesign-mockups/storyboard.png` (stories 0 to 6). The hero folds into one line while the keyboard is open and while the assistant shows suggestions, so that the thread has room. The first run starts from the landing page (see "The front door is the app when signed in, and the landing page when not"); before the first log the hero is a calm sentence and there is no chart.
 
-Status: the biggest gap as the hero figure, four rings (calories, carbs, protein, water) each with a tick where the plan for this time of day stands, and the logging buttons (see "Start logging from one button on the home"). Chat: the conversation with the quick buttons (frequent foods, water, the camera) above the composer, and a switch back to Status. There is no mixed state: when the chat comes up it is the chat.
-
-## Decided by the owner
-
-- The drawing of the Status is right ("igen").
-- Two states only, Status or Chat: "ha feljön a chat, akkor chat, és abban vannak gyorsgombok; kb 2 állapot: chat vagy státusz". The earlier mockups with the chat over a shrunken strip and with a bottom sheet are dropped.
+This replaces the earlier decision of two separate states, Status and Chat ("kb 2 állapot: chat vagy státusz"): the new decision comes from the owner's redesign request.
