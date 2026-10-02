@@ -27,13 +27,13 @@ export function OptionCard({ option, primary = false, onChoose, labels }: { opti
         <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: c.strong }}>
           <Text style={{ fontFamily: T.face.bold, color: c.onStrong }}>{option.rank}</Text>
         </View>
-        <Text style={{ flex: 1, fontSize: 18, fontFamily: T.face.display, letterSpacing: -0.3, color: fg }}>{option.name}</Text>
+        <Text style={{ flex: 1, fontSize: T.font.card, fontFamily: T.face.display, letterSpacing: -0.3, color: fg }}>{option.name}</Text>
         <FoodIcon category={option.category} size={26} color={fg} />
       </View>
-      <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: fg }}>
+      <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: fg }}>
         {option.kcal} kcal · {option.protein} g {labels.protein}{option.fat !== undefined ? ` · ${option.fat} g ${labels.fat}` : ""}
       </Text>
-      {option.reason ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: fg }}>{option.reason}</Text> : null}
+      {option.reason ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: fg }}>{option.reason}</Text> : null}
     </Pressable>
   );
 }

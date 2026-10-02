@@ -36,23 +36,23 @@ export function EditSheet({ entry, timeZone, t, onSave, onDelete, onClose }:
       <Pressable accessibilityLabel={t.cancel} onPress={onClose} style={{ flex: 1, backgroundColor: c.scrim, justifyContent: "flex-end" }}>
         <Pressable onPress={() => undefined} style={{ backgroundColor: c.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 28, gap: 10, alignSelf: "center", width: "100%", maxWidth: 480 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-            <Text style={{ fontFamily: T.face.display, fontSize: 20, letterSpacing: -0.4, color: c.onSurface }}>{t.editTitle}</Text>
-            <Text style={{ fontFamily: T.face.display, fontSize: 17, color: c.onSurface }}>{scale(entry.kcal, f)} kcal</Text>
+            <Text style={{ fontFamily: T.face.display, fontSize: T.font.title, letterSpacing: -0.4, color: c.onSurface }}>{t.editTitle}</Text>
+            <Text style={{ fontFamily: T.face.display, fontSize: T.font.card, color: c.onSurface, ...T.numeric }}>{scale(entry.kcal, f)} kcal</Text>
           </View>
-          <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.macroLine(scale(entry.protein, f), scale(entry.carbs, f), scale(entry.fat, f))}</Text>
+          <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant, ...T.numeric }}>{t.macroLine(scale(entry.protein, f), scale(entry.carbs, f), scale(entry.fat, f))}</Text>
           <Row label={t.editName}>
-            <TextInput value={name} onChangeText={setName} accessibilityLabel={t.editName} style={{ flex: 1, textAlign: "right", fontFamily: T.face.semi, fontSize: T.font.base, color: c.onSurface, minHeight: 36 }} />
+            <TextInput value={name} onChangeText={setName} accessibilityLabel={t.editName} style={{ flex: 1, textAlign: "right", fontFamily: T.face.semi, fontSize: T.font.body, color: c.onSurface, minHeight: 36 }} />
           </Row>
           <Row label={t.editPortion}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Round label="−" onPress={() => step(-10)} />
-              <Text style={{ fontFamily: T.face.bold, fontSize: T.font.base, color: c.onSurface, minWidth: 52, textAlign: "center" }}>{pct}%</Text>
+              <Text style={{ fontFamily: T.face.bold, fontSize: T.font.body, color: c.onSurface, minWidth: 52, textAlign: "center" }}>{pct}%</Text>
               <Round label="+" onPress={() => step(10)} />
             </View>
           </Row>
           <Row label={t.editTime}>
             <TextInput value={time} onChangeText={setTime} accessibilityLabel={t.editTime} keyboardType="numbers-and-punctuation" maxLength={5}
-              style={{ textAlign: "right", fontFamily: T.face.bold, fontSize: T.font.base, color: timeOk ? c.onSurface : c.error, minHeight: 36, minWidth: 60 }} />
+              style={{ textAlign: "right", fontFamily: T.face.bold, fontSize: T.font.body, color: timeOk ? c.onSurface : c.error, minHeight: 36, minWidth: 60 }} />
           </Row>
           <Row label={t.editType}>
             <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", justifyContent: "flex-end", flex: 1 }}>
@@ -72,7 +72,7 @@ export function EditSheet({ entry, timeZone, t, onSave, onDelete, onClose }:
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, backgroundColor: c.surfaceLow, borderRadius: 16, paddingVertical: 8, paddingHorizontal: 14, minHeight: 48 }}>
-      <Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }}>{label}</Text>
+      <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }}>{label}</Text>
       {children}
     </View>
   );
@@ -82,7 +82,7 @@ function Round({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
       style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ fontFamily: T.face.bold, fontSize: 20, color: c.onSurface }}>{label}</Text>
+      <Text style={{ fontFamily: T.face.bold, fontSize: T.font.title, color: c.onSurface }}>{label}</Text>
     </Pressable>
   );
 }

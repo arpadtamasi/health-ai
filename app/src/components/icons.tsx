@@ -3,8 +3,8 @@
 // To change the icon set, change this table (or the two components); the categories stay the same.
 import type { ComponentType } from "react";
 import {
-  Apple, ArrowLeft, ArrowUp, Camera, Candy, Carrot, Coffee, CupSoda, Croissant, Drumstick, Egg, Fish, GlassWater, Heart, Milk, Popcorn,
-  Plus, Salad, Soup, Utensils, Wheat, X,
+  Apple, ArrowUp, Camera, Candy, Carrot, Coffee, CupSoda, Croissant, Drumstick, Egg, Fish, GlassWater, Heart, Milk, Popcorn,
+  Salad, Soup, Utensils, Wheat,
 } from "lucide-react-native";
 import { tokens as T } from "../theme/tokens";
 
@@ -20,7 +20,7 @@ const FOOD: Record<FoodCategory, IconComponent> = {
   drink: CupSoda, water: GlassWater, coffee: Coffee, soup: Soup, salad: Salad, snack: Popcorn, other: Utensils,
 };
 
-const UI = { camera: Camera, "arrow-up": ArrowUp, "arrow-left": ArrowLeft, x: X, heart: Heart, plus: Plus } as const;
+const UI = { camera: Camera, "arrow-up": ArrowUp, heart: Heart } as const;
 export type UiIconName = keyof typeof UI;
 
 export function FoodIcon({ category, size = 24, color = T.color.onSurface }: { category: FoodCategory; size?: number; color?: string }) {

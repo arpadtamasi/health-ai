@@ -249,13 +249,13 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const items: Item[] = useMemo(() => {
     const out: Item[] = [];
     const tz = state?.timeZone ?? "UTC";
-    if (!ready) out.push({ key: "greet", time: 0, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }}>{t.greetSetup}</Text></View> });
-    else if (shown.length === 0 && messages.length === 0) out.push({ key: "empty", time: 0, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }}>{t.threadEmpty}</Text></View> });
+    if (!ready) out.push({ key: "greet", time: 0, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }}>{t.greetSetup}</Text></View> });
+    else if (shown.length === 0 && messages.length === 0) out.push({ key: "empty", time: 0, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }}>{t.threadEmpty}</Text></View> });
     if (ready && !healthConnected && !dismissedConnect) {
       out.push({ key: "connect", time: 1, node: (
         <View style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
-          <Text style={{ fontFamily: T.face.display, fontSize: 17, color: c.onSurface }}>{t.connectTitle}</Text>
-          <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.connectText}</Text>
+          <Text style={{ fontFamily: T.face.display, fontSize: T.font.card, color: c.onSurface }}>{t.connectTitle}</Text>
+          <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{t.connectText}</Text>
           <View style={{ flexDirection: "row", gap: T.space.s }}><Chip label={t.connectButton} selected onPress={connect} /><Chip label={t.connectDismiss} onPress={() => setDismissedConnect(true)} /></View>
         </View>) });
     }
@@ -268,7 +268,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
       const user = m.role === "user";
       m.content.forEach((p, i) => {
         const key = `m-${m.id}-${i}`;
-        if (p.type === "text" && p.text && !(user && p.text === t.photoQuestion && m.content.some((q) => q.type === "image"))) out.push({ key, time: time + i, node: <View style={bubble(user)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: user ? c.onStrong : c.onSurface }}>{p.text}</Text></View> });
+        if (p.type === "text" && p.text && !(user && p.text === t.photoQuestion && m.content.some((q) => q.type === "image"))) out.push({ key, time: time + i, node: <View style={bubble(user)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, lineHeight: 23, color: user ? c.onStrong : c.onSurface }}>{p.text}</Text></View> });
         else if (p.type === "image" && p.image) out.push({ key, time: time + i, node: <View style={{ ...bubble(true), padding: 6 }}><Image source={{ uri: p.image }} style={{ width: 190, height: 110, borderRadius: 14 }} /></View> });
         else if (p.type === "tool-call" && p.toolName === "show_options") {
           const opts = (p.result as Option[] | undefined) ?? [];
@@ -277,7 +277,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
       });
       if (m.metadata?.custom?.failedPhoto) out.push({ key: `f-${m.id}`, time: time + 50, node: <View style={{ flexDirection: "row", gap: 8 }}><Chip label={t.newPhoto} selected onPress={() => void camera()} /><Chip label={t.describe} onPress={() => undefined} /></View> });
     }
-    if (running) out.push({ key: "thinking", time: Number.MAX_SAFE_INTEGER, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurfaceVariant }}>{t.thinking}</Text></View> });
+    if (running) out.push({ key: "thinking", time: Number.MAX_SAFE_INTEGER, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.thinking}</Text></View> });
     return out.sort((a, b) => a.time - b.time);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, pending, messages, fresh, ready, state, t, healthConnected, dismissedConnect, running, scheme]);
@@ -289,11 +289,13 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.surface }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m, height: 48, paddingHorizontal: T.space.xl }}>
-        <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={17} color={c.onPrimary} filled /></View>
-        <Text style={{ fontFamily: T.face.display, fontSize: 20, letterSpacing: -0.4, color: c.onSurface }}>{t.appName}</Text>
-      </View>
-      {slow ? <View style={{ marginHorizontal: T.space.xl, marginBottom: 6, alignSelf: "flex-start", backgroundColor: c.surfaceLow, borderRadius: T.radius.chip, paddingVertical: 6, paddingHorizontal: 14 }}><Text accessibilityLiveRegion="polite" style={{ fontFamily: T.face.semi, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.slowNet}</Text></View> : null}
+      {ready ? null : (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m, height: 48, paddingHorizontal: T.space.xl }}>
+          <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={17} color={c.onPrimary} filled /></View>
+          <Text style={{ fontFamily: T.face.display, fontSize: T.font.title, letterSpacing: -0.4, color: c.onSurface }}>{t.appName}</Text>
+        </View>
+      )}
+      {slow ? <View style={{ marginHorizontal: T.space.xl, marginBottom: 6, alignSelf: "flex-start", backgroundColor: c.surfaceLow, borderRadius: T.radius.chip, paddingVertical: 6, paddingHorizontal: 14 }}><Text accessibilityLiveRegion="polite" style={{ fontFamily: T.face.semi, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{t.slowNet}</Text></View> : null}
       {ready && !state ? (
         <View style={{ paddingHorizontal: T.space.xl, gap: 10 }}>
           <View style={{ height: 190, borderRadius: 28, backgroundColor: c.surfaceLow }} />
@@ -313,15 +315,15 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
           onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })} />
         {showConsent ? (
           <View style={{ marginHorizontal: T.space.xl, gap: T.space.s, backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l }}>
-            <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }}>{t.consentText}</Text>
+            <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{t.consentText}</Text>
             <Button label={t.consentButton} onPress={() => void backend.consent().then(() => { setConsented(true); setReady(true); })} />
           </View>
         ) : null}
         <View style={{ paddingTop: 10, paddingBottom: 14, paddingHorizontal: T.space.xl, gap: 8, borderTopWidth: 1, borderTopColor: c.surfaceHigh, backgroundColor: c.surface }}>
           <View style={{ flexDirection: "row", gap: 8, flexWrap: "nowrap", overflow: "hidden" }}>
             {replies.length
-              ? replies.map((r) => <ThreadPrimitive.Suggestion key={r} prompt={r} send style={{ minHeight: T.size.touch, paddingHorizontal: 16, justifyContent: "center", borderRadius: T.radius.chip, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface }}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }}>{r}</Text></ThreadPrimitive.Suggestion>)
-              : ready ? usuals.slice(0, 4).map((u, i) => <Chip key={`${u.kind}-${u.name}`} selected={i === 0} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : u.name} onPress={() => logUsual(u)} />) : null}
+              ? replies.map((r) => <ThreadPrimitive.Suggestion key={r} prompt={r} send style={{ minHeight: T.size.touch, paddingHorizontal: 16, justifyContent: "center", borderRadius: T.radius.chip, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface }}><Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{r}</Text></ThreadPrimitive.Suggestion>)
+              : ready ? usuals.slice(0, 3).map((u, i) => <Chip key={`${u.kind}-${u.name}`} selected={i === 0} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : u.name} onPress={() => logUsual(u)} />) : null}
           </View>
           <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
             <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={() => void camera()}
@@ -329,7 +331,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
               <UiIcon name="camera" size={22} color={c.onPrimaryContainer} />
             </Pressable>
             <ComposerPrimitive.Input placeholder={t.placeholder} multiline placeholderTextColor={c.onSurfaceVariant} onFocus={() => { setTyping(true); warmUp(); }} onBlur={() => setTyping(false)}
-              style={[{ flex: 1, backgroundColor: c.surfaceHigh, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, minHeight: 48, maxHeight: 120, fontFamily: T.face.body, fontSize: T.font.base, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
+              style={[{ flex: 1, backgroundColor: c.surfaceHigh, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, minHeight: 48, maxHeight: 120, fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
             <ComposerPrimitive.Send style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
               <UiIcon name="arrow-up" size={20} color={c.onPrimary} />
             </ComposerPrimitive.Send>

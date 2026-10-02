@@ -35,15 +35,15 @@ export function Hero({ tone, big, text, chart, minutes, window, labels, compact 
   if (compact) {
     return (
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: t.bg, borderRadius: 20, paddingVertical: 10, paddingHorizontal: 16 }}>
-        <Text style={{ fontFamily: T.face.display, fontSize: 22, letterSpacing: -0.4, color: t.fg }}>{big}</Text>
-        <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: t.fg }}>{hhmm(minutes)}</Text>
+        <Text style={{ fontFamily: T.face.display, fontSize: T.font.title, letterSpacing: -0.4, color: t.fg }}>{big}</Text>
+        <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: t.fg }}>{hhmm(minutes)}</Text>
       </View>
     );
   }
   return (
     <View accessibilityLiveRegion="polite" style={{ backgroundColor: t.bg, borderRadius: 28, paddingTop: 16, paddingHorizontal: 18, paddingBottom: 12 }}>
-      <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: T.face.display, fontSize: 38, letterSpacing: -0.8, color: t.fg }}>{big}</Text>
-      <Text style={{ fontFamily: T.face.body, fontSize: 15, color: t.fg, marginTop: 4 }}>{text}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit style={{ fontFamily: T.face.display, fontSize: T.font.hero, letterSpacing: -0.8, color: t.fg, ...T.numeric }}>{big}</Text>
+      <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: t.fg, marginTop: 4 }}>{text}</Text>
       {chart ? <Chart chart={chart} tone={tone} minutes={minutes} window={window} labels={labels} /> : null}
     </View>
   );
@@ -70,22 +70,22 @@ function Chart({ chart, tone, minutes, window, labels }: { chart: ChartModel; to
         {chart.limit
           ? <>
               <Line x1={0} y1={1.5} x2={W} y2={1.5} stroke={t.fg} strokeWidth={5} strokeLinecap="round" />
-              <SvgText x={W * 0.3} y={22} fontSize={12} fontFamily={font} fill={t.fg} textAnchor="middle">{labels.cap}</SvgText>
+              <SvgText x={W * 0.3} y={22} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor="middle">{labels.cap}</SvgText>
             </>
           : <>
               <Line x1={0} y1={H} x2={W} y2={0} stroke={t.plan} strokeWidth={2.5} strokeDasharray="2 6" strokeLinecap="round" />
-              <SvgText x={W * 0.3} y={Y(0.3 * chart.goal) - 12} fontSize={12} fontFamily={font} fill={t.fg} textAnchor="middle">{labels.plan}</SvgText>
+              <SvgText x={W * 0.3} y={Y(0.3 * chart.goal) - 12} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor="middle">{labels.plan}</SvgText>
             </>}
         <Line x1={nx} y1={0} x2={nx} y2={H} stroke={t.fg} strokeOpacity={0.45} />
         <Path d={path} fill="none" stroke={t.line} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
         {chart.steps.map((s, i) => <Circle key={i} cx={X(s.x)} cy={Y(s.total)} r={5.5} fill={t.dot} stroke={t.dotStroke} strokeWidth={2} />)}
-        <SvgText x={0} y={12} fontSize={12} fontFamily={font} fill={t.fg}>{labels.metric}</SvgText>
+        <SvgText x={0} y={12} fontSize={T.font.micro} fontFamily={font} fill={t.fg}>{labels.metric}</SvgText>
         {chart.steps.length ? (
-          <SvgText x={endNear ? nx - 8 : nx + 8} y={endNear ? Math.max(12, Y(chart.total) - 12) : Math.min(H - 6, Y(chart.total) + 18)} fontSize={12} fontFamily={font} fill={t.fg} textAnchor={endNear ? "end" : "start"}>{labels.you}</SvgText>
+          <SvgText x={endNear ? nx - 8 : nx + 8} y={endNear ? Math.max(12, Y(chart.total) - 12) : Math.min(H - 6, Y(chart.total) + 18)} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor={endNear ? "end" : "start"}>{labels.you}</SvgText>
         ) : null}
-        {nx < 40 ? null : <SvgText x={0} y={H + 17} fontSize={12} fontFamily={T.face.body} fill={t.fg}>{`${window.startHour}:00`}</SvgText>}
-        {nx > W - 40 ? null : <SvgText x={W} y={H + 17} fontSize={12} fontFamily={T.face.body} fill={t.fg} textAnchor="end">{`${window.endHour}:00`}</SvgText>}
-        <SvgText x={Math.min(W - 20, Math.max(20, nx))} y={H + 17} fontSize={12} fontFamily={font} fill={t.fg} textAnchor="middle">{hhmm(minutes)}</SvgText>
+        {nx < 40 ? null : <SvgText x={0} y={H + 17} fontSize={T.font.micro} fontFamily={T.face.body} fill={t.fg}>{`${window.startHour}:00`}</SvgText>}
+        {nx > W - 40 ? null : <SvgText x={W} y={H + 17} fontSize={T.font.micro} fontFamily={T.face.body} fill={t.fg} textAnchor="end">{`${window.endHour}:00`}</SvgText>}
+        <SvgText x={Math.min(W - 20, Math.max(20, nx))} y={H + 17} fontSize={T.font.micro} fontFamily={font} fill={t.fg} textAnchor="middle">{hhmm(minutes)}</SvgText>
       </Svg>
     </View>
   );

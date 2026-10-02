@@ -13,16 +13,16 @@ export function ConfirmDelete({ ask, onConfirm }: { ask: DeleteAsk; onConfirm: (
   const [state, setState] = useState<"ask" | "done" | "failed" | "kept">("ask");
   return (
     <View style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
-      <Text style={{ fontFamily: T.face.display, fontSize: T.font.base, color: c.onSurface }}>{ask.all ? t.deleteAllTitle : t.deleteTitle}</Text>
-      {ask.all ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.deleteAllText}</Text> : ask.labels.map((l) => <Text key={l} style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{l}</Text>)}
+      <Text style={{ fontFamily: T.face.display, fontSize: T.font.body, color: c.onSurface }}>{ask.all ? t.deleteAllTitle : t.deleteTitle}</Text>
+      {ask.all ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{t.deleteAllText}</Text> : ask.labels.map((l) => <Text key={l} style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{l}</Text>)}
       {state === "ask" || state === "failed" ? (
         <View style={{ flexDirection: "row", gap: T.space.s }}>
           <Chip label={t.deleteConfirm} tone="danger" onPress={() => void onConfirm(ask).then((ok) => setState(ok ? "done" : "failed"))} />
           <Chip label={t.deleteCancel} onPress={() => setState("kept")} />
         </View>
       ) : null}
-      {state === "done" ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }}>{t.deleted}</Text> : null}
-      {state === "failed" ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.error }}>{t.deleteFailed}</Text> : null}
+      {state === "done" ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{t.deleted}</Text> : null}
+      {state === "failed" ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.error }}>{t.deleteFailed}</Text> : null}
     </View>
   );
 }

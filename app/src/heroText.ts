@@ -12,7 +12,8 @@ export function amountText(m: Metric, n: number): string {
 }
 
 export function heroWords(h: Hero, d: DayInput, t: Texts): { big: string; text: string } {
-  const label = metricLabel(t, h.metric);
+  // The chart names the metric; the sentence only needs to when the figure is not calories.
+  const label = h.metric === "kcal" ? "" : metricLabel(t, h.metric);
   const note = h.note ? (h.note.kind === "fatLeft" ? t.noteFatLeft(h.note.amount) : t.noteProteinBehind(h.note.amount)) : "";
   const join = (a: string) => (note ? `${a} ${note}` : a);
   switch (h.kind) {

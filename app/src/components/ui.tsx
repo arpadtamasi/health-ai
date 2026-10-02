@@ -10,7 +10,7 @@ export function Button({ label, onPress, kind = "primary", disabled = false }: {
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}
       style={{ minHeight: T.size.button, borderRadius: T.radius.button, alignItems: "center", justifyContent: "center", paddingHorizontal: T.space.xl,
         backgroundColor: primary ? c.primary : "transparent", opacity: disabled ? 0.5 : 1 }}>
-      <Text style={{ color: primary ? c.onPrimary : c.primary, fontFamily: T.face.semi, fontSize: T.font.base }}>{label}</Text>
+      <Text style={{ color: primary ? c.onPrimary : c.primary, fontFamily: T.face.semi, fontSize: T.font.body }}>{label}</Text>
     </Pressable>
   );
 }
@@ -24,7 +24,7 @@ export function Chip({ label, icon, selected = false, onPress, tone = "neutral" 
         borderColor: selected ? c.primaryContainer : c.outline, backgroundColor: selected ? c.primaryContainer : c.surface }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         {icon ? <FoodIcon category={icon} size={16} color={fg} /> : null}
-        <Text numberOfLines={1} style={{ fontFamily: selected ? T.face.semi : T.face.body, fontSize: T.font.body, color: fg }}>{label}</Text>
+        <Text numberOfLines={1} style={{ fontFamily: selected ? T.face.semi : T.face.body, fontSize: T.font.meta, color: fg }}>{label}</Text>
       </View>
     </Pressable>
   );

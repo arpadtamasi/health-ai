@@ -12,7 +12,7 @@ const c = T.color;
 export interface BarLabels { name: string; value: string }
 
 function Bar({ bar, label, value, selected, onPress }: { bar: BarModel; label: string; value: string; selected: boolean; onPress: () => void }) {
-  const [w, setW] = useState(0);
+  const [w, setW] = useState(160);   // a first guess, so the bar never waits for the layout
   const H = 12;
   const tight = bar.limit && bar.fill >= 85;
   const fillColor = bar.limit ? (tight ? c.behind : c.good) : bar.behind ? c.behind : c.good;
@@ -22,8 +22,8 @@ function Bar({ bar, label, value, selected, onPress }: { bar: BarModel; label: s
     <Pressable accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={`${label}: ${value}`} onPress={onPress}
       style={{ flex: 1, minHeight: T.size.touch, paddingHorizontal: 10, paddingVertical: 8, margin: -8, borderRadius: 16, backgroundColor: selected ? c.surface : "transparent", borderWidth: 2, borderColor: selected ? c.ink : "transparent" }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={{ fontFamily: selected ? T.face.bold : T.face.body, fontSize: T.font.body, color: c.onSurface }}>{label}</Text>
-        <Text style={{ fontFamily: T.face.bold, fontSize: T.font.body, color: textColor }}>{value}</Text>
+        <Text style={{ fontFamily: selected ? T.face.bold : T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{label}</Text>
+        <Text style={{ fontFamily: T.face.bold, fontSize: T.font.meta, color: textColor, ...T.numeric }}>{value}</Text>
       </View>
       <View style={{ marginTop: 6, height: H }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
         {w > 0 ? (
