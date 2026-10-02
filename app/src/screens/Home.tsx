@@ -8,7 +8,7 @@ import { backend } from "../backend";
 import { useT } from "../i18n";
 import { tokens as T } from "../theme/tokens";
 import { AssistantChat } from "./AssistantChat";
-import { CameraScreen } from "./CameraScreen";
+import { takePhoto } from "../photo";
 import { StatusScreen, type Toast } from "./StatusScreen";
 
 type View_ = "status" | "chat";
@@ -19,7 +19,6 @@ export function Home({ onboarded, healthConnected, onSignedOut }: { onboarded: b
   const [view, setView] = useState<View_>(onboarded ? "status" : "chat");
   const [state, setState] = useState<DayState | null>(null);
   const [usuals, setUsuals] = useState<Usual[]>([]);
-  const [cameraOpen, setCameraOpen] = useState(false);
   const [photo, setPhoto] = useState<{ uri: string; base64: string } | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
@@ -59,19 +58,20 @@ export function Home({ onboarded, healthConnected, onSignedOut }: { onboarded: b
     else void Linking.openURL(connectHealthUrl);
   };
 
-  if (cameraOpen) {
-    return <CameraScreen onCapture={(p) => { setCameraOpen(false); setPhoto(p); setView("chat"); }} onCancel={() => setCameraOpen(false)} />;
-  }
+  const camera = async () => {
+    const p = await takePhoto();
+    if (p) { setPhoto(p); setView("chat"); }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: T.color.surface }}>
       {ready ? (
         <View style={{ flex: 1, display: view === "status" ? "flex" : "none" }}>
-          <StatusScreen state={state} usuals={usuals} toast={toast} healthConnected={healthConnected} onConnect={connect} onLog={() => setView("chat")} onPhoto={() => setCameraOpen(true)} onFrequent={(u) => void frequent(u)} onUndo={() => void undoToast()} />
+          <StatusScreen state={state} usuals={usuals} toast={toast} healthConnected={healthConnected} onConnect={connect} onLog={() => setView("chat")} onPhoto={() => void camera()} onFrequent={(u) => void frequent(u)} onUndo={() => void undoToast()} />
         </View>
       ) : null}
       <View style={{ flex: 1, display: view === "chat" ? "flex" : "none" }}>
-        <AssistantChat onboarded={onboarded} usuals={usuals} photo={photo} onPhotoHandled={onPhotoHandled} onCamera={() => setCameraOpen(true)}
+        <AssistantChat onboarded={onboarded} usuals={usuals} photo={photo} onPhotoHandled={onPhotoHandled} onCamera={() => void camera()}
           onStatus={() => { setView("status"); void load(); }} onChanged={reload} onReady={onReady} />
       </View>
     </View>

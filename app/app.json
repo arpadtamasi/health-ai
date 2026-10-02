@@ -23,9 +23,9 @@
     },
     "plugins": [
       [
-        "expo-camera",
+        "expo-image-picker",
         {
-          "cameraPermission": "Health AI uses the camera to read what you can eat (fridge, menu, counter, plate)."
+          "cameraPermission": "Health AI uses the camera to read what you ate or can eat (a plate, a label, a fridge, a menu)."
         }
       ]
     ]
