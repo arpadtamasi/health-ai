@@ -41,6 +41,8 @@ export interface ConverseRequest {
   turns: Turn[];
   tools: ToolSpec[];
   maxTokens: number;
+  /** The model must call one of the tools (no free text): for a photo, which has to end in a log or a question. */
+  forceTool?: boolean;
 }
 
 export interface ConverseResponse {
@@ -99,6 +101,7 @@ export class AnthropicModelClient implements ModelClient, ToolCaller {
       max_tokens: req.maxTokens,
       system: req.system,
       tools: req.tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.inputSchema as Anthropic.Messages.Tool.InputSchema })),
+      ...(req.forceTool ? { tool_choice: { type: "any" as const } } : {}),
       messages: req.turns.map((t) => ({ role: t.role, content: t.content.map(toParam) })),
     });
     const content: Block[] = [];

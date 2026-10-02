@@ -4,8 +4,8 @@
 // (US "Start logging from one button on the home"). The chat is assistant-ui's local runtime with our own adapter; the thread is
 // drawn here so that the day's entries and the messages can share it, in time order.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, Platform, Pressable, Text, View } from "react-native";
-import { AssistantRuntimeProvider, ComposerPrimitive, ThreadPrimitive, useAui, useAuiState, useLocalRuntime, type ChatModelAdapter, type ChatModelRunResult } from "@assistant-ui/react-native";
+import { FlatList, Image, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState, useLocalRuntime, type ChatModelAdapter, type ChatModelRunResult } from "@assistant-ui/react-native";
 import { ApiError, connectHealthUrl, warmUp, type ChatEvent, type DayEntry, type DayState, type EntryPatch, type Usual } from "../api/client";
 import { backend } from "../backend";
 import { Button, Chip } from "../components/ui";
@@ -241,9 +241,19 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     try { await backend.deleteEntries([e.id]); await load(); hide(e.id, false); } catch { hide(e.id, false); }
   };
   const deleteEntries = async (a: DeleteAsk): Promise<boolean> => { try { if (a.all) await backend.deleteAll(); else await backend.deleteEntries(a.ids); await load(); return true; } catch { return false; } };
+  // The photos wait in the composer (up to four, one meal can take several) and go with the text in one message, as in a chat app.
+  const [tray, setTray] = useState<Photo[]>([]);
+  const [draft, setDraft] = useState("");
   const camera = async () => {
     const p: Photo | undefined = await takePhoto();
-    if (p) aui.thread().append({ role: "user", content: [{ type: "image", image: `data:image/jpeg;base64,${p.base64}` }, { type: "text", text: t.photoQuestion }] });
+    if (p) setTray((x) => [...x, p].slice(0, 4));
+  };
+  const canSend = (draft.trim().length > 0 || tray.length > 0) && !running;
+  const send = () => {
+    if (!canSend) return;
+    const text = draft.trim() || t.photoQuestion;
+    aui.thread().append({ role: "user", content: [...tray.map((p) => ({ type: "image" as const, image: `data:image/jpeg;base64,${p.base64}` })), { type: "text" as const, text }] });
+    setTray([]); setDraft("");
   };
   const connect = () => { if (Platform.OS === "web") window.location.href = connectHealthUrl; else void Linking.openURL(connectHealthUrl); };
 
@@ -268,10 +278,14 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     for (const m of messages) {
       const time = m.createdAt ? new Date(m.createdAt).getTime() : Date.now();
       const user = m.role === "user";
+      const pics = m.content.filter((p) => p.type === "image" && p.image);
+      if (pics.length) out.push({ key: `m-${m.id}-img`, time, node: (
+        <View style={{ ...bubble(true), padding: 6, flexDirection: "row", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>
+          {pics.map((p, i) => <Image key={i} source={{ uri: p.image }} style={{ width: pics.length === 1 ? 190 : 90, height: pics.length === 1 ? 110 : 90, borderRadius: 14 }} />)}
+        </View>) });
       m.content.forEach((p, i) => {
         const key = `m-${m.id}-${i}`;
         if (p.type === "text" && p.text && !(user && p.text === t.photoQuestion && m.content.some((q) => q.type === "image"))) out.push({ key, time: time + i, node: <View style={bubble(user)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, lineHeight: 23, color: user ? c.onStrong : c.onSurface }}>{p.text}</Text></View> });
-        else if (p.type === "image" && p.image) out.push({ key, time: time + i, node: <View style={{ ...bubble(true), padding: 6 }}><Image source={{ uri: p.image }} style={{ width: 190, height: 110, borderRadius: 14 }} /></View> });
         else if (p.type === "tool-call" && p.toolName === "show_options") {
           const opts = (p.result as Option[] | undefined) ?? [];
           out.push({ key, time: time + i, node: <View style={{ gap: T.space.s }}>{opts.map((o) => <OptionCard key={o.rank} option={o} primary={o.rank === 1} onChoose={(x) => choose(x)} labels={{ choose: "Choose", protein: t.metricP, fat: t.metricF }} />)}</View> });
@@ -330,17 +344,33 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
               ? replies.map((r) => <ThreadPrimitive.Suggestion key={r} prompt={r} send style={{ minHeight: T.size.touch, paddingHorizontal: 16, justifyContent: "center", borderRadius: T.radius.chip, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface }}><Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{r}</Text></ThreadPrimitive.Suggestion>)
               : ready ? usuals.slice(0, 3).map((u, i) => <Chip key={`${u.kind}-${u.name}`} selected={i === 0} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : shortName(u.name)} onPress={() => logUsual(u)} />) : null}
           </View>
-          <ComposerPrimitive.Root style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
+          {tray.length ? (
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              {tray.map((p, i) => (
+                <View key={i} style={{ width: 64, height: 64 }}>
+                  <Image source={{ uri: p.uri }} style={{ width: 64, height: 64, borderRadius: 14 }} />
+                  <Pressable accessibilityRole="button" accessibilityLabel={t.removePhoto} onPress={() => setTray((x) => x.filter((_, j) => j !== i))}
+                    style={{ position: "absolute", top: -8, right: -8, width: 28, height: 28, borderRadius: 14, backgroundColor: c.strong, alignItems: "center", justifyContent: "center" }}>
+                    <UiIcon name="x" size={14} color={c.onStrong} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
             <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} onPress={() => void camera()}
               style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.primaryContainer, alignItems: "center", justifyContent: "center" }}>
               <UiIcon name="camera" size={22} color={c.onPrimaryContainer} />
             </Pressable>
-            <ComposerPrimitive.Input placeholder={t.placeholder} multiline placeholderTextColor={c.onSurfaceVariant} onFocus={() => { setTyping(true); warmUp(); }} onBlur={() => setTyping(false)}
+            <TextInput value={draft} onChangeText={setDraft} placeholder={tray.length ? t.placeholderPhoto : t.placeholder} multiline placeholderTextColor={c.onSurfaceVariant}
+              onFocus={() => { setTyping(true); warmUp(); }} onBlur={() => setTyping(false)}
+              onKeyPress={(e) => { const k = e.nativeEvent as unknown as { key: string; shiftKey?: boolean }; if (Platform.OS === "web" && k.key === "Enter" && !k.shiftKey) { (e as unknown as { preventDefault?: () => void }).preventDefault?.(); send(); } }}
               style={[{ flex: 1, backgroundColor: c.surfaceHigh, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, minHeight: 48, maxHeight: 120, fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
-            <ComposerPrimitive.Send style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t.send} disabled={!canSend} onPress={send}
+              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.primary, opacity: canSend ? 1 : 0.4, alignItems: "center", justifyContent: "center" }}>
               <UiIcon name="arrow-up" size={20} color={c.onPrimary} />
-            </ComposerPrimitive.Send>
-          </ComposerPrimitive.Root>
+            </Pressable>
+          </View>
         </View>
       </ThreadPrimitive.Root>
       {editing && state ? <EditSheet entry={editing} timeZone={state.timeZone} t={t} onSave={(p) => void save(p)} onDelete={(e) => void remove(e)} onClose={() => setEditing(null)} /> : null}

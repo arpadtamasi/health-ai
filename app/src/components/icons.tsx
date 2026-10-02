@@ -4,7 +4,7 @@
 import type { ComponentType } from "react";
 import {
   Apple, ArrowUp, Camera, Candy, Carrot, Coffee, CupSoda, Croissant, Drumstick, Egg, Fish, GlassWater, Heart, Milk, Popcorn,
-  Salad, Soup, Utensils, Wheat,
+  Salad, Soup, Utensils, Wheat, X,
 } from "lucide-react-native";
 import { tokens as T } from "../theme/tokens";
 
@@ -20,7 +20,7 @@ const FOOD: Record<FoodCategory, IconComponent> = {
   drink: CupSoda, water: GlassWater, coffee: Coffee, soup: Soup, salad: Salad, snack: Popcorn, other: Utensils,
 };
 
-const UI = { camera: Camera, "arrow-up": ArrowUp, heart: Heart } as const;
+const UI = { camera: Camera, "arrow-up": ArrowUp, heart: Heart, x: X } as const;
 export type UiIconName = keyof typeof UI;
 
 export function FoodIcon({ category, size = 24, color = T.color.onSurface }: { category: FoodCategory; size?: number; color?: string }) {

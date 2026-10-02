@@ -202,6 +202,28 @@ describe("the chat agent", () => {
     expect(e.saved).toEqual([{ fat: 80 }]);
   });
 
+  it("makes a photo end in a tool call (forced), and an ask shows the question and stops", async () => {
+    const e = env();
+    const m = scripted(call("t1", "ask", { question: "Mi van a képen?" }), say("(nem kellene megjelennie)"));
+    const r = await runAgent(deps(m), e, { history: [], message: "(fotó)", images: [{ mediaType: "image/jpeg", dataBase64: "AAAA" }] });
+    expect(m.requests[0]!.forceTool).toBe(true);
+    expect(r.events).toEqual([{ type: "text", text: "Mi van a képen?" }]);
+    expect(m.requests).toHaveLength(1);
+    const typed = scripted(say("Szia"));
+    await runAgent(deps(typed), env(), { history: [], message: "szia" });
+    expect(typed.requests[0]!.forceTool).toBeUndefined();
+  });
+
+  it("drops a claim of having logged when no tool was called, and makes the model act", async () => {
+    const e = env();
+    const m = scripted(say("Naplóztam: kesudió, 196 kcal."), call("t1", "log_meal", { name: "Kesudió", kcal: 196, carbs: 9, protein: 6, fat: 16 }), say("Most tényleg felírtam."));
+    const r = await runAgent(deps(m), e, { history: [], message: "ettem kesudiót" });
+    expect(e.logged).toHaveLength(1);
+    expect(r.events.map((x) => x.type)).toEqual(["logged", "text"]);
+    expect(JSON.stringify(r.events)).not.toContain("Naplóztam: kesudió");
+    expect(m.requests[1]!.forceTool).toBe(true);
+  });
+
   it("hands the model what is left after a logged meal, so it does not calculate", async () => {
     const e = env({ logMeal: () => Promise.resolve({ id: null, left: { calories: 1700, carbs: 150, protein: 70 } }) });
     const m = scripted(call("t1", "log_meal", { name: "Alma", kcal: 95, carbs: 25, protein: 0 }), say("Naplóztam."));

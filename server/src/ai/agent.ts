@@ -127,6 +127,9 @@ const TOOLS: ToolSpec[] = [
     ids: { type: "array", items: { type: "string" } },
     all: { type: "boolean" },
   }),
+  tool("ask", "Ask the person one short question, when you cannot tell what a photo shows or what they mean; nothing is logged.", {
+    question: { type: "string" },
+  }, ["question"]),
   tool("quick_replies", "Show 2 to 4 short answers the person can tap instead of typing, for the question you are asking.", {
     replies: { type: "array", items: { type: "string" }, description: "Each at most 24 characters, in the person's language." },
   }, ["replies"]),
@@ -163,6 +166,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
   const images = input.images ?? [];
   const turns: Turn[] = [...past, { role: "user", content: [...images.map((image): Block => ({ type: "image", image })), userText] }];
 
+  let asked = false;
   const run = async (name: string, raw: unknown): Promise<string> => {
     const args = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     try {
@@ -236,6 +240,13 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           events.push({ type: "confirm_delete", ids: picked.map((e) => e.id), all, labels: picked.map((e) => `${e.name} ${e.detail} (${e.when})`) });
           return JSON.stringify({ shown: "A confirmation card is on the screen. Nothing is deleted until the person taps it." });
         }
+        case "ask": {
+          const q = typeof args["question"] === "string" ? args["question"].trim() : "";
+          if (!q) return JSON.stringify({ error: "Give the question." });
+          events.push({ type: "text", text: q });
+          asked = true;
+          return JSON.stringify({ shown: true });
+        }
         case "quick_replies": {
           const list = Array.isArray(args["replies"]) ? args["replies"].filter((r): r is string => typeof r === "string") : [];
           const replies = [...new Set(list.map((r) => r.trim()).filter((r) => r.length > 0 && r.length <= 24))].slice(0, 4);
@@ -278,16 +289,31 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
   };
 
   const system = systemFor(await env.language().catch(() => undefined), await env.clock().catch(() => undefined));
+  const LOGGED = new Set(["logged", "logged_water", "updated"]);
+  const CLAIM = /napl[oó]z|felír|rögzít|\blogged\b|\brecorded\b/i;
+  let forceNext = images.length > 0;   // a photo has to end in a log, options or a question, never in an empty promise
+  let corrected = false;
   for (let step = 0; step < MAX_STEPS; step++) {
     const sent = step === 0 ? [...turns] : turns.map((t) => ({ ...t, content: t.content.map((b): Block => (b.type === "image" ? { type: "text", text: "(photo attached)" } : b)) }));
-    const res = await deps.model.converse({ model: deps.modelName, system, turns: sent, tools: TOOLS, maxTokens: 800 });
+    const res = await deps.model.converse({ model: deps.modelName, system, turns: sent, tools: TOOLS, maxTokens: 800, ...(forceNext ? { forceTool: true } : {}) });
+    forceNext = false;
     usage.inputTokens += res.usage.inputTokens;
     usage.outputTokens += res.usage.outputTokens;
-    for (const b of res.content) if (b.type === "text" && b.text.trim()) events.push({ type: "text", text: b.text.trim() });
+    const texts = res.content.filter((b): b is Extract<Block, { type: "text" }> => b.type === "text" && !!b.text.trim());
     const calls = res.content.filter((b): b is Extract<Block, { type: "tool_use" }> => b.type === "tool_use");
+    // The model said it logged something but called no tool: that is not true, so the claim is dropped and it is made to act.
+    if (calls.length === 0 && !corrected && !events.some((e) => LOGGED.has(e.type)) && texts.some((x) => CLAIM.test(x.text))) {
+      corrected = true;
+      turns.push({ role: "assistant", content: res.content });
+      turns.push({ role: "user", content: [{ type: "text", text: "(system) You said you logged something but called no tool, so nothing was logged. Call log_meal, log_water or update_entry now with the right values, or call ask if you need to know more." }] });
+      forceNext = true;
+      continue;
+    }
+    for (const x of texts) events.push({ type: "text", text: x.text.trim() });
     if (res.stopReason !== "tool_use" || calls.length === 0) break;
     turns.push({ role: "assistant", content: res.content });
     turns.push({ role: "user", content: await Promise.all(calls.map(async (c): Promise<Block> => ({ type: "tool_result", toolUseId: c.id, content: await run(c.name, c.input) }))) });
+    if (asked) break;
   }
   return { events, usage };
 }
