@@ -13,7 +13,7 @@ SERVICE_ACCOUNT_NAME="${SERVICE_ACCOUNT_NAME:-health-ai-run}"
 KEY_RING="${KEY_RING:-health-ai}"
 KEY_NAME="${KEY_NAME:-google-tokens}"
 # Collections with an `expireAt` field (server/src/store/firestore.ts, TTL_COLLECTIONS).
-TTL_COLLECTIONS="authRequests authCodes refreshTokens reconnectNonces feedback intents"
+TTL_COLLECTIONS="authRequests authCodes refreshTokens reconnectNonces feedback intents tokenUsage chat"
 SECRETS="health-ai-jwt-secret health-ai-google-client-secret"
 
 SA_EMAIL="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"

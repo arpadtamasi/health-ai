@@ -16,6 +16,26 @@ export interface Config {
   sealer: { kind: "kms"; keyName: string } | { kind: "local"; key: Buffer };
 }
 
+/** The model behind the app's suggestions. Absent when there is no API key: the app then says suggestions are unavailable. */
+export interface AiConfig {
+  apiKey: string;
+  /** Cheapest model first; set MODEL_WHAT_NOW to move one task to a stronger model. */
+  modelName: string;
+  /** Tokens (input plus output, from the response's usage) one user may spend per local day. A first guess, to tune by use. */
+  dailyTokenLimit: number;
+}
+
+export const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+export const DEFAULT_DAILY_TOKEN_LIMIT = 150_000;
+
+export function loadAiConfig(env: NodeJS.ProcessEnv = process.env): AiConfig | undefined {
+  const apiKey = env.ANTHROPIC_API_KEY;
+  if (!apiKey) return undefined;
+  const limit = Number(env.DAILY_TOKEN_LIMIT ?? DEFAULT_DAILY_TOKEN_LIMIT);
+  if (!Number.isInteger(limit) || limit <= 0) throw new Error(`DAILY_TOKEN_LIMIT must be a positive integer, got "${env.DAILY_TOKEN_LIMIT}"`);
+  return { apiKey, modelName: env.MODEL_WHAT_NOW || DEFAULT_MODEL, dailyTokenLimit: limit };
+}
+
 export function loadPort(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.PORT ?? "8080";
   const port = Number(raw);

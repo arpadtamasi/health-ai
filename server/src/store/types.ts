@@ -5,7 +5,7 @@ export type ClientRecord = OAuthClientInformationFull;
 /** A pending /authorize or reconnect, keyed by the `state` sent to Google. */
 export interface AuthRequest {
   id: string;
-  kind: "connect" | "reconnect";
+  kind: "connect" | "reconnect" | "app" | "app-connect";
   createdAt: number;
   clientId?: string;
   redirectUri?: string;
@@ -51,8 +51,8 @@ export interface User {
   id: string;
   email: string;
   grantedScopes: string[];
-  /** Google refresh token, sealed; never stored in plain text. */
-  googleRefreshTokenSealed: string;
+  /** Google refresh token, sealed; never stored in plain text. Absent until Google Health is connected (the app also works without it). */
+  googleRefreshTokenSealed?: string;
   status: "active" | "needs_reconnect";
   createdAt: number;
   updatedAt: number;
@@ -94,6 +94,82 @@ export interface IntentRecord {
   intent: string | null;
   createdAt: number;
   /** Firestore TTL field: 90 days after `createdAt`. */
+  expireAt: number;
+}
+
+/** What the app needs to know about a person besides Google data: goals, eating window, foods to avoid, consent. */
+export interface AppSettings {
+  userId: string;
+  goals: { calories: number; carbs: number; protein: number; /** Fat goal in grams; derived from the calories when absent. */ fat?: number; /** Daily water goal in millilitres; the default applies when absent. */ waterMl?: number };
+  window: { startHour: number; endHour: number };
+  /** Allergies and foods to avoid, as the person said them. */
+  constraints: string[];
+  /** Set when the first chat onboarding finished with an explicit list (an empty list counts) and the consent. */
+  onboardedAt?: number;
+  consentAt?: number;
+  updatedAt: number;
+}
+
+/** Languages the app speaks: its own texts exist in these, and the chat answers in the saved one. */
+export const LANGUAGES = ["en", "hu"] as const;
+export type Language = (typeof LANGUAGES)[number];
+
+/** Small per-person preferences that exist before the setup is done (so they cannot live in AppSettings). */
+export interface AppPrefs {
+  userId: string;
+  language?: Language;
+  /** IANA time zone of the person's device: the day, the pace and the meal type are read in it. */
+  timeZone?: string;
+  updatedAt: number;
+}
+
+export const DEFAULT_WATER_GOAL_ML = 2000;
+
+/**
+ * A meal or a drink the person logged, kept in the service's own storage until they delete it (BR: Meals and water kept by the
+ * service belong to the person). Never holds a photo or chat text.
+ */
+export interface Entry {
+  id: string;
+  userId: string;
+  kind: "meal" | "water";
+  name: string;
+  kcal: number;
+  carbs: number;
+  protein: number;
+  /** Grams of fat; entries from before fat was tracked have none. */
+  fat?: number;
+  /** Set when the person or the assistant fixed the meal type; otherwise it follows the time of day. */
+  mealType?: "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER";
+  /** Millilitres, for water. */
+  ml?: number;
+  /** The ingredients the model recognised, for meals that came from a photo or from the chat. */
+  ingredients: string[];
+  source: "photo" | "typed" | "button" | "chat";
+  /** True when the values were estimated (a photo, a described meal) and not entered exactly. */
+  estimate: boolean;
+  /** When it was eaten or drunk, epoch milliseconds. */
+  at: number;
+  /** The resource name of its copy in Google Health, once mirrored. */
+  googleName?: string;
+}
+
+/**
+ * One message of the app's chat, kept during the test (BR "The chat is kept during the test"): the person's text, or the
+ * assistant's answer as the events it produced. Never holds a photo, only how many were sent. Expires after the retention period.
+ */
+export interface ChatRecord {
+  id: string;
+  userId: string;
+  at: number;
+  role: "user" | "assistant";
+  text?: string;
+  /** How many photos came with a user message; the photos themselves are not kept. */
+  images?: number;
+  /** The assistant's events (text, options, logged, updated, ...), as sent to the app. */
+  events?: unknown[];
+  usage?: { inputTokens: number; outputTokens: number };
+  /** Firestore TTL field. */
   expireAt: number;
 }
 
@@ -146,5 +222,29 @@ export interface Store {
    * Deletes everything stored for the user: the user record, grants, refresh tokens,
    * authorization codes, reconnect nonces, feedback and intents.
    */
+  getAppSettings(userId: string): Promise<AppSettings | undefined>;
+  putAppSettings(settings: AppSettings): Promise<void>;
+
+  getAppPrefs(userId: string): Promise<AppPrefs | undefined>;
+  putAppPrefs(prefs: AppPrefs): Promise<void>;
+
+  putEntry(entry: Entry): Promise<void>;
+  /** One person's entries in the range, oldest first. */
+  listEntries(userId: string, range: TimeRange): Promise<Entry[]>;
+  getEntry(userId: string, id: string): Promise<Entry | undefined>;
+  deleteEntry(userId: string, id: string): Promise<void>;
+  /** Removes every entry of one person and returns what was removed (the caller removes the Google Health copies). */
+  deleteAllEntries(userId: string): Promise<Entry[]>;
+
+  putChat(record: ChatRecord): Promise<void>;
+  /** The latest messages of one person, oldest first. */
+  listChat(userId: string, limit: number): Promise<ChatRecord[]>;
+  deleteAllChat(userId: string): Promise<number>;
+
+  /** Model tokens used by one user on one local day (the daily limit counts these). */
+  getTokenUsage(userId: string, day: string): Promise<number>;
+  /** Adds tokens and returns the new total for that user and day. Atomic. */
+  addTokenUsage(userId: string, day: string, tokens: number, expireAtMs: number): Promise<number>;
+
   deleteUserData(userId: string): Promise<void>;
 }

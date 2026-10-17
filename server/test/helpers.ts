@@ -76,7 +76,7 @@ export class FakeGoogle implements GoogleOAuth {
   }
 }
 
-export function makeTestApp(opts: { now?: () => number } = {}) {
+export function makeTestApp(opts: { now?: () => number; ai?: NonNullable<Parameters<typeof createApp>[0]["ai"]> } = {}) {
   const store = new MemoryStore();
   store.allow("owner@example.com", true);
   store.allow("tester@example.com");
@@ -93,6 +93,7 @@ export function makeTestApp(opts: { now?: () => number } = {}) {
     google,
     healthFetch: health.fetch,
     ...(opts.now ? { now: opts.now } : {}),
+    ...(opts.ai ? { ai: opts.ai } : {}),
   });
   return { ...built, store, google, health, sealer, http: request(built.app) };
 }
@@ -109,7 +110,7 @@ export const REDIRECT_URI = "https://claude.ai/api/mcp/auth_callback";
 
 export async function registerClient(t: TestApp, redirectUris = [REDIRECT_URI]): Promise<string> {
   const res = await t.http.post("/register").send({ redirect_uris: redirectUris, client_name: "Test client", token_endpoint_auth_method: "none" });
-  if (res.status !== 201) throw new Error(`registration failed: ${res.status} ${JSON.stringify(res.body)}`);
+  if (res.status !== 201) throw new Error(`registration failed: ${res.status} ${JSON.stringify(res.body)} ${res.text.slice(0, 200)}`);
   return res.body.client_id as string;
 }
 

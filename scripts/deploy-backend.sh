@@ -8,6 +8,7 @@
 #
 # Needs: gcloud (signed in).
 set -euo pipefail
+# Scales to zero by default (MIN_INSTANCES=1 keeps one instance warm for a few dollars a month); the app is built for the slow first call.
 source "$(dirname "${BASH_SOURCE[0]}")/deploy-env.sh"
 
 GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:?set GOOGLE_CLIENT_ID}"
@@ -33,9 +34,9 @@ gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --quiet 
   --source "$ROOT/server" \
   --service-account "$SERVICE_ACCOUNT" \
   --env-vars-file "$ENV_FILE" \
-  --set-secrets "JWT_SECRET=health-ai-jwt-secret:latest,GOOGLE_CLIENT_SECRET=health-ai-google-client-secret:latest" \
+  --set-secrets "JWT_SECRET=health-ai-jwt-secret:latest,GOOGLE_CLIENT_SECRET=health-ai-google-client-secret:latest,ANTHROPIC_API_KEY=health-ai-anthropic-key:latest" \
   --allow-unauthenticated \
-  --min-instances 0 --max-instances 3 --memory 512Mi --timeout 60
+  --min-instances "${MIN_INSTANCES:-0}" --max-instances 3 --memory 512Mi --timeout 60 --cpu-boost
 
 echo "== Backend smoke check"
 curl -fsS "${PUBLIC_URL}/health" && echo

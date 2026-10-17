@@ -279,7 +279,7 @@ function entryId(type: DataType, value: string): string | undefined {
 const NAME_PATTERN = /^users\/[^/]+\/dataTypes\/([a-z0-9-]+)\/dataPoints\/([A-Za-z0-9._~-]{1,200})$/;
 
 /** The name of the data point a finished create operation returned, if it is one of this type. */
-function createdName(op: unknown, typeId: string): string | undefined {
+export function createdName(op: unknown, typeId: string): string | undefined {
   const response = (op as { done?: unknown; response?: unknown } | null)?.response;
   const name = (response as { name?: unknown } | null)?.name;
   if (typeof name !== "string") return undefined;

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Sessions } from "../app-api/session.js";
 import type { Sealer } from "../crypto/sealer.js";
 import type { GoogleOAuth } from "../google/oauth.js";
 import type { AuthRequest, Store } from "../store/types.js";
@@ -8,12 +9,15 @@ import { checkGrantedScopes, describeMissing, googleScopes } from "./scopes.js";
 import { AUTH_REQUEST_TTL_MS, randomToken, sha256 } from "./tokens.js";
 
 export const GOOGLE_CALLBACK_PATH = "/oauth/google/callback";
+/** Where the browser lands after the app's own sign-in. */
+export const APP_HOME = "/";
 
 export interface AuthRoutesDeps {
   store: Store;
   sealer: Sealer;
   google: GoogleOAuth;
   links: ReconnectLinks;
+  sessions: Sessions;
   healthReadScopes: string[];
   healthWriteScopes: string[];
   onGoogleTokenReplaced?: (userId: string) => void;
@@ -65,6 +69,32 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
         return;
       }
 
+      // The app's own sign-in asks for the person's identity only: the app works without Google Health. A person who already connected
+      // it keeps their connection, and one who grants it here (with offline access) is connected.
+      if (authReq.kind === "app") {
+        const connects = result.refreshToken !== undefined && checkGrantedScopes(deps, result.grantedScopes).missingRead.length === 0;
+        const prior = await deps.store.getUser(result.sub);
+        if (connects && result.refreshToken) {
+          await deps.store.putUser({
+            id: result.sub, email: result.email, grantedScopes: result.grantedScopes, googleRefreshTokenSealed: await deps.sealer.seal(result.refreshToken),
+            status: "active", createdAt: prior?.createdAt ?? now(), updatedAt: now(),
+          });
+          deps.onGoogleTokenReplaced?.(result.sub);
+        } else if (prior) {
+          await deps.store.putUser({ ...prior, email: result.email, updatedAt: now() });
+        } else {
+          await deps.store.putUser({ id: result.sub, email: result.email, grantedScopes: result.grantedScopes, status: "active", createdAt: now(), updatedAt: now() });
+        }
+        res.setHeader("set-cookie", deps.sessions.cookie(await deps.sessions.issue(result.sub)));
+        res.redirect(APP_HOME);
+        return;
+      }
+
+      if (authReq.kind === "app-connect" && authReq.userId !== result.sub) {
+        res.status(403).type("html").send(errorPage("That is a different Google account from the one you are signed in with. Sign in again and connect Google Health with the same account."));
+        return;
+      }
+
       // BR-01m3eb1dz1bqrx534g1g403fqw: no MCP tokens unless the Health read scopes were granted.
       const scopeCheck = checkGrantedScopes(deps, result.grantedScopes);
       if (scopeCheck.missingRead.length > 0) {
@@ -95,6 +125,13 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
         return;
       }
 
+      // Connecting Google Health afterwards, from the app: the Health permissions were granted by the person who is signed in.
+      if (authReq.kind === "app-connect") {
+        res.setHeader("set-cookie", deps.sessions.cookie(await deps.sessions.issue(result.sub)));
+        res.redirect(APP_HOME);
+        return;
+      }
+
       const code2 = randomToken();
       await deps.store.putAuthCode({
         codeHash: sha256(code2),
@@ -110,6 +147,34 @@ export function authRoutes(deps: AuthRoutesDeps): Router {
       back.searchParams.set("code", code2);
       if (authReq.clientState !== undefined) back.searchParams.set("state", authReq.clientState);
       res.type("html").send(connectedPage(back.href));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // US-01m3rw2bqxkqp6v1hg9g02t1zr: the app starts its Google sign-in here (identity only); the callback above finishes it.
+  router.get("/api/auth/start", async (_req, res, next) => {
+    try {
+      const id = randomToken();
+      await deps.store.putAuthRequest({ id, kind: "app", createdAt: now() });
+      res.redirect(deps.google.authUrl({ state: id, scopes: ["openid", "email"] }));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // US-01m3w51cs0tvb44382vsx72nsp (Connect Google Health afterwards): the signed-in person grants the Health permissions.
+  router.get("/api/auth/connect-health", async (req, res, next) => {
+    try {
+      const userId = await deps.sessions.userOf(req.headers.cookie);
+      const user = userId ? await deps.store.getUser(userId) : undefined;
+      if (!user) {
+        res.redirect("/api/auth/start");
+        return;
+      }
+      const id = randomToken();
+      await deps.store.putAuthRequest({ id, kind: "app-connect", createdAt: now(), userId: user.id, loginHint: user.email });
+      res.redirect(deps.google.authUrl({ state: id, scopes: googleScopes(deps), loginHint: user.email }));
     } catch (err) {
       next(err);
     }

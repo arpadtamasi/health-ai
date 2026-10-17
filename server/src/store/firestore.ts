@@ -1,7 +1,7 @@
 import { Firestore, Timestamp, type CollectionReference, type DocumentData } from "@google-cloud/firestore";
 import { AUTH_CODE_TTL_MS, AUTH_REQUEST_TTL_MS, RECONNECT_LINK_TTL_SECONDS } from "../auth/tokens.js";
 import type {
-  AllowEntry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, ChatRecord, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -23,17 +23,23 @@ export const COLLECTIONS = {
   reconnectNonces: "reconnectNonces",
   feedback: "feedback",
   intents: "intents",
+  appSettings: "appSettings",
+  appPrefs: "appPrefs",
+  tokenUsage: "tokenUsage",
 } as const;
+
+/** The chat messages of a person, a subcollection of the user document. */
+export const CHAT_COLLECTION = "chat";
 
 export const TTL_COLLECTIONS = [
   COLLECTIONS.authRequests, COLLECTIONS.authCodes, COLLECTIONS.refreshTokens, COLLECTIONS.reconnectNonces,
-  COLLECTIONS.feedback, COLLECTIONS.intents,
+  COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.tokenUsage, CHAT_COLLECTION,
 ] as const;
 
 /** Collections whose documents carry a `userId`; `deleteUserData` empties them for one user. */
 const USER_COLLECTIONS = [
   COLLECTIONS.grants, COLLECTIONS.refreshTokens, COLLECTIONS.authCodes, COLLECTIONS.authRequests,
-  COLLECTIONS.reconnectNonces, COLLECTIONS.feedback, COLLECTIONS.intents,
+  COLLECTIONS.reconnectNonces, COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.appSettings, COLLECTIONS.appPrefs, COLLECTIONS.tokenUsage,
 ] as const;
 
 const expireAt = (ms: number) => Timestamp.fromMillis(ms);
@@ -133,12 +139,70 @@ export class FirestoreStore implements Store {
     return snaps.docs.map((d) => withMillis<IntentRecord>(d.data()));
   }
 
+  async getAppSettings(userId: string) { return this.get<AppSettings>(COLLECTIONS.appSettings, userId); }
+  async putAppSettings(s: AppSettings) { await this.col(COLLECTIONS.appSettings).doc(s.userId).set(s); }
+
+  // Entries live under the person's user document, so a range query on `at` needs only the automatic single-field index.
+  private entries(userId: string) { return this.col(COLLECTIONS.users).doc(userId).collection("entries"); }
+  async putEntry(e: Entry) { await this.entries(e.userId).doc(e.id).set(e); }
+  async listEntries(userId: string, range: TimeRange) {
+    const snaps = await this.entries(userId).where("at", ">=", range.from).where("at", "<", range.to).orderBy("at", "asc").get();
+    return snaps.docs.map((d) => d.data() as Entry);
+  }
+  async getEntry(userId: string, id: string) {
+    const snap = await this.entries(userId).doc(id).get();
+    return snap.exists ? (snap.data() as Entry) : undefined;
+  }
+  async deleteEntry(userId: string, id: string) { await this.entries(userId).doc(id).delete(); }
+  async deleteAllEntries(userId: string) {
+    const snaps = await this.entries(userId).get();
+    const gone = snaps.docs.map((d) => d.data() as Entry);
+    const writer = this.db.bulkWriter();
+    for (const d of snaps.docs) void writer.delete(d.ref);
+    await writer.close();
+    return gone;
+  }
+
+  // The chat lives under the person's user document too; TTL on `expireAt` for the collection group "chat".
+  private chat(userId: string) { return this.col(COLLECTIONS.users).doc(userId).collection(CHAT_COLLECTION); }
+  async putChat(r: ChatRecord) { await this.chat(r.userId).doc(r.id).set({ ...r, expireAt: expireAt(r.expireAt) }); }
+  async listChat(userId: string, limit: number) {
+    const snaps = await this.chat(userId).orderBy("at", "desc").limit(limit).get();
+    return snaps.docs.map((d) => { const x = d.data(); return { ...x, expireAt: (x["expireAt"] as Timestamp).toMillis() } as ChatRecord; }).reverse();
+  }
+  async deleteAllChat(userId: string) {
+    const snaps = await this.chat(userId).get();
+    const writer = this.db.bulkWriter();
+    for (const d of snaps.docs) void writer.delete(d.ref);
+    await writer.close();
+    return snaps.size;
+  }
+
+  async getAppPrefs(userId: string) { return this.get<AppPrefs>(COLLECTIONS.appPrefs, userId); }
+  async putAppPrefs(p: AppPrefs) { await this.col(COLLECTIONS.appPrefs).doc(p.userId).set(p); }
+
+  async getTokenUsage(userId: string, day: string) {
+    const snap = await this.col(COLLECTIONS.tokenUsage).doc(`${userId}|${day}`).get();
+    return (snap.get("tokens") as number | undefined) ?? 0;
+  }
+  async addTokenUsage(userId: string, day: string, tokens: number, expireAtMs: number) {
+    const ref = this.col(COLLECTIONS.tokenUsage).doc(`${userId}|${day}`);
+    return this.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const total = ((snap.get("tokens") as number | undefined) ?? 0) + tokens;
+      tx.set(ref, { userId, day, tokens: total, expireAt: expireAt(expireAtMs) });
+      return total;
+    });
+  }
+
   async deleteUserData(userId: string) {
     const writer = this.db.bulkWriter();
     for (const name of USER_COLLECTIONS) {
       const snaps = await this.col(name).where("userId", "==", userId).get();
       for (const d of snaps.docs) void writer.delete(d.ref);
     }
+    for (const d of (await this.entries(userId).get()).docs) void writer.delete(d.ref);
+    for (const d of (await this.chat(userId).get()).docs) void writer.delete(d.ref);
     void writer.delete(this.col(COLLECTIONS.users).doc(userId));
     await writer.close();
   }

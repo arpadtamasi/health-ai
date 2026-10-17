@@ -3,6 +3,13 @@ import { GoogleInvalidGrantError, type GoogleOAuth } from "../google/oauth.js";
 import type { Store } from "../store/types.js";
 import type { ReconnectLinks } from "./reconnect.js";
 
+/** The person signed in without Google Health, so there is no Google access to hand out. */
+export class NotConnectedError extends Error {
+  constructor() {
+    super("Google Health is not connected");
+  }
+}
+
 /** Tools turn this into an actionable error: Google access expired, with a reconnect link. */
 export class ReconnectRequiredError extends Error {
   constructor(readonly reconnectUrl: string) {
@@ -32,6 +39,7 @@ export class GoogleAccess {
 
     const user = await this.store.getUser(userId);
     if (!user) throw new Error("unknown user");
+    if (!user.googleRefreshTokenSealed) throw new NotConnectedError();
     if (user.status === "needs_reconnect") throw new ReconnectRequiredError(await this.links.issue(userId));
     try {
       const fresh = await this.google.refresh(await this.sealer.open(user.googleRefreshTokenSealed));
@@ -43,6 +51,12 @@ export class GoogleAccess {
       await this.store.putUser({ ...user, status: "needs_reconnect", updatedAt: this.now() });
       throw new ReconnectRequiredError(await this.links.issue(userId));
     }
+  }
+
+  /** True when the person has connected Google Health: its refresh token is stored and still usable. */
+  async connected(userId: string): Promise<boolean> {
+    const user = await this.store.getUser(userId);
+    return user?.googleRefreshTokenSealed !== undefined && user.status === "active";
   }
 
   forget(userId: string): void {

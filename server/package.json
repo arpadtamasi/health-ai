@@ -27,6 +27,7 @@
     "vitest": "^5.0.2"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.130.0",
     "@google-cloud/firestore": "^9.2.0",
     "@google-cloud/kms": "^6.2.0",
     "@modelcontextprotocol/sdk": "^1.30.1",

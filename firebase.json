@@ -1,11 +1,91 @@
 {
   "hosting": {
     "public": "site/dist",
-    "ignore": ["firebase.json", "**/.*"],
+    "ignore": [
+      "firebase.json",
+      "**/.*"
+    ],
     "rewrites": [
       {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/mcp",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/mcp/**",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/oauth/**",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/.well-known/**",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/authorize",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/token",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/register",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/revoke",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/reconnect",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "/health",
+        "run": {
+          "serviceId": "health-ai",
+          "region": "europe-west1"
+        }
+      },
+      {
         "source": "**",
-        "run": { "serviceId": "health-ai", "region": "europe-west1" }
+        "destination": "/index.html"
       }
     ]
   }

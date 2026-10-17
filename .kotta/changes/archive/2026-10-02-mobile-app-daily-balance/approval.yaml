@@ -1,0 +1,76 @@
+change: mobile-app-daily-balance
+approved_by: rp
+approved_at: 2026-10-01T17:47:18.358Z
+approval_basis: sha256:7bb5778cf246453f8c79799907c8e0a46f61b9baa252e0017a33b7b4bba84bef
+approved:
+  added:
+    - id: A-01m3rvr5z4n6ny0qnm5mm438zp
+      title: Phone user
+    - id: BR-01m3w6mwr4tjz6d69tmebx5z2k
+      title: Meals and water kept by the service belong to the person
+    - id: EX-01m3w51drw4nt7nxnhmk3y6kaj
+      title: A new person logs a meal and water with no Google Health connected
+    - id: EX-01m3rvsr7h4ydg9kcwetmp605f
+      title: A repeated coffee is logged with one tap
+    - id: EX-01m3w51djh93prcew2vzdj5kvx
+      title: A signed-in visitor at the front door lands in the app
+    - id: EX-01m3rvsqvrfkzhj564c066ev2b
+      title: Camera proposes items and the user adjusts a portion
+    - id: EX-01m3s789wxqpqankpfp30newfx
+      title: Choosing a suggestion is recorded next to what was shown
+    - id: EX-01m3w51dz4w9fapbyyvm1xps3s
+      title: Connecting Google Health later makes new entries show in the Fitbit app
+    - id: EX-01m3w6mwygvv4whahcwbbbmj3m
+      title: Deleting my data removes my meals and water
+    - id: EX-01m3rvsrdjkebc8g6et48tx2zs
+      title: Halving a logged burrito replaces the entry
+    - id: EX-01m3w51d5bqfv5qhk9smp3yxyj
+      title: One button on the home opens the quick buttons, the camera and the
+        conversation
+    - id: EX-01m3rvsr1m8dv503d3dx58wgxm
+      title: One tap logs the reviewed meal
+    - id: EX-01m3rvsqnw1hdzx9fsh390z7z9
+      title: Pace figure compares eaten calories with the plan for the time of day
+    - id: EX-01m3w51dc1tdt80206mbrxz1ps
+      title: Tapping Glass logs 250 ml of water and the water goal moves
+    - id: EX-01m3rw3rp60bx11r7bt9g5wenr
+      title: The chat changes the goal and the quick-add buttons
+    - id: EX-01m3rwa0je7dfzm48e1f496wnr
+      title: The chat proposes carb-rich snacks when carbs are behind
+    - id: EX-01m3ssfx5e99rb6mfjgz4z1j4d
+      title: The first chat sets constraints, goal and window before any suggestion
+    - id: EX-01m3w51cz41qvfw0mfa79pbphx
+      title: The home shows the day's calories, carbs, protein and water as a
+        full-screen picture
+    - id: EX-01m3rw2bxw47z5r006wv503fy3
+      title: Typing what was eaten logs it and updates the pace
+    - id: US-01m3rw2bqxkqp6v1hg9g02t1zr
+      title: Ask and log through a small chat
+    - id: US-01m3rwa0cvrtcapqk0k3h6mqvc
+      title: Ask what to eat to catch up
+    - id: US-01m3rvr6am99nrrbycxfw4r6v4
+      title: Choose food and quantity with the camera
+    - id: US-01m3w51cs0tvb44382vsx72nsp
+      title: Connect Google Health afterwards
+    - id: US-01m3rvr6vsnzps8jrdz05gja1y
+      title: Correct a logged meal
+    - id: US-01m3rvr6g951cs1s9p1czxvmhp
+      title: Log a meal in one step
+    - id: US-01m3rvr6p4vj42j4atck7vyw08
+      title: Log water and repeat items in one tap
+    - id: US-01m3w51c5vf6n7yr5pmgjkww9b
+      title: Log water
+    - id: US-01m3w51bs6krjxa2rgb86qkft7
+      title: Open on a full-screen home that shows the day
+    - id: US-01m3s789qmvs4jx8e93nb2j61n
+      title: Record what was suggested and what was chosen
+    - id: US-01m3rvr64zrzczabckjf6crb2z
+      title: See where I am against the day's pace
+    - id: US-01m3w51bzh8h6t8npn6k80r782
+      title: Start logging from one button on the home
+    - id: US-01m3w51ccdyb7xfbtes6729sct
+      title: The front door is the app when signed in, and the landing page when not
+    - id: US-01m3w51cjntkh2v1r59kx570dr
+      title: Use the app without Google Health
+  changed: []
+  removed: []

@@ -32,7 +32,7 @@ export function registerDeleteMyData(server: McpServer, ctx: CallContext, deps: 
     }
     const user = await ctx.store.getUser(ctx.userId);
     let googleRevoked = false;
-    if (user) {
+    if (user?.googleRefreshTokenSealed) {
       try {
         await deps.google.revoke(await deps.sealer.open(user.googleRefreshTokenSealed));
         googleRevoked = true;
