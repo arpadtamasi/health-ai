@@ -12,13 +12,15 @@ In the Claude Code cloud sandbox, `docker build` needs the proxy and CA: build a
 `--network host --build-arg HTTPS_PROXY=$HTTPS_PROXY` and `/root/.ccr/ca-bundle.crt` added via
 `NODE_EXTRA_CA_CERTS` in the build stage only. Never commit the sandbox CA into the real Dockerfile.
 
-## Landing page (`site/`)
+## App (`app/`) and the front door
 
-Static Astro page for `/`, served by Firebase Hosting (`firebase.json` → `site/dist`); every other
-path is rewritten to Cloud Run. It imports the tokens, fonts and icons from
-`server/src/auth/pages.ts`. Run from `site/`: `npm run dev`, `npm run build`, `npm run check`.
-`PUBLIC_URL` and `GOOGLE_HEALTH_WRITE_SCOPES` are read at build time. `scripts/deploy-frontend.sh`
-builds and deploys it, `scripts/deploy-backend.sh` deploys the server, `scripts/deploy.sh` runs both.
+An Expo app (React Native + react-native-web, assistant-ui for the chat) is the whole front end: the web export is served at `/`
+by Firebase Hosting (`firebase.json` rewrites only the API, `/mcp`, OAuth and `/health` paths to Cloud Run; every other path is the
+app). Signed out, the app shows the landing text and the Google sign-in. Run from `app/`: `npm test` (node:test), `npx tsc --noEmit`,
+`EXPO_PUBLIC_MOCK=1 npx expo export --platform web` for a sample-data build (never deployed; the deploy script checks for it).
+`site/` only provides the static files (icons) that are copied next to the export; its old Astro landing page is not served.
+`scripts/deploy-frontend.sh` builds and deploys, `scripts/deploy-backend.sh` deploys the server (`MIN_INSTANCES=1` keeps one
+instance warm; the app is built for the slow first call), `scripts/deploy.sh` runs both.
 
 ## Feedback
 
@@ -43,7 +45,7 @@ stories, interfaces) under `.kotta/spec/`, on top of the OpenSpec changes. Its r
 
 @.kotta/AGENTS.md
 
-- CLI: `npm install --global @arpadtamasi/kotta@1.0.0-alpha.1` (needed in every fresh cloud session).
+- CLI: `npm install --global @arpadtamasi/kotta@1.0.0-alpha.9` (needed in every fresh cloud session).
 - Skills are vendored in `.claude/skills/` (plan-change, example-mapping, use-case-modeling, ...).
   `kotta init`/`kotta sync` install them into `~/.claude/skills`; copy updated skills back into the
   repo after upgrading Kotta.
