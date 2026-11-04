@@ -1,8 +1,9 @@
 # Deploys Health AI when main changes, or by hand (Actions → Deploy → Run workflow), so that a release needs no laptop.
 # It signs in to Google Cloud with GitHub's own identity (Workload Identity Federation): no key is stored anywhere. The one-time
-# setup is scripts/github-deploy-setup.sh, run once in Cloud Shell; it creates the deploy account and prints the two repository
-# variables this workflow reads (GCP_PROJECT_ID, GCP_WIF_PROVIDER). The service's own settings (public URL, OAuth client, scopes,
-# minimum instances) are read from the running Cloud Run service, so they stay in one place.
+# setup is scripts/github-deploy-setup.sh, run once in Cloud Shell; it creates the deploy account and prints the project number.
+# The project id and number below are not secrets (repository variables of the same names override them). The service's own
+# settings (public URL, OAuth client, scopes, minimum instances) are read from the running Cloud Run service, so they stay in one
+# place.
 name: Deploy
 
 on:
@@ -36,9 +37,9 @@ jobs:
   deploy:
     needs: check
     runs-on: ubuntu-latest
-    if: vars.GCP_PROJECT_ID != '' && vars.GCP_WIF_PROVIDER != ''
+    if: vars.GCP_PROJECT_NUMBER != ''
     env:
-      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'health-ai-hub' }}
       REGION: europe-west1
       SERVICE: health-ai
     steps:
@@ -49,8 +50,8 @@ jobs:
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: health-ai-deploy@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          workload_identity_provider: projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: health-ai-deploy@${{ vars.GCP_PROJECT_ID || 'health-ai-hub' }}.iam.gserviceaccount.com
           create_credentials_file: true
       - uses: google-github-actions/setup-gcloud@v2
       - name: Read the service's settings from Cloud Run
@@ -71,6 +72,6 @@ jobs:
   not-set-up:
     needs: check
     runs-on: ubuntu-latest
-    if: vars.GCP_PROJECT_ID == '' || vars.GCP_WIF_PROVIDER == ''
+    if: vars.GCP_PROJECT_NUMBER == ''
     steps:
-      - run: echo "::warning::Deploy is not set up yet. Run scripts/github-deploy-setup.sh once in Cloud Shell, then add the two repository variables it prints."
+      - run: echo "::warning::Deploy is not set up yet. Run scripts/github-deploy-setup.sh once in Cloud Shell, then set GCP_PROJECT_NUMBER to the number it prints."

@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # One-time setup for .github/workflows/deploy.yml: lets GitHub Actions of this repository deploy Health AI without any stored key
-# (Workload Identity Federation). Run it once in Cloud Shell (shell.cloud.google.com works from a phone), signed in as a project
-# owner. Safe to run again.
+# (Workload Identity Federation). Run it once in Cloud Shell, signed in as a project owner. Safe to run again. From a phone, open
+# Cloud Shell with this repository already cloned and type one line (no paste needed):
 #
-#   PROJECT_ID=my-project bash github-deploy-setup.sh
+#   https://shell.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/arpadtamasi/health-ai&shellonly=true
+#   bash scripts/github-deploy-setup.sh
 #
-# It prints the two repository variables to add on GitHub (Settings → Secrets and variables → Actions → Variables).
+# The project defaults to health-ai-hub (PROJECT_ID=... overrides it). It prints the project number, which the workflow needs.
 set -euo pipefail
-PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
+PROJECT_ID="${PROJECT_ID:-health-ai-hub}"
 [ -n "$PROJECT_ID" ] || { echo "set PROJECT_ID" >&2; exit 1; }
 REPO="${REPO:-arpadtamasi/health-ai}"
 SA="health-ai-deploy@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -37,8 +38,10 @@ gc iam service-accounts describe "$RUN_SA" >/dev/null 2>&1 || echo "warning: $RU
 
 cat <<OUT
 
-Done. Add these two repository variables on GitHub (Settings → Secrets and variables → Actions → Variables):
-  GCP_PROJECT_ID   = ${PROJECT_ID}
-  GCP_WIF_PROVIDER = projects/${NUMBER}/locations/global/workloadIdentityPools/github/providers/github
+Done. The project number is:
+
+    ${NUMBER}
+
+It goes into .github/workflows/deploy.yml (GCP_PROJECT_NUMBER), or into a repository variable of that name.
 Then run the Deploy workflow (Actions → Deploy → Run workflow).
 OUT
