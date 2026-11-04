@@ -1,0 +1,72 @@
+# Deploys Health AI when main changes, or by hand (Actions → Deploy → Run workflow), so that a release needs no laptop.
+# It signs in to Google Cloud with GitHub's own identity (Workload Identity Federation): no key is stored anywhere. The one-time
+# setup is scripts/github-deploy-setup.sh, run once in Cloud Shell; it creates the deploy account and prints the project number.
+# The project id (health-ai-hub) and number (560348334085) below are not secrets; repository variables GCP_PROJECT_ID and
+# GCP_PROJECT_NUMBER override them. Pull requests run the checks only. The service's own
+# settings (public URL, OAuth client, scopes, minimum instances) are read from the running Cloud Run service, so they stay in one
+# place.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Server checks
+        working-directory: server
+        run: npm ci && npm run check
+      - name: App checks
+        working-directory: app
+        run: npm ci && npx tsc --noEmit && npm test
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'health-ai-hub' }}
+      REGION: europe-west1
+      SERVICE: health-ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/${{ vars.GCP_PROJECT_NUMBER || '560348334085' }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: health-ai-deploy@${{ vars.GCP_PROJECT_ID || 'health-ai-hub' }}.iam.gserviceaccount.com
+          create_credentials_file: true
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Read the service's settings from Cloud Run
+        run: |
+          gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format json > service.json
+          for k in PUBLIC_URL GOOGLE_CLIENT_ID GOOGLE_HEALTH_READ_SCOPES GOOGLE_HEALTH_WRITE_SCOPES; do
+            v="$(jq -r --arg k "$k" '.spec.template.spec.containers[0].env[]? | select(.name == $k) | .value // empty' service.json)"
+            [ -n "$v" ] || { [ "$k" = GOOGLE_HEALTH_WRITE_SCOPES ] || { echo "::error::$k is not set on the Cloud Run service"; exit 1; }; }
+            echo "$k=$v" >> "$GITHUB_ENV"
+          done
+          echo "MIN_INSTANCES=$(jq -r '.spec.template.metadata.annotations["autoscaling.knative.dev/minScale"] // "0"' service.json)" >> "$GITHUB_ENV"
+          rm service.json
+      - name: Deploy backend and frontend
+        run: scripts/deploy.sh
+      - name: Summary
+        run: echo "Deployed $(git rev-parse --short HEAD) to $PUBLIC_URL" >> "$GITHUB_STEP_SUMMARY"

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import { useFonts } from "expo-font";
-import { BricolageGrotesque_600SemiBold, BricolageGrotesque_800ExtraBold } from "@expo-google-fonts/bricolage-grotesque";
+import { Gabarito_600SemiBold, Gabarito_800ExtraBold } from "@expo-google-fonts/gabarito";
 import { Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold } from "@expo-google-fonts/figtree";
 import { backend } from "./src/backend";
 import { Today } from "./src/screens/Today";
@@ -21,7 +21,7 @@ function Shell() {
   const scheme = useScheme();
   const [phase, setPhase] = useState<Phase>({ name: "loading" });
   const [lang, setLang] = useState<Lang>(detectLang());
-  const [fontsLoaded, fontError] = useFonts({ BricolageGrotesque_600SemiBold, BricolageGrotesque_800ExtraBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ Gabarito_600SemiBold, Gabarito_800ExtraBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
 
   useEffect(() => {
     backend.me().then((me) => { if (isLang(me.language)) setLang(me.language); setPhase({ name: "app", onboarded: me.onboarded, healthConnected: me.healthConnected }); }).catch(() => setPhase({ name: "signedOut" }));
@@ -31,7 +31,7 @@ function Shell() {
   const waiting = phase.name === "loading" || (!fontsLoaded && !fontError);
   return (
     <LangProvider lang={lang} setLang={setLang}>
-      <View style={{ flex: 1, backgroundColor: T.color.surface, alignItems: "center" }}>
+      <View style={{ flex: 1, backgroundColor: T.color.table, alignItems: "center" }}>
         <View style={{ flex: 1, width: "100%", maxWidth: 480, paddingTop: 24, paddingBottom: 0 }}>
           {waiting ? <Splash /> : null}
           {!waiting && phase.name === "signedOut" ? <SignInScreen /> : null}

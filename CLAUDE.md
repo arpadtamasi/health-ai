@@ -21,6 +21,8 @@ app). Signed out, the app shows the landing text and the Google sign-in. Run fro
 `site/` only provides the static files (icons) that are copied next to the export; its old Astro landing page is not served.
 `scripts/deploy-frontend.sh` builds and deploys, `scripts/deploy-backend.sh` deploys the server (`MIN_INSTANCES=1` keeps one
 instance warm; the app is built for the slow first call), `scripts/deploy.sh` runs both.
+On GitHub, `.github/workflows/deploy.yml` runs the checks and `scripts/deploy.sh` on every push to `main` (or by hand), signed in
+with Workload Identity Federation; `scripts/github-deploy-setup.sh` is its one-time setup in Cloud Shell.
 
 ## Feedback
 

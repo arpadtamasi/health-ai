@@ -1,5 +1,5 @@
-// Server-rendered pages of the sign-in flow, in plain Material Design 3
-// (docs/designs/signin-flow-brief.md). No health values are ever shown here.
+// Server-rendered pages of the sign-in flow, in the "Terített asztal" palette of the app (change home-plate-and-glass): tablecloth
+// ground, ceramic cards, deep green actions, Gabarito headings on Figtree. No health values are ever shown here.
 // The static landing page (site/) imports STYLE, FONTS and icon from here, so keep this module
 // free of Node-only imports.
 
@@ -25,18 +25,18 @@ export const ICONS: Record<string, string> = {
 
 export const STYLE = `
 :root{color-scheme:light dark;
---md-primary:#39608f;--md-on-primary:#ffffff;--md-primary-container:#d3e4ff;--md-on-primary-container:#1e4875;
---md-secondary-container:#d7e3f8;--md-on-secondary-container:#3c4758;--md-tertiary-container:#f5d9ff;--md-on-tertiary-container:#533f5e;--md-error-container:#ffdad6;--md-on-error-container:#93000a;
---md-surface:#f8f9ff;--md-surface-container-low:#f2f3fa;--md-surface-container-high:#e7e8ee;
---md-on-surface:#191c20;--md-on-surface-variant:#43474e;--md-outline-variant:#c3c6cf}
+--md-primary:#1d5c4d;--md-on-primary:#ffffff;--md-primary-container:#d8e9e0;--md-on-primary-container:#0e3a30;
+--md-secondary-container:#e6ebe4;--md-on-secondary-container:#2d3a33;--md-tertiary-container:#f8e4bd;--md-on-tertiary-container:#5a3d05;--md-error-container:#ffdad6;--md-on-error-container:#93000a;
+--md-surface:#e4eae1;--md-surface-container-low:#fbfcfa;--md-surface-container-high:#e6ebe4;
+--md-on-surface:#17201b;--md-on-surface-variant:#59675f;--md-outline-variant:#d2dacf}
 @media (prefers-color-scheme:dark){:root{
---md-primary:#a3c9fe;--md-on-primary:#00315b;--md-primary-container:#1e4875;--md-on-primary-container:#d3e4ff;
---md-secondary-container:#3c4758;--md-on-secondary-container:#d7e3f8;--md-tertiary-container:#533f5e;--md-on-tertiary-container:#f5d9ff;--md-error-container:#93000a;--md-on-error-container:#ffdad6;
---md-surface:#111418;--md-surface-container-low:#191c20;--md-surface-container-high:#272a2f;
---md-on-surface:#e1e2e8;--md-on-surface-variant:#c3c6cf;--md-outline-variant:#43474e}}
+--md-primary:#86d4b9;--md-on-primary:#0b2a21;--md-primary-container:#24453b;--md-on-primary-container:#cdeee1;
+--md-secondary-container:#2b3530;--md-on-secondary-container:#d5e3da;--md-tertiary-container:#4a3a17;--md-on-tertiary-container:#f6dfae;--md-error-container:#93000a;--md-on-error-container:#ffdad6;
+--md-surface:#151c18;--md-surface-container-low:#1d2621;--md-surface-container-high:#2b3530;
+--md-on-surface:#edf3ee;--md-on-surface-variant:#a0b1a7;--md-outline-variant:#34413a}}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--md-surface);color:var(--md-on-surface)}
-body{font-family:"Roboto Flex",Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;
+body{font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;
 padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
 .ms{width:24px;height:24px;fill:currentColor;flex:none;display:block}
 .shell{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
@@ -48,7 +48,7 @@ main.center{align-items:center;text-align:center;justify-content:center;padding-
 .steps{display:flex;gap:6px}.steps span{height:4px;flex:1;border-radius:2px;background:var(--md-surface-container-high)}
 .steps span.on{background:var(--md-primary)}
 .overline{font-size:12px;font-weight:500;letter-spacing:.5px;color:var(--md-on-surface-variant);margin:0}
-h1{margin:0;font-size:28px;line-height:36px;font-weight:400;text-wrap:balance}
+h1{margin:0;font-family:Gabarito,Figtree,system-ui,sans-serif;font-size:28px;line-height:34px;font-weight:800;letter-spacing:-.4px;text-wrap:balance}
 p{margin:0}.body{font-size:14px;line-height:20px;color:var(--md-on-surface-variant);max-width:40ch}
 .list{list-style:none;margin:0;padding:0;background:var(--md-surface-container-low);border-radius:16px;overflow:hidden;text-align:left;align-self:stretch}
 .item{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;padding:12px 16px;min-height:56px}
@@ -75,7 +75,7 @@ gap:8px;font-weight:500;font-size:15px;letter-spacing:.1px;text-decoration:none;
 `;
 
 export const FONTS = `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;8..144,500&display=swap">`;
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Gabarito:wght@800&display=swap">`;
 
 function page(title: string, main: string, opts: { center?: boolean; head?: string } = {}): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
