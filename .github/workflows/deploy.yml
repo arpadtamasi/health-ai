@@ -1,7 +1,8 @@
 # Deploys Health AI when main changes, or by hand (Actions → Deploy → Run workflow), so that a release needs no laptop.
 # It signs in to Google Cloud with GitHub's own identity (Workload Identity Federation): no key is stored anywhere. The one-time
 # setup is scripts/github-deploy-setup.sh, run once in Cloud Shell; it creates the deploy account and prints the project number.
-# The project id and number below are not secrets (repository variables of the same names override them). The service's own
+# The project id (health-ai-hub) and number (560348334085) below are not secrets; repository variables GCP_PROJECT_ID and
+# GCP_PROJECT_NUMBER override them. Pull requests run the checks only. The service's own
 # settings (public URL, OAuth client, scopes, minimum instances) are read from the running Cloud Run service, so they stay in one
 # place.
 name: Deploy
@@ -9,6 +10,7 @@ name: Deploy
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -37,7 +39,7 @@ jobs:
   deploy:
     needs: check
     runs-on: ubuntu-latest
-    if: vars.GCP_PROJECT_NUMBER != ''
+    if: github.event_name != 'pull_request'
     env:
       PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'health-ai-hub' }}
       REGION: europe-west1
@@ -50,7 +52,7 @@ jobs:
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github/providers/github
+          workload_identity_provider: projects/${{ vars.GCP_PROJECT_NUMBER || '560348334085' }}/locations/global/workloadIdentityPools/github/providers/github
           service_account: health-ai-deploy@${{ vars.GCP_PROJECT_ID || 'health-ai-hub' }}.iam.gserviceaccount.com
           create_credentials_file: true
       - uses: google-github-actions/setup-gcloud@v2
@@ -68,10 +70,3 @@ jobs:
         run: scripts/deploy.sh
       - name: Summary
         run: echo "Deployed $(git rev-parse --short HEAD) to $PUBLIC_URL" >> "$GITHUB_STEP_SUMMARY"
-
-  not-set-up:
-    needs: check
-    runs-on: ubuntu-latest
-    if: vars.GCP_PROJECT_NUMBER == ''
-    steps:
-      - run: echo "::warning::Deploy is not set up yet. Run scripts/github-deploy-setup.sh once in Cloud Shell, then set GCP_PROJECT_NUMBER to the number it prints."
