@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { barOf, chartOf, judgeHero, minutesOf, type DayEntry, type DayInput } from "./day.ts";
+import { judgeHero, minutesOf, type DayEntry, type DayInput } from "./day.ts";
 
 const goals = { calories: 2100, protein: 160, carbs: 185, fat: 80, waterMl: 2500 };
 const window = { startHour: 7, endHour: 22 };
@@ -9,34 +9,34 @@ const meal = (id: string, at: number, kcal: number, protein = 0): DayEntry => ({
 const tz = "Europe/Budapest";
 const at = (hhmm: string) => Date.parse(`2026-10-02T${hhmm}:00+02:00`);
 
-// EX: The hero is red when the calories are 200 under the plan (BR-01m3y1…: The hero's colour states the situation).
-test("the hero is red when the calories are far under the plan", () => {
+// EX-01m3y1pthj3qcq57gf9km40rqw (The line says how far under the plan, and nothing turns red), BR-01m6m4323nzt0ma6qf6j5a0yxa.
+test("the calories are judged under the plan when they are far under it", () => {
   const h = judgeHero(day(17 * 60 + 40, { calories: 1300 }), [meal("a", at("08:00"), 1300)]);
   assert.equal(h.tone, "behind");
   assert.equal(h.kind, "under");
   assert.equal(h.amount, 190); // the plan at 17:40 is about 1,493 kcal
 });
 
-// EX: The hero is yellow within 120 kcal of the plan.
-test("the hero is yellow within 120 kcal of the plan, and ahead counts as on track", () => {
+// EX-01m3y1ptvks1k8pxkzpe89stx5 (Within 120 kcal of the plan the line says on the plan).
+test("within 120 kcal of the plan the day is on the plan, and further above it is ahead", () => {
   const near = judgeHero(day(14 * 60 + 20, { calories: 1000 }), [meal("a", at("08:00"), 1000)]);
   assert.equal(near.tone, "ok");
   assert.equal(near.kind, "on");
   assert.equal(judgeHero(day(12 * 60 + 15, { calories: 1430 }), [meal("a", at("08:00"), 1430)]).kind, "ahead");
 });
 
-// EX: The hero is dark when the day is closed.
-test("the hero is dark once the window is over or the goal reached", () => {
+// EX-01m3y1pv379hwqmt3jfsqz9p9v (When the day is closed the line says the day is done).
+test("the day is done once the window is over or the goal reached", () => {
   assert.equal(judgeHero(day(22 * 60 + 20, { calories: 2000 }), [meal("a", at("08:00"), 2000)]).tone, "done");
   assert.equal(judgeHero(day(20 * 60, { calories: 2105 }), [meal("a", at("08:00"), 2105)]).tone, "done");
 });
 
-test("before the first log there is no judgement, and in the first two hours of the window the hero does not call a lag", () => {
+test("before the first log there is no judgement, and in the first two hours of the window no lag is called", () => {
   assert.equal(judgeHero(day(7 * 60 + 2, {}), []).kind, "morning");
   assert.equal(judgeHero(day(8 * 60 + 30, { calories: 100 }), [meal("a", at("08:00"), 100)]).kind, "start");
 });
 
-// EX: Tapping the protein bar puts protein in the hero.
+// EX-01m3y1pt0jf372my3204evety1 (Tapping the protein third puts protein in the line).
 test("another metric is judged by its own plan, with an eight percent margin", () => {
   const d = day(17 * 60 + 40, { calories: 1300, protein: 70 });
   const h = judgeHero(d, [meal("a", at("08:00"), 1300, 70)], "p");
@@ -45,34 +45,11 @@ test("another metric is judged by its own plan, with an eight percent margin", (
   assert.ok(h.amount >= 40 && h.amount <= 48, String(h.amount));
 });
 
-// EX: The fat bar shows the cap and not a pace.
-test("fat is a limit: the hero says how much is left, and the bar has a cap instead of a pace tick", () => {
-  const d = day(17 * 60 + 40, { fat: 72 });
-  const h = judgeHero(d, [], "f");
+// EX-01m3y1ptc4mfsg0c8vbcjm3w2z (The fat third shows the cap): fat is a limit, the line says how much is left or how far it is over.
+test("fat is a limit: what is left of the cap, or over it", () => {
+  const h = judgeHero(day(17 * 60 + 40, { fat: 72 }), [], "f");
   assert.deepEqual([h.kind, h.amount, h.tone], ["fatLeft", 8, "ok"]);
-  const bar = barOf(d, "f");
-  assert.equal(bar.limit, true);
-  assert.ok(bar.tick > 60 && bar.tick < 80, String(bar.tick));   // the pace tick is there too, the cap is the end of the bar
-  assert.equal(bar.left, 8);
-  assert.equal(judgeHero(day(10 * 60, { fat: 90 }), [], "f").tone, "behind");
-});
-
-test("a minimum bar says what is to go, and is behind when it is more than eight points under the plan", () => {
-  const bar = barOf(day(17 * 60 + 40, { protein: 70 }), "p");
-  assert.equal(bar.left, 90);
-  assert.equal(bar.behind, true);
-  assert.equal(barOf(day(10 * 60, { protein: 160 }), "p").done, true);
-});
-
-test("the chart is a staircase of what was logged up to now, per metric", () => {
-  const entries = [meal("b", at("07:30"), 415, 17), meal("l", at("12:00"), 640, 38), meal("late", at("21:00"), 100, 1)];
-  const c = chartOf(day(15 * 60, { calories: 1055 }), entries, "kcal", tz);
-  assert.deepEqual(c.steps.map((s) => s.total), [415, 1055]);
-  assert.ok(c.nowX > c.steps[1]!.x);
-  assert.equal(c.limit, false);
-  assert.deepEqual(chartOf(day(15 * 60, {}), entries, "p", tz).steps.map((s) => s.total), [17, 55]);
-  assert.equal(chartOf(day(15 * 60, {}), entries, "f", tz).limit, true);
-  assert.ok(chartOf(day(15 * 60, {}), entries, "f", tz).planNow > 0);
+  assert.equal(judgeHero(day(10 * 60, { fat: 90 }), [], "f").kind, "fatOver");
 });
 
 test("the minutes of an instant are read in the person's own time zone", () => {

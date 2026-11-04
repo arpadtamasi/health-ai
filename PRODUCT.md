@@ -49,7 +49,7 @@ A thin, standard remote MCP server over the Google Health API: one sign-in conne
 
 - Working name: health-ai (no final name, logo or visual identity yet).
 - Interface language: English.
-- Visual language (owner's decision): plain Material Design 3, played straight, sitting alongside Google's own account and Google Health surfaces. Custom visual worlds (wayfinding, lab report, hypnogram, seed packet, spirit level) were explored and declined.
+- Visual language (owner's decision, 2026-11-04, change home-plate-and-glass): "Terített asztal", a table seen from above. A tablecloth ground, ceramic white for the plate and the sheets, one identity colour per macro and for water, deep green for actions; the app, the sign-in and the landing text share it. It replaces both the earlier plain Material Design 3 and the Paprika palette ("A paprika paletta sem követelmény"). Other custom worlds (wayfinding, lab report, hypnogram, seed packet, spirit level) were explored earlier and declined.
 - Mood (owner's words): balance, confidence, health. It must feel like being well, never like being a patient: no clinical, lab-report or illness associations.
 
 ## Evidence on Hand

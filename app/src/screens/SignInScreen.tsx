@@ -1,5 +1,6 @@
 // The front door of the app (US-01m3w51ccdyb7xfbtes6729sct): what you see when you are signed out. It says what the app does, offers the
-// Google sign-in, and, for people who use Claude, the address of the connector.
+// Google sign-in, and, for people who use Claude, the address of the connector. It wears the same tablecloth and ceramic as the home
+// (change home-plate-and-glass: the new palette on the sign-in and the landing text too).
 import { useState } from "react";
 import { Linking, Platform, ScrollView, Text, View } from "react-native";
 import { API_BASE, signInUrl } from "../api/client";
@@ -29,7 +30,7 @@ export function SignInScreen() {
     } catch { /* the address is selectable; the person can copy it by hand */ }
   };
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: c.surface, padding: T.space.xl, justifyContent: "center", gap: T.space.l }}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: c.table, padding: T.space.xl, justifyContent: "center", gap: T.space.l }}>
       <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
         <UiIcon name="heart" size={28} color={c.onPrimary} filled />
       </View>
@@ -38,7 +39,7 @@ export function SignInScreen() {
       <Button label={t.signInButton} onPress={go} />
       <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{t.signInOnly}</Text>
 
-      <View style={{ backgroundColor: c.surfaceLow, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
+      <View style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
         <Text style={{ fontFamily: T.face.display, fontSize: T.font.card, color: c.onSurface }}>{t.claudeTitle}</Text>
         <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{t.claudeText}</Text>
         <Text selectable style={{ fontFamily: Platform.OS === "web" ? "monospace" : undefined, fontSize: T.font.meta, color: c.onSurface, }}>{mcpUrl()}</Text>
@@ -51,7 +52,7 @@ export function SignInScreen() {
 /** The splash while the app finds out whether the person is signed in. */
 export function Splash() {
   return (
-    <View style={{ flex: 1, backgroundColor: c.surface, alignItems: "center", justifyContent: "center" }}>
+    <View style={{ flex: 1, backgroundColor: c.table, alignItems: "center", justifyContent: "center" }}>
       <View style={{ width: 72, height: 72, borderRadius: 18, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
         <UiIcon name="heart" size={36} color={c.onPrimary} filled />
       </View>
