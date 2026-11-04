@@ -21,7 +21,7 @@ colors:
   carbs-wheat: "#e09a22"
   fat-olive: "#5f8f45"
   water-blue: "#3a87d0"
-  good: "#23784a"
+  good: "#1e6c42"
   warn: "#b04314"
   error: "#b3261e"
   own-message: "#1d5c4d"
@@ -312,8 +312,8 @@ A muted sage-and-ceramic table carrying four saturated food colours and one deep
 These four are drawn at full strength as layers, at 60% opacity in the 45 degree hatching of the gap, at 28% fill under a dashed ink outline for a previewed suggestion, and at 22% for layers that are not the highlighted entry.
 
 ### Tertiary: state ink
-- **Good Green** (#23784a; dark #74d59d): the tick, dot and up-arrow marks; a figure that is done.
-- **Behind Rust** (#b04314; dark #ff9b68): the down-arrow mark; a figure that lags or a fat figure near or over its cap.
+- **Good Green** (#1e6c42; dark #74d59d): the tick, dot and up-arrow marks.
+- **Behind Rust** (#b04314; dark #ff9b68): the down-arrow mark. Figures stay in ink; they never turn rust or green.
 - **Error Red** (#b3261e; dark #ff8a80): the outline of an entry that failed to save, the action bar when a save failed, the danger chip, an invalid time in the edit sheet.
 
 State ink only ever accompanies a word or a shape; it never colours a macro's own surface.
@@ -388,7 +388,7 @@ Spacing runs on a 4px base (4, 8, 12, 16, 20, 24px); 6, 10 and 14px appear as in
 Depth is tonal and physical rather than layered with shadows. Cloth sits lowest, ceramic surfaces sit on it, separated by a 1px Hairline; the inverse ink action bar is the only surface that reverses. The plate and the glass are the only objects that cast a shadow, because they are the only things standing on the table. The edit sheet is a modal over a Scrim. No UI card, chip or sheet carries a box-shadow.
 
 ### Shadow Vocabulary
-- **Plate shadow**: Table Shadow at 55% opacity under the rim, offset 3px right and 6px down. The build currently draws it as an unblurred disc; that hard edge is a known defect, not a rule, and the shadow should gain a soft blur when the plate is next touched.
+- **Plate shadow**: Table Shadow under the rim, offset 3px right and 6px down, drawn as three widening discs at 40, 22 and 10% so the edge is soft (react-native-svg has no portable blur). The glass casts the same kind of soft ellipse.
 - **Glass shadow**: a flat contact ellipse of Table Shadow (60 by 8 units) under the foot of the glass (also unblurred in the build).
 
 ### Named Rules

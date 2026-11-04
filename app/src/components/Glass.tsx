@@ -24,7 +24,7 @@ export function Glass({ part, selected, dim, highlight, width, onSelect, label }
           <Line x1={0} y1={0} x2={0} y2={6} stroke={c.water} strokeOpacity={0.6} strokeWidth={2.6} />
         </Pattern>
       </Defs>
-      <Ellipse cx={42} cy={203} rx={30} ry={4} fill={c.shadow} />
+      {[0, 3, 6].map((d, i) => <Ellipse key={d} cx={42} cy={203} rx={30 + d} ry={4 + d / 3} fill={c.shadow} opacity={[0.7, 0.35, 0.15][i]} />)}
       <G opacity={dim ? 0.3 : 1}>
         <Path d={SHAPE} fill={c.plate} fillOpacity={0.6} />
         <G clipPath={`url(#gc${uid})`}>

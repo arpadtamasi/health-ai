@@ -83,7 +83,7 @@ export function Plate({ parts, kcal, selected, highlight, preview, size, onSelec
           </Pattern>
         ))}
       </Defs>
-      <Circle cx={CX + 3} cy={CY + 6} r={R + RIM + 1} fill={c.shadow} opacity={0.55} />
+      {[0, 2.5, 5].map((d, i) => <Circle key={d} cx={CX + 3} cy={CY + 6} r={R + RIM + d} fill={c.shadow} opacity={[0.4, 0.22, 0.1][i]} />)}
       <Circle cx={CX} cy={CY} r={R + RIM} fill={c.plate} />
       <Circle cx={CX} cy={CY} r={R + 3.5} fill="none" stroke={c.plateEdge} strokeWidth={2} />
       {SECT.map((s) => {

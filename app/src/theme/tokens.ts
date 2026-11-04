@@ -30,7 +30,7 @@ export const LIGHT: Palette = {
   plate: "#ffffff", plateEdge: "#e9ede6", well: "#f1f4ef", shadow: "rgba(28, 48, 36, 0.14)",
   onSurface: "#17201b", onSurfaceVariant: "#59675f", outline: "#d2dacf",
   protein: "#c4456b", carbs: "#e09a22", fat: "#5f8f45", water: "#3a87d0",
-  good: "#23784a", goodText: "#23784a", warn: "#b04314", error: "#b3261e",
+  good: "#1e6c42", goodText: "#1e6c42", warn: "#b04314", error: "#b3261e",
   ink: "#17201b", strong: "#1d5c4d", onStrong: "#ffffff", scrim: "#17201b66",
 };
 

@@ -1,6 +1,6 @@
 // US-01m3y1prd5e73v389tvmmk9nm7 (Choose what the home shows): the row under the line, protein, carbs, fat and water as eaten against
 // the goal, each with the dot of its colour. A tap chooses it, as a tap on its third or on the glass does; the chosen one is outlined.
-// The figure turns to the warning text colour when it lags or the cap is near, beside the words of the line (BR-01m6m4323nzt0ma6qf6j5a0yxa).
+// The figures stay in ink: the line, its mark and the hatching on the plate say how the day stands (BR-01m6m4323nzt0ma6qf6j5a0yxa).
 import { Pressable, Text, View } from "react-native";
 import type { Drawn, Part } from "../plate";
 import type { Texts } from "../i18n";
@@ -18,7 +18,6 @@ export function Figures({ parts, selected, onSelect, t }: { parts: Record<Drawn,
       {ORDER.map((m) => {
         const p = parts[m];
         const value = m === "w" ? `${l(p.eaten)} / ${l(p.goal)} l` : `${Math.round(p.eaten)} / ${p.goal} g`;
-        const tone = m === "f" ? (p.tight || p.over > 0 ? c.warn : c.onSurface) : p.done ? c.goodText : p.behind ? c.warn : c.onSurface;
         const on = selected === m;
         return (
           <Pressable key={m} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${name[m]}: ${value}`} onPress={() => onSelect(m)}
@@ -28,7 +27,7 @@ export function Figures({ parts, selected, onSelect, t }: { parts: Record<Drawn,
               <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: colorOf(m) }} />
               <Text numberOfLines={1} style={{ fontFamily: T.face.semi, fontSize: 12.5, color: c.onSurface }}>{name[m]}</Text>
             </View>
-            <Text numberOfLines={1} style={{ fontFamily: T.face.bold, fontSize: 13, color: tone, ...T.numeric }}>{value}</Text>
+            <Text numberOfLines={1} style={{ fontFamily: T.face.bold, fontSize: 13, color: c.onSurface, ...T.numeric }}>{value}</Text>
           </Pressable>
         );
       })}
