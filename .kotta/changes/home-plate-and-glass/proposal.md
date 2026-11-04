@@ -14,6 +14,10 @@ Preview the owner reviewed: the "Terített asztal" artifact (https://claude.ai/a
 
 Outside the model but part of the work: the new palette (tablecloth and ceramic, beet, wheat, olive and blue for the macros, deep green for actions) replaces Paprika in the app, on the sign-in and on the landing text (J2, answer 4); `app/src/theme/tokens.ts` and `DESIGN.md` follow it. `PRODUCT.md` still names plain Material Design 3 as the visual language; that line is out of date.
 
+## Decided at planning
+
+- A tap on a suggestion previews it on the plate and a second tap on the same option logs it, with an Undo; there is no separate button ("Ok a b"). "Log a meal in one step", "Record what was suggested and what was chosen" and "Choosing a suggestion is recorded next to what was shown" follow it.
+
 ## Open decisions
 
-- How is a suggestion logged now that a tap previews it on the plate? (See the open decision in "Ask what to eat to catch up"; the assistant suggests that a second tap on the same option logs it.)
+None.

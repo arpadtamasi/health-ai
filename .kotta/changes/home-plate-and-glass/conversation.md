@@ -59,6 +59,16 @@ Kézzel párosítva az ágens által (2026-11-04): a heurisztika ezeket a „Pá
 > 1 igen 2 igen 3 igen 4 igen
 
 
+### J3 · 2026-11-04 20:45 UTC
+
+Kézzel felvéve az ágens által (2026-11-04), a kapu előtti kérdésből.
+
+**Ágens** (20:40 UTC): hogyan naplózódjon egy javaslat, ha a koppintás előnézetet mutat a tányéron? (a) egy koppintás előnézet, az „Ezt eszem” gomb naplóz; (b) egy koppintás előnézet, egy második koppintás ugyanarra naplóz, nincs külön gomb; (c) egy koppintás rögtön naplóz Visszavonással. Az ágens a b)-t javasolta.
+
+**Ember** (20:45 UTC):
+
+> Ok a b
+
 ## Elvetett utak
 
 Az ágens javasolt valamit, az ember mást választott.

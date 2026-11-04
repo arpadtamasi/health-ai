@@ -6,7 +6,7 @@ subjects: [US-01m3rwa0cvrtcapqk0k3h6mqvc]
 provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
-  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/home-plate-and-glass/conversation.md · J3"]
   quote: "3 igen"
   inferred: "The foods and numbers are sample values chosen by the assistant."
 ---
@@ -22,4 +22,4 @@ They choose "Chicken breast with rice" (560 kcal, 38 g protein) from the three o
 
 ## Then
 
-The plate still shows above the sheet, and each third gains a dashed layer of what the chicken would add; nothing is logged yet.
+The plate still shows above the sheet, and each third gains a dashed layer of what the chicken would add; nothing is logged until they tap the chicken a second time, which logs it with an Undo.
