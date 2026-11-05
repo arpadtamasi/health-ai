@@ -316,7 +316,7 @@ A muted sage-and-ceramic table carrying four saturated food colours and one deep
 - **Pale Leaf** (#d8e9e0, text #0e3a30; dark #24453b, text #cdeee1): the quiet action container. A selected chip (meal type in the edit sheet, the "Connect" chip of the Health banner).
 
 ### Secondary: the macro identities
-- **Protein Lentil** (#e07a4f, every other entry #c9643b): the lentils of the protein third, its dot in the figures row and on day entries.
+- **Protein Lentil** (#e07a4f, every other entry #c9643b): the lentils of the protein third, its dot in the legend and on day entries.
 - **Carbs Rice** (#f1e8d3, every other entry #e2d4b2, with a thin edge rgba(70,52,30,.38)): the rice of the carbs third and its dot.
 - **Fat Pumpkin Seed** (#7f9e47, every other entry #66843a): the seeds of the fat third and its dot.
 - **Water Blue** (#3a87d0; dark #63a9ec): the glass and its dot.
@@ -367,7 +367,7 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 - **Line** (Gabarito 600, 19px, 24px line, -0.2px, tabular): the sentence under the plate. Its sub-line is Meta in Muted Ink.
 - **Card** (Gabarito 800, 17px): a card's name, the kcal on the edit sheet.
 - **Section** (Gabarito 600, 16px): "Ma eddig" over the day strip, the line in the folded plate.
-- **Micro** (Figtree, 13px): the smallest role (legend, figures' names, the switch's one-time line, card macros, steps); nothing smaller is set, except inside the plate's hub, which is sized on screen.
+- **Micro** (Figtree, 13px): the smallest role (legend, the glass's litres, the switch's one-time line, card macros, steps); nothing smaller is set, except inside the plate's hub, which is sized on screen.
 - **Body** (Figtree 400, 16px, 23px line in bubbles): the conversation, inputs, edit-sheet labels. **Button** is Figtree 600 at the same size.
 - **Meta** (Figtree 400, 14px): chips, notes, the action bar (500 for the message, 700 underlined for its actions).
 - **Figure** (Figtree 700, 13px, tabular): figure values, day-entry amounts; Figtree 400-600 at 13px for times, the date, counts and reasons; 12.5px 600 for figure names.
@@ -384,14 +384,14 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 One screen, portrait, built at 390px wide and capped at 480px for sheets and server pages. The home stacks top to bottom without scrolling:
 
 1. **Top bar** (min 48px, 18px sides): the date and the clock in Muted Ink (Figtree 600, 13px), and a 40px round conversation button.
-2. **Plate and glass**, bottom-aligned, 2px apart: the plate gets the height left once the top bar, the line block, today's entries and the dock are measured, between 110px (96px under 600px of height) and 300px, never wider than the width minus 108px; the glass is a quarter of the plate wide (at least 46px). The hub grows on a small plate so that its figure stays 20px and its goal 11px on screen ("/ 2100" without the unit under 240px).
+2. **Plate and glass**, bottom-aligned, 2px apart: the plate gets the height left once the top bar, the line block, today's entries and the dock are measured, between 110px (96px under 600px of height) and 300px, never wider than the width minus 108px; the glass is a quarter of the plate wide (at least 46px), with "0,5 / 2,0 l" under it (Micro Strong, ink). The hub grows on a small plate so that its figure stays 20px and its goal 11px on screen ("/ 2100" without the unit under 240px).
 3. **The line** (20px sides): the 22px mark beside the Line text and its sub-line, 8px apart.
-4. **Figures row** (12px sides, 4px gaps): protein, carbs, fat, water in four equal columns.
+4. **Legend** in Micro: which grain is which macro. There is no row of figures: a tapped third shows its grams in the hub.
 5. A flexible spacer (min 16px), so the lower block sits on the dock.
 6. **"Ma eddig"** heading and a horizontal strip of day entries (6px gaps, 16px inset), scrolled to the newest.
 7. **Action bar** when something was just done, then the **dock**: the "Ettem · Ennék" switch, its one-line explanation the first time only, the chips (usual items on "Ettem"; on "Ennék" up to four usual foods that fit what is left, the one closing the largest gap first, none when none fits; a photo on "Ennék" goes through the camera button, which is the one photo entry) and the composer. After the eating window the switch is hidden and the dock stays on "Ettem".
 
-Conversation mode folds the plate into one 56px line at the top and gives the rest to the thread. The thread reads like a chat app: the person's messages in Own Message bubbles, the assistant's replies across the width without a bubble (bold and lists rendered), every entry it logged as a Ceramic card with the name, the amount, three macro dots and Edit and Undo chips (struck through and dimmed once undone), and a message that did not go out marked "Nem ment el" in Warn with a green "Újra" (its reason only when it says more than "try again"). While a reply is written, its steps sit above it as 13px Muted Ink lines, each with a small spinner that turns into a Good Green tick; the text grows under them as it arrives; a card shows as soon as its step ends; and a 44px Strong circle with a white square (Stop) stands in place of Send. A finished or stopped reply folds its steps into one quiet line, tick, the step labels joined by " · ", a chevron, that opens on a tap. The what-now sheet rises from under the figures so the plate stays visible above it with the picked option previewed.
+Conversation mode folds the plate into one 56px line at the top and gives the rest to the thread. The thread reads like a chat app: the person's messages in Own Message bubbles, the assistant's replies across the width without a bubble (bold and lists rendered), every entry it logged as a Ceramic card with the name, the amount, three macro dots and Edit and Undo chips (struck through and dimmed once undone), and a message that did not go out marked "Nem ment el" in Warn with a green "Újra" (its reason only when it says more than "try again"). While a reply is written, its steps sit above it as 13px Muted Ink lines, each with a small spinner that turns into a Good Green tick; the text grows under them as it arrives; a card shows as soon as its step ends; and a 44px Strong circle with a white square (Stop) stands in place of Send. A finished or stopped reply folds its steps into one quiet line, tick, the step labels joined by " · ", a chevron, that opens on a tap. The thread is one day: it starts on a new page when the diary's day changes, and earlier days are not shown. The what-now sheet rises from under the legend so the plate stays visible above it with the picked option previewed.
 
 Spacing runs on a 4px base (4, 8, 12, 16, 20, 24px); 6, 10 and 14px appear as in-between gaps and insets. Touch targets are at least 44px; buttons and bars 48px.
 
@@ -448,9 +448,6 @@ Beside the plate, 70px wide: fills from the bottom in Water Blue at 92%, a Plate
 
 ### The Line and the Mark (signature)
 A 22px drawn mark (2px ring, round caps) beside the Line text: arrow down (Behind Rust), arrow up, dot or tick (Good Green), or an empty ring (Muted Ink). The shape carries the meaning; the colour only helps.
-
-### Figures row
-Four equal 44px-tall cells: a 9px identity dot and the name (Figtree 600 12.5px), then "eaten / goal" (Figure role). The chosen cell gets a 1.5px ink outline on Ceramic.
 
 ### Day strip ("Ma eddig")
 Section heading with a count of meals and glasses on the right; 40px Ceramic entries (12px radius, 1.5px Hairline) with the identity dot of the main macro, time, short name and amount. Highlighted: ink outline. Saving: 55% opacity and "…". Failed: Error Red outline. Empty: a dashed Hairline placeholder.

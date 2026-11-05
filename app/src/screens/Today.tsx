@@ -16,7 +16,6 @@ import { Button, Chip, RoundButton, cardStyle } from "../components/ui";
 import { ConfirmDelete, type DeleteAsk } from "../components/ConfirmDelete";
 import { DayStrip, shortName } from "../components/DayStrip";
 import { EditSheet } from "../components/EditSheet";
-import { Figures } from "../components/Figures";
 import type { Option } from "../components/food";
 import { Glass } from "../components/Glass";
 import { UiIcon } from "../components/icons";
@@ -28,8 +27,9 @@ import { judgeHero, minutesOf, type DayInput } from "../day";
 import { amountText, lineWords } from "../lineText";
 import { isLang, useT, type Lang, type Texts } from "../i18n";
 import { dayFraction } from "../pace";
-import { nextShown, partOf, type Drawn } from "../plate";
+import { glassText, nextShown, partOf, type Drawn } from "../plate";
 import { BUILD, isNewer, onComeBack, publishedBuild } from "../update";
+import { dayOf, isNewDay, todaysTurns } from "../daypage";
 import { canSendAgain, fittingUsuals, intentOf, photoTurns, startSide, switchShown, type Side } from "../dock";
 import { blocksOf } from "../rich";
 import { applyLine, emptyLive, stepLabel, stepSummary, type Live, type Step, type StepWords, type StreamLine } from "../stream";
@@ -43,7 +43,9 @@ import { Splash } from "./SignInScreen";
 const c = T.color;
 
 /** The adapter lives outside React, so the current texts, the language switch and the event sink reach it through this box. */
-const box: { t: Texts | null; setLang: (l: Lang) => void; onEvents: (events: ChatEvent[]) => void; onLogged: () => void } = { t: null, setLang: () => undefined, onEvents: () => undefined, onLogged: () => undefined };
+const deviceZone = (): string => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; } };
+const box: { t: Texts | null; setLang: (l: Lang) => void; onEvents: (events: ChatEvent[]) => void; onLogged: () => void; timeZone: string; pageAt: number } =
+  { t: null, setLang: () => undefined, onEvents: () => undefined, onLogged: () => undefined, timeZone: deviceZone(), pageAt: Date.now() };
 
 interface Meta { replies?: string[]; needsConsent?: boolean; onboarded?: boolean; failedPhoto?: boolean; failed?: boolean; retry?: boolean; intent?: Side; stopped?: boolean }
 type Img = { mediaType: "image/jpeg"; dataBase64: string };
@@ -60,7 +62,9 @@ const adapter: ChatModelAdapter = {
     const images: Img[] = last ? imagesOf(last) : [];
     const intent = (last?.metadata?.custom as Meta | undefined)?.intent;
     // EX-01m6ph6eawez8cc1g4kd33xszg: the photos of the last two earlier user messages come along, so a question about them still sees them.
-    const earlier = messages.slice(0, -1);
+    // EX-01m6py99nbp6t6ctsbpzh6q29y: the assistant is given only today's turns, even on a page left open past midnight.
+    const today = dayOf(Date.now(), box.timeZone);
+    const earlier = messages.slice(0, -1).filter((m) => !m.createdAt || dayOf(new Date(m.createdAt).getTime(), box.timeZone) === today);
     const withPhotos = photoTurns(earlier.flatMap((m, i) => (m.role === "user" ? [i] : [])));
     const history = earlier.flatMap((m, i) => {
       const tx = m.content.filter((p) => p.type === "text").map((p) => (p as { text: string }).text).join(" ");
@@ -267,6 +271,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const load = useCallback(async () => {
     try {
       const [s, u, e] = await Promise.all([backend.state(), backend.usuals().catch(() => [] as Usual[]), backend.entriesToday().catch(() => [] as DayEntry[])]);
+      box.timeZone = s.timeZone || box.timeZone;
       setState(s); setUsuals(u); setEntries(e); setLoadedAt(Date.now()); setLoadFailed(false);
       cacheSet("day", { state: s, usuals: u, entries: e, at: Date.now() });
     } catch (err) { if (err instanceof ApiError && err.status === 401) onSignedOut(); else setLoadFailed(true); }
@@ -312,7 +317,9 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
         const b = busyRef.current;
         const busy = { typing: typingRef.current, sheetOpen: b.sheetOpen || !b.ready, writing: b.writing || netStatus().pending > 0 };
         const newer = Platform.OS === "web" && isNewer(BUILD, await publishedBuild());
-        if (onComeBack(newer, busy) === "reload") { globalThis.location?.reload(); return; }
+        // EX-01m6py99nbp6t6ctsbpzh6q29y: on a new day the page is loaded again, which starts a new page in the conversation.
+        const newDay = Platform.OS === "web" && isNewDay(dayOf(box.pageAt, box.timeZone), box.timeZone, Date.now());
+        if (onComeBack(newer || newDay, busy) === "reload") { globalThis.location?.reload(); return; }
         if (busyRef.current.ready) void loadRef.current();
       })();
     });
@@ -591,7 +598,12 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
             <Plate parts={view.parts} kcal={{ eaten: day.eaten.calories, goal: day.goals.calories }} selected={metric} highlight={highlight} size={plateSize}
               preview={pickedOption ? { p: pickedOption.protein, c: pickedOption.carbs, f: pickedOption.fat ?? 0 } : trying ? { p: trying.protein, c: trying.carbs, f: trying.fat } : null}
               onSelect={select} labels={{ p: t.nameP, c: t.nameC, f: t.nameF }} />
-            <Glass part={view.parts.w} width={Math.max(46, Math.round(plateSize * 0.24))} selected={metric === "w"} dim={metric !== "kcal" && metric !== "w"} highlight={highlight} onSelect={() => select("w")} label={t.nameW} />
+            {/* EX-01m6py99we6df5kcy1cnqvbd6g: no row of figures; the glass reads its litres under it. */}
+            <View style={{ alignItems: "center", gap: 4 }}>
+              <Glass part={view.parts.w} width={Math.max(46, Math.round(plateSize * 0.24))} selected={metric === "w"} dim={metric !== "kcal" && metric !== "w"} highlight={highlight} onSelect={() => select("w")}
+                label={`${t.nameW}: ${glassText(view.parts.w.eaten, view.parts.w.goal)}`} />
+              <Text numberOfLines={1} style={{ ...T.type.microStrong, color: c.onSurface, ...T.numeric }}>{glassText(view.parts.w.eaten, view.parts.w.goal)}</Text>
+            </View>
           </View>
           <View onLayout={measure("info")} style={{ gap: compact ? 8 : 12, paddingTop: compact ? 8 : 12 }}>
             <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", gap: 8, paddingHorizontal: 20 }}>
@@ -601,9 +613,8 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
                 {view.line.sub ? <Text style={{ ...T.type.meta, color: c.onSurfaceVariant, marginTop: 2 }}>{view.line.sub}</Text> : null}
               </View>
             </View>
-            <Figures parts={view.parts} selected={metric} onSelect={select} t={t} />
             {/* EX-01m6nze05k4np1swbj179esg8j: the legend names the food of each third, on every screen. */}
-            <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, textAlign: "center", marginTop: compact ? -6 : -4 }}>{t.legend}</Text>
+            <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, textAlign: "center" }}>{t.legend}</Text>
           </View>
 
           {mode === "whatnow" ? (
@@ -829,11 +840,15 @@ function WithRuntime(props: TodayProps & { initial: Initial }) {
   return <AssistantRuntimeProvider runtime={runtime}><Inner {...props} /></AssistantRuntimeProvider>;
 }
 
-/** The conversation is read back from the server (it keeps the chat during the test), so that reopening the app shows it again. */
+/** The conversation is read back from the server (it keeps the chat during the test), so that reopening the app shows today's
+ * conversation again (EX-01m3y2d5jng87ap6mmb7shz36n); earlier days are not shown: each day starts a new page (EX-01m6py99nbp6t6ctsbpzh6q29y). */
 export function Today(props: TodayProps) {
   const [initial, setInitial] = useState<Initial | null>(null);
   useEffect(() => {
-    backend.chatHistory().then((turns) => {
+    box.timeZone = cacheGet<{ state: DayState }>("day")?.state.timeZone ?? box.timeZone;
+    box.pageAt = Date.now();
+    backend.chatHistory().then((all) => {
+      const turns = todaysTurns(all, box.timeZone, Date.now());
       setInitial(turns.flatMap((x): Initial => {
         if (x.role === "user") return x.text ? [{ role: "user", content: [{ type: "text" as const, text: x.text }], createdAt: new Date(x.at) }] : [];
         // The reply comes back as it was: its text and the cards of what it logged (EX-01m6ph6eqsv1wt33vqx395z7nn).

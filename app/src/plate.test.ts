@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { layersOf, mainOf, partOf, radiusAt, spillRadius } from "./plate.ts";
+import { glassText, layersOf, mainOf, partOf, radiusAt, spillRadius } from "./plate.ts";
 import type { DayEntry, DayInput } from "./day.ts";
 
 const goals = { calories: 2100, protein: 160, carbs: 185, fat: 80, waterMl: 2500 };
@@ -120,4 +120,10 @@ test("each third has its own spots, inside its own sector, and the grains of the
     assert.ok(s.every((p) => Math.abs((((Math.atan2(p.y - 120, p.x - 120) * 180) / Math.PI - THIRD_ANGLE[t] + 540) % 360) - 180) < 60));
   }
   assert.ok(spotsOf("p", GEO).length > spotsOf("c", GEO).length && spotsOf("c", GEO).length > spotsOf("f", GEO).length);
+});
+
+// EX-01m6py99we6df5kcy1cnqvbd6g (The glass shows its litres under it).
+test("the glass reads its litres", () => {
+  assert.equal(glassText(500, 2000), "0,5 / 2,0 l");
+  assert.equal(glassText(0, 2500), "0,0 / 2,5 l");
 });
