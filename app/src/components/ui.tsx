@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { tokens as T } from "../theme/tokens";
-import { FoodIcon, type FoodCategory } from "./icons";
+import { FoodIcon, UiIcon, type FoodCategory, type UiIconName } from "./icons";
 
 const c = T.color;
 
@@ -16,14 +16,14 @@ export function Button({ label, onPress, kind = "primary", disabled = false }: {
 }
 
 /** A pill, at least 44 px tall: the dock and the card actions are what a thumb hits ten times a day. */
-export function Chip({ label, icon, selected = false, onPress, tone = "neutral" }: { label: string; icon?: FoodCategory; selected?: boolean; onPress?: () => void; tone?: "neutral" | "danger" }) {
+export function Chip({ label, icon, ui, selected = false, onPress, tone = "neutral" }: { label: string; icon?: FoodCategory; ui?: UiIconName; selected?: boolean; onPress?: () => void; tone?: "neutral" | "danger" }) {
   const fg = selected ? c.onPrimaryContainer : tone === "danger" ? c.error : c.onSurface;
   return (
     <Pressable accessibilityRole="button" onPress={onPress}
       style={{ minHeight: T.size.touch, maxWidth: 220, flexShrink: 0, paddingHorizontal: 16, borderRadius: T.radius.chip, borderWidth: 1, justifyContent: "center",
         borderColor: selected ? c.primaryContainer : c.outline, backgroundColor: selected ? c.primaryContainer : c.surface }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        {icon ? <FoodIcon category={icon} size={16} color={fg} /> : null}
+        {icon ? <FoodIcon category={icon} size={16} color={fg} /> : ui ? <UiIcon name={ui} size={16} color={fg} /> : null}
         <Text numberOfLines={1} style={{ fontFamily: selected ? T.face.semi : T.face.body, fontSize: T.font.meta, color: fg }}>{label}</Text>
       </View>
     </Pressable>

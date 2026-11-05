@@ -1,5 +1,6 @@
 // Sample data instead of the API, for design work (EXPO_PUBLIC_MOCK=1). Never part of the deployed app.
 import type { Backend } from "../backend";
+import { ApiError } from "../api/client";
 import type { DayEntry } from "../day";
 import { entries as seed, goals, suggestions } from "./data";
 
@@ -19,7 +20,14 @@ export function mockBackend(): Backend {
       eaten: { calories: sum("kcal"), carbs: sum("carbs"), protein: sum("protein"), fat: sum("fat") }, date: "", minutes: minutesNow(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       water: { ml: list.reduce((a, e) => a + (e.ml ?? 0), 0), goalMl: goals.waterMl },
     }),
-    chat: () => Promise.resolve({ events: [{ type: "text", text: "Sample mode: the model is not connected." }, { type: "options", options: suggestions, basis: "Sample options." }], needsConsent: false, onboarded: true, language: null }),
+    // Sample answers: "Ennék" (or a question) gets the options, "hiba" fails so that "Újra" can be seen, anything else is logged.
+    chat: (input) => {
+      if (/hiba/i.test(input.message)) return Promise.reject(new ApiError(0, "network", null));
+      if (input.intent === "would" || /egyek|eat\b/i.test(input.message)) return Promise.resolve({ events: [{ type: "text", text: "Sample mode: the model is not connected." }, { type: "options", options: suggestions, basis: "Sample options." }], needsConsent: false, onboarded: true, language: null });
+      const id = `sample-${++seq}`;
+      list = [...list, { id, kind: "meal", name: "Ropa vieja, rizs, saláta", kcal: 480, carbs: 41, protein: 34, fat: 18, at: Date.now(), source: "photo", estimate: true, ingredients: [] }];
+      return Promise.resolve({ events: [{ type: "logged", name: "Ropa vieja, rizs, saláta", kcal: 480, id }, { type: "text", text: "**Beírtam fél adagot.** Ezzel 1140 kcal-nál jársz, fehérjéből még 91 g hiányzik. Vacsorára:\n- túró tojással\n- csirkemell rizzsel" }], needsConsent: false, onboarded: true, language: null });
+    },
     consent: () => Promise.resolve(),
     chatHistory: () => Promise.resolve([]),
     usuals: () => Promise.resolve([{ kind: "meal" as const, name: "Cappuccino", kcal: 90, carbs: 7, protein: 5, fat: 5, count: 9 }, { kind: "water" as const, name: "250 ml", kcal: 0, carbs: 0, protein: 0, fat: 0, ml: 250, count: 6 }, { kind: "meal" as const, name: "Túró", kcal: 160, carbs: 6, protein: 22, fat: 5, count: 4 }, { kind: "meal" as const, name: "Oat bran, milk, jam", kcal: 415, carbs: 72, protein: 17, fat: 11, count: 3 }]),

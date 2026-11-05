@@ -62,7 +62,8 @@ export type ChatEvent =
   /** The person's language was saved; the app switches its own texts to it. */
   | { type: "language"; language: Language };
 
-export interface ChatTurn { role: "user" | "assistant"; text: string }
+/** A past turn; a recent user turn may carry its photos again (BR-01m6ph6dq7aszxhxgzz4kgr8d4: a photo is seen for two more messages). */
+export interface ChatTurn { role: "user" | "assistant"; text: string; images?: ImageInput[] | undefined }
 
 export interface Clock {
   /** The person's own local date and time, from their time zone. */
@@ -151,7 +152,21 @@ const MAX_STEPS = 5;
 const HISTORY_TURNS = 20;
 
 export interface AgentDeps { model: ModelClient; modelName: string }
-export interface AgentInput { history: ChatTurn[]; message: string; images?: ImageInput[] }
+/** The side of the dock's switch the message was sent on (BR-01m6ph6dgw3qxzxjjy1sh3t0yz); none from the conversation sheet. */
+export type Intent = "ate" | "would";
+export interface AgentInput { history: ChatTurn[]; message: string; images?: ImageInput[]; intent?: Intent }
+
+/** Photos stay visible for the two user messages after the one they came with, and never more than four of them. */
+export const PHOTO_TURNS = 2;
+export const MAX_PAST_PHOTOS = 4;
+
+/** What the switch tells the model about this message (BR-01m3y1prykkz2yqtf6g5fgz0ne with the switch). */
+export const intentNote = (intent: Intent | undefined): string | undefined =>
+  intent === "ate"
+    ? "(Sent on the \"Ettem\" side: this is what the person ate, unless the message itself asks what to eat. If a photo shows a fridge, a menu, a counter or shelves and the message does not ask what to eat, call ask with one short question such as \"Ajánljak belőle?\" and log nothing.)"
+    : intent === "would"
+      ? "(Sent on the \"Ennék\" side: the person asks what to eat. Call suggest_options; never log_meal, whatever the photo shows.)"
+      : undefined;
 export interface AgentResult { events: ChatEvent[]; usage: Usage }
 
 const asNumber = (x: unknown): number | undefined => (typeof x === "number" && Number.isFinite(x) ? x : undefined);
@@ -160,8 +175,19 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
   const events: ChatEvent[] = [];
   const usage: Usage = { inputTokens: 0, outputTokens: 0 };
 
-  const past: Turn[] = input.history.slice(-HISTORY_TURNS).map((t) => ({ role: t.role, content: [{ type: "text", text: t.text }] }));
-  const userText: Block = { type: "text", text: input.message };
+  const recent = input.history.slice(-HISTORY_TURNS);
+  // Only the last PHOTO_TURNS user turns may bring their photos back, newest first, at most MAX_PAST_PHOTOS in all.
+  const userIdx = recent.map((t, i) => (t.role === "user" ? i : -1)).filter((i) => i >= 0).slice(-PHOTO_TURNS);
+  let photoBudget = MAX_PAST_PHOTOS;
+  const keep = new Map<number, ImageInput[]>();
+  for (const i of [...userIdx].reverse()) {
+    const imgs = (recent[i]!.images ?? []).slice(0, photoBudget);
+    photoBudget -= imgs.length;
+    if (imgs.length) keep.set(i, imgs);
+  }
+  const past: Turn[] = recent.map((t, i) => ({ role: t.role, content: [...(keep.get(i) ?? []).map((image): Block => ({ type: "image", image })), { type: "text", text: t.text }] }));
+  const note = intentNote(input.intent);
+  const userText: Block = { type: "text", text: note ? `${input.message}\n\n${note}` : input.message };
   // The photo goes to the model once; later steps see a placeholder, because the suggestion tool already has the image.
   const images = input.images ?? [];
   const turns: Turn[] = [...past, { role: "user", content: [...images.map((image): Block => ({ type: "image", image })), userText] }];

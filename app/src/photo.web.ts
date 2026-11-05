@@ -15,12 +15,16 @@ async function shrink(file: File): Promise<Photo> {
   return { uri, base64: uri.split(",")[1]! };
 }
 
-export function takePhoto(): Promise<Photo | undefined> {
+/** "camera" opens the phone's camera; "gallery" opens the photo picker, so a meal photographed earlier can be logged afterwards
+ * (EX-01m6ph6e4bcenyjywdahg41g4r). */
+export type PhotoSource = "camera" | "gallery";
+
+export function takePhoto(from: PhotoSource = "camera"): Promise<Photo | undefined> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    input.setAttribute("capture", "environment");
+    if (from === "camera") input.setAttribute("capture", "environment");
     input.style.display = "none";
     let settled = false;
     const done = (p?: Photo) => { if (!settled) { settled = true; input.remove(); resolve(p); } };

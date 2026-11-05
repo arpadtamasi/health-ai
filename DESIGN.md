@@ -225,12 +225,21 @@ components:
     rounded: "{rounded.bar}"
     padding: "0 6px 0 14px"
     height: "48px"
-  bubble-assistant:
-    backgroundColor: "{colors.ceramic}"
+  reply-assistant:
+    backgroundColor: "transparent"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.bubble}"
+    padding: "0 8px 0 0"
+  logged-card:
+    backgroundColor: "{colors.ceramic}"
+    textColor: "{colors.ink}"
+    rounded: "16px"
     padding: "10px 14px"
+  side-switch:
+    backgroundColor: "{colors.ceramic-low}"
+    rounded: "{rounded.pill}"
+    padding: "3px"
+    height: "44px"
   bubble-own:
     backgroundColor: "{colors.own-message}"
     textColor: "{colors.on-own-message}"
@@ -303,7 +312,7 @@ The home is dense but calm: one screen, nothing to scroll, the dock always in re
 A muted sage-and-ceramic table carrying four saturated food colours and one deep action green. Light values first, dark in parentheses; the frontmatter holds both (dark keys end in `-dark`).
 
 ### Primary
-- **Deep Table Green** (#1d5c4d; dark #86d4b9): the action colour. The camera and Send circles, the filled button (Sign in, Save, consent), the 1.5px outline and label of "Mit egyek most?", the "tap again to log" hint on a picked suggestion. Text on it is white (dark: #0b2a21).
+- **Deep Table Green** (#1d5c4d; dark #86d4b9): the action colour. The camera and Send circles, the filled button (Sign in, Save, consent), the chosen half of the "Ettem · Ennék" switch, the "tap again to log" hint on a picked suggestion. Text on it is white (dark: #0b2a21).
 - **Pale Leaf** (#d8e9e0, text #0e3a30; dark #24453b, text #cdeee1): the quiet action container. A selected chip (meal type in the edit sheet, the "Connect" chip of the Health banner).
 
 ### Secondary: the macro identities
@@ -323,7 +332,7 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 
 ### Neutral
 - **Tablecloth** (#e4eae1; dark #151c18): the page, behind everything; also the text colour on the inverse action bar.
-- **Ceramic** (#fbfcfa; dark #1d2621): dock, sheets, cards, chips, assistant bubbles, day entries, the quiet round button.
+- **Ceramic** (#fbfcfa; dark #1d2621): dock, sheets, cards (the logged-entry cards of the thread too), chips, day entries, the quiet round button.
 - **Ceramic Low** (#f1f4ef; dark #232d28): the composer field, edit-sheet rows, the confirm-delete card, a picked suggestion.
 - **Ceramic High** (#e6ebe4; dark #2b3530): the deepest ceramic step, used by the sign-in pages' containers.
 - **Plate White** (#ffffff; dark #242e29) with **Plate Edge** (#e9ede6; dark #2f3a34): the plate, its inner rim ring, the hub, the hairline between layers, the glass body.
@@ -340,7 +349,7 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 
 **The Words-and-Marks Rule.** The situation is said by the line under the plate, by a drawn mark (arrow down, arrow up, dot, tick in a 2px ring), by hatching for the lag, a dotted ink arc for the plan, a thick ink rim for the fat cap, and a spill onto the rim for an overrun. State ink may tint these marks and words; it never stands alone.
 
-**The Green Means Press Rule.** Deep Table Green marks what you can press: camera, Send, the filled button, the outlined "Mit egyek most?". Nothing that only informs is green.
+**The Green Means Press Rule.** Deep Table Green marks what you can press: camera, Send, the filled button, the chosen half of the switch, "Újra". Nothing that only informs is green.
 
 **The Ink Outline Rule.** "This one is chosen" is an ink outline (1.5-2px; 2.4px on the glass), never a colour change: a chosen third, the hub, a figure, a day entry, a picked suggestion. The others step back by opacity (26% for the other thirds, 30% for the glass, 22% for non-highlighted layers).
 
@@ -379,10 +388,9 @@ One screen, portrait, built at 390px wide and capped at 480px for sheets and ser
 4. **Figures row** (12px sides, 4px gaps): protein, carbs, fat, water in four equal columns.
 5. A flexible spacer (min 16px), so the lower block sits on the dock.
 6. **"Ma eddig"** heading and a horizontal strip of day entries (6px gaps, 16px inset), scrolled to the newest.
-7. **"Mit egyek most?"** outlined button (16px sides).
-8. **Action bar** when something was just done, then the **dock**: usual items as chips and the composer.
+7. **Action bar** when something was just done, then the **dock**: the "Ettem · Ennék" switch, its one-line explanation the first time only, the chips (usual items on "Ettem", "Mit egyek most?" and "Fotó a hűtőről" on "Ennék") and the composer. After the eating window the switch is hidden and the dock stays on "Ettem".
 
-Conversation mode folds the plate into one 56px line at the top and gives the rest to the thread. The what-now sheet rises from under the figures so the plate stays visible above it with the picked option previewed.
+Conversation mode folds the plate into one 56px line at the top and gives the rest to the thread. The thread reads like a chat app: the person's messages in Own Message bubbles, the assistant's replies across the width without a bubble (bold and lists rendered), every entry it logged as a Ceramic card with the name, the amount, three macro dots and Edit and Undo chips (struck through and dimmed once undone), and a message that did not go out marked "Nem ment el" in Warn with a green "Újra". The what-now sheet rises from under the figures so the plate stays visible above it with the picked option previewed.
 
 Spacing runs on a 4px base (4, 8, 12, 16, 20, 24px); 6, 10 and 14px appear as in-between gaps and insets. Touch targets are at least 44px; buttons and bars 48px.
 
@@ -407,7 +415,7 @@ Soft, ceramic corners and true circles. The plate and its hub are circles; third
 - **Shape:** full pill (999px), 48px tall, 20px sides.
 - **Primary:** Deep Table Green with white Figtree 600 16px. Disabled at 50% opacity.
 - **Text:** transparent with green label.
-- **"Mit egyek most?":** the home's one outlined button: Ceramic fill, 1.5px green outline, a 18px Lucide utensils icon and a Figtree 700 15.5px green label; it reads "breakfast" before 10:00 with no meal logged.
+- **"Ettem · Ennék" switch:** one Ceramic Low pill with a Hairline, two equal halves 38px tall; the chosen half is filled Deep Table Green with white Figtree 700 14.5px, the other is Muted Ink on the pill. It replaces the earlier outlined "Mit egyek most?" button; that label lives on as the first chip of the "Ennék" side and reads "breakfast" before 10:00 with no meal logged.
 - **Round actions:** 44px green circles for camera and Send (Send appears only when there is something to send); a 40px Ceramic circle with a Hairline for the conversation toggle and the sheet close.
 
 ### Chips

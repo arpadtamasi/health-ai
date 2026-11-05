@@ -41,7 +41,7 @@ export type ChatEvent =
 export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean; language: "en" | "hu" | null }
 /** A stored message of the conversation (the server keeps the chat during the test). */
 export interface HistoryTurn { role: "user" | "assistant"; at: number; text?: string; images?: number; events?: ChatEvent[] }
-export interface ChatTurn { role: "user" | "assistant"; text: string }
+export interface ChatTurn { role: "user" | "assistant"; text: string; images?: { mediaType: "image/jpeg"; dataBase64: string }[] }
 
 export interface Usual { kind: "meal" | "water"; name: string; kcal: number; carbs: number; protein: number; fat: number; ml?: number; count: number }
 export interface Me { email: string; onboarded: boolean; language: "en" | "hu" | null; healthConnected: boolean }
@@ -114,7 +114,7 @@ export const api = {
   choice: (body: { options: { rank: number; name: string; kcal: number; carbs: number; protein: number; fat?: number }[]; chosenRank: number | null }) => call<{ ok: true }>("POST", "/choice", body),
   entriesToday: () => call<{ entries: DayEntry[] }>("GET", "/entries/today"),
   updateEntry: (patch: EntryPatch) => call<{ entry: DayEntry }>("POST", "/entries/update", patch),
-  chat: (input: { message: string; history: ChatTurn[]; images?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string }[] }) => call<ChatReply>("POST", "/chat", input),
+  chat: (input: { message: string; history: ChatTurn[]; images?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string }[]; intent?: "ate" | "would" }) => call<ChatReply>("POST", "/chat", input),
   chatHistory: () => call<{ turns: HistoryTurn[] }>("GET", "/chat/history?limit=60"),
   consent: () => call<{ ok: true }>("POST", "/consent", {}),
   usuals: () => call<{ usuals: Usual[] }>("GET", "/usuals"),
