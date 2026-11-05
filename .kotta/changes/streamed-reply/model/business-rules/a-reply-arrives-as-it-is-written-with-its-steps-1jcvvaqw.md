@@ -21,7 +21,7 @@ The owner wants the conversation to feel like Claude or ChatGPT (SZ1), and named
 
 ## Scope
 
-The conversation sheet and the "What should I eat now?" sheet. The way the reply reaches the phone (one streamed request, or the app asking for progress) is chosen by a probe of Firebase Hosting (J1); either way the person sees the same.
+The conversation sheet and the "What should I eat now?" sheet. The reply reaches the phone by the app asking for its progress while it is written, because Firebase Hosting holds a streamed response back until it ends (J1, the probe).
 
 ## Open decisions
 
