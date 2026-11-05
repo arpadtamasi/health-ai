@@ -2,6 +2,7 @@
 id: EX-01m3ssfx5e99rb6mfjgz4z1j4d
 form: example
 title: "The first chat sets constraints, goal and window before any suggestion"
+accepted: ["unexamined: the setup conversation is the model's SETUP instruction in the server prompt; no test drives a first chat end to end"]
 subjects: [US-01m3rw2bqxkqp6v1hg9g02t1zr]
 provenance:
   level: partly-inferred

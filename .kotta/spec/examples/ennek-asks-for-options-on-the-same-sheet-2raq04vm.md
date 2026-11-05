@@ -5,8 +5,8 @@ title: Ennék asks for options on the same sheet
 subjects: [BR-01m6ph6dgw3qxzxjjy1sh3t0yz, US-01m3rwa0cvrtcapqk0k3h6mqvc]
 provenance:
   level: inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/ettem-ennek/conversation.md · J1"]
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/ennek-no-chip/conversation.md · SZ1", ".kotta/changes/ennek-no-chip/conversation.md · J1", ".kotta/changes/ettem-ennek/conversation.md · J1"]
   quote: null
   inferred: "The time and the wording are made up for the example."
 ---
@@ -22,4 +22,4 @@ The person taps "Ennék" and writes "vacsora, 600 kcal alatt".
 
 ## Then
 
-The "What should I eat now?" sheet opens with three options under 600 kcal; nothing is logged. The field said "Mire vágysz?…" once the switch moved, and the chips offered requests instead of the usual items.
+The "What should I eat now?" sheet opens with three options under 600 kcal; nothing is logged. The field said "Mire vágysz?…" once the switch moved, and the chips offered the usual foods that fit now instead of all of them.
