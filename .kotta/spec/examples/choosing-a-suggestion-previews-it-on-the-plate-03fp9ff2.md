@@ -6,7 +6,7 @@ subjects: [US-01m3rwa0cvrtcapqk0k3h6mqvc]
 provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
-  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/home-plate-and-glass/conversation.md · J3"]
+  sources: [".kotta/changes/ennek-no-chip/conversation.md · SZ1", ".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/home-plate-and-glass/conversation.md · J3"]
   quote: "3 igen"
   inferred: "The foods and numbers are sample values chosen by the assistant."
 ---
@@ -14,7 +14,7 @@ provenance:
 
 ## Given
 
-It is 13:00, 660 kcal and 35 g protein were eaten, and the person tapped "What should I eat now?" with a photo of the fridge.
+It is 13:00, 660 kcal and 35 g protein were eaten, and the person sent a photo of the fridge on the "Ennék" side.
 
 ## When
 

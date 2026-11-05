@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { canSendAgain, intentOf, photoTurns, startSide, switchShown } from "./dock.ts";
+import { canSendAgain, fittingUsuals, intentOf, largestGap, photoTurns, startSide, switchShown } from "./dock.ts";
 
 const base = { ready: true, afterWindow: false, mode: "home" as const, armed: false };
 
@@ -38,4 +38,24 @@ test("a failed message can be sent again, except at the daily limit", () => {
   assert.equal(canSendAgain("timeout"), true);
   assert.equal(canSendAgain(undefined), true);
   assert.equal(canSendAgain("daily_limit"), false);
+});
+
+const usual = (name: string, kcal: number, protein: number, count = 1, kind: "meal" | "water" = "meal") => ({ kind, name, kcal, protein, carbs: 10, fat: 5, count });
+const goals = { calories: 2100, protein: 160, carbs: 220, fat: 70 };
+
+// EX-01m6pvfvzzq4vs1pfhdczn9kx4 (Ennék offers the usual foods that fit now): protein is furthest behind, so the one with most protein first.
+test("Ennék offers the usual foods that fit, the largest gap closed first", () => {
+  const left = { calories: 2100 - 660, protein: 125, carbs: 120, fat: 40 };
+  const us = [usual("Cappuccino", 90, 5, 9), usual("Túró", 160, 22), usual("Oat bran, milk, jam", 415, 17, 3), usual("Two boiled eggs", 155, 13, 2), usual("Water", 0, 0, 20, "water")];
+  assert.deepEqual(fittingUsuals(us, left, goals).map((u) => u.name), ["Túró", "Oat bran, milk, jam", "Two boiled eggs", "Cappuccino"]);
+  assert.equal(largestGap(left, goals), "protein");
+  // at most four, and a food over what is left drops out
+  const many = [...us, usual("Pizza", 900, 30), usual("Skyr", 120, 15)];
+  assert.deepEqual(fittingUsuals(many, { ...left, calories: 500 }, goals).map((u) => u.name), ["Túró", "Oat bran, milk, jam", "Skyr", "Two boiled eggs"]);
+});
+
+// EX-01m6pvfw80s18pn0szqydw2dn7 (When no usual food fits, Ennék has no chips).
+test("when no usual food fits, there are no chips", () => {
+  const left = { calories: 40, protein: 10, carbs: 5, fat: 2 };
+  assert.deepEqual(fittingUsuals([usual("Cappuccino", 90, 5), usual("Túró", 160, 22)], left, goals), []);
 });

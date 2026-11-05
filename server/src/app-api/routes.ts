@@ -63,7 +63,10 @@ const idsBody = z.object({ ids: z.array(z.string().min(1).max(300)).min(1).max(1
 
 const chatBody = z.object({
   message: z.string().trim().min(1).max(2000),
-  history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000), images: z.array(image).max(4).optional() })).max(40).default([]),
+  // BR-01m6ph6dq7aszxhxgzz4kgr8d4: a long day's conversation is not refused; the agent reads only the latest turns, so the history
+  // keeps its last 40 and each earlier text its first 4,000 characters.
+  history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(100_000).transform((x) => x.slice(0, 4000)), images: z.array(image).max(4).optional() }))
+    .max(1000).default([]).transform((h) => h.slice(-40)),
   image: image.optional(),
   images: z.array(image).max(4).optional(),
   intent: z.enum(["ate", "would"]).optional(),

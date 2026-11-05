@@ -37,7 +37,7 @@ export function Button({ label, onPress, kind = "primary", disabled = false }: {
 export function Chip({ label, icon, ui, selected = false, onPress, tone = "neutral" }: { label: string; icon?: FoodCategory; ui?: UiIconName; selected?: boolean; onPress?: () => void; tone?: "neutral" | "danger" }) {
   const fg = selected ? c.onPrimaryContainer : tone === "danger" ? c.error : c.onSurface;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress}
+    <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress}
       style={{ minHeight: T.size.touch, maxWidth: 220, flexShrink: 0, paddingHorizontal: 16, borderRadius: T.radius.chip, borderWidth: 1, justifyContent: "center",
         borderColor: selected ? c.primaryContainer : c.outline, backgroundColor: selected ? c.primaryContainer : c.surface }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
