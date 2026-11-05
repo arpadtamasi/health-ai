@@ -35,11 +35,11 @@ export function SignInScreen() {
       <Text style={{ fontFamily: T.face.display, fontSize: T.font.display, lineHeight: 42, letterSpacing: -0.8, color: c.onSurface }}>{t.signInTitle}</Text>
       <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.signInText}</Text>
       <Button label={t.signInButton} onPress={go} />
-      <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{t.signInOnly}</Text>
+      <Text style={{ ...T.type.meta, color: c.onSurfaceVariant }}>{t.signInOnly}</Text>
 
       <View style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, borderRadius: T.radius.card, padding: T.space.l, gap: T.space.s }}>
         <Text style={{ fontFamily: T.face.display, fontSize: T.font.card, color: c.onSurface }}>{t.claudeTitle}</Text>
-        <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{t.claudeText}</Text>
+        <Text style={{ ...T.type.meta, color: c.onSurfaceVariant }}>{t.claudeText}</Text>
         <Text selectable style={{ fontFamily: Platform.OS === "web" ? "monospace" : undefined, fontSize: T.font.meta, color: c.onSurface, }}>{mcpUrl()}</Text>
         {Platform.OS === "web" ? <View style={{ alignSelf: "flex-start" }}><Chip label={copied ? t.copied : t.copy} onPress={copy} /></View> : null}
       </View>

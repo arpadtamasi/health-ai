@@ -28,7 +28,7 @@ export function Figures({ parts, selected, onSelect, t }: { parts: Record<Drawn,
               borderColor: on ? c.ink : "transparent", backgroundColor: on ? c.surface : "transparent" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
               <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: colorOf(m), borderWidth: 1, borderColor: T.color.grainEdge }} />
-              <Text numberOfLines={1} style={{ fontFamily: T.face.semi, fontSize: T.font.micro, color: c.onSurface }}>{name[m]}</Text>
+              <Text numberOfLines={1} style={{ ...T.type.microStrong, color: c.onSurface }}>{name[m]}</Text>
             </View>
             <Text numberOfLines={1} style={{ fontFamily: T.face.bold, fontSize: T.font.micro, color: c.onSurface, ...T.numeric }}>{value}</Text>
           </Pressable>

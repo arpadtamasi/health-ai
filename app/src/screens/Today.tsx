@@ -12,7 +12,7 @@ import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState, useLoca
 import { ApiError, connectHealthUrl, warmUp, type ChatEvent, type DayEntry, type DayState, type EntryPatch, type Usual } from "../api/client";
 import { backend } from "../backend";
 import { ActionBar, type BarAction } from "../components/ActionBar";
-import { Button, Chip } from "../components/ui";
+import { Button, Chip, RoundButton, cardStyle } from "../components/ui";
 import { ConfirmDelete, type DeleteAsk } from "../components/ConfirmDelete";
 import { DayStrip, shortName } from "../components/DayStrip";
 import { EditSheet } from "../components/EditSheet";
@@ -192,25 +192,16 @@ function Composer({ t, running, placeholder, onSend, onFocus, onDraft, onStop, a
         </View>
       ) : null}
       <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t.openCamera} accessibilityState={{ expanded: menu }} onPress={() => setMenu((m) => !m)}
-          style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
-          <UiIcon name="camera" size={21} color={c.onPrimary} />
-        </Pressable>
+        <RoundButton label={t.openCamera} icon="camera" expanded={menu} onPress={() => setMenu((m) => !m)} />
         <TextInput ref={input} value={draft} onChangeText={setDraft} placeholder={tray.length ? t.placeholderPhoto : placeholder} multiline placeholderTextColor={c.onSurfaceVariant}
           autoFocus={autoFocus} onFocus={() => { onFocus?.(); warmUp(); }}
           onKeyPress={(e) => { const k = e.nativeEvent as unknown as { key: string; shiftKey?: boolean }; if (Platform.OS === "web" && k.key === "Enter" && !k.shiftKey) { (e as unknown as { preventDefault?: () => void }).preventDefault?.(); send(); } }}
           style={[{ flex: 1, backgroundColor: c.surfaceLow, borderWidth: 1, borderColor: c.outline, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11, minHeight: 44, maxHeight: 120, fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
         {/* EX-01m6pmf9zhdr5wntczz8ncfdrj: while a reply is written, Stop stands in place of Send. */}
         {running && onStop ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={t.stop} onPress={onStop}
-            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.strong, alignItems: "center", justifyContent: "center" }}>
-            <View style={{ width: 13, height: 13, borderRadius: 2, backgroundColor: c.onStrong }} />
-          </Pressable>
+          <RoundButton label={t.stop} tone="strong" onPress={onStop}><View style={{ width: 13, height: 13, borderRadius: 2, backgroundColor: c.onStrong }} /></RoundButton>
         ) : canSend ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={t.send} onPress={send}
-            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
-            <UiIcon name="arrow-up" size={20} color={c.onPrimary} />
-          </Pressable>
+          <RoundButton label={t.send} icon="arrow-up" onPress={send} />
         ) : null}
       </View>
     </View>
@@ -431,8 +422,6 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     aui.thread().append({ role: "user", content: [...photos.map((p) => ({ type: "image" as const, image: `data:image/jpeg;base64,${p.base64}` })), { type: "text" as const, text: body }],
       ...(intent ? { metadata: { custom: { intent } } } : {}) });
   };
-  // "Fotó a hűtőről" on the "Ennék" side: the photo goes straight to the sheet as the choices (BR-01m3y1prykkz2yqtf6g5fgz0ne).
-  const fridge = async () => { const p = await takePhoto("camera"); if (p) { openWhatNow(); send("", [p], t.whatNow, "would"); } };
   const connect = () => { if (Platform.OS === "web") window.location.href = connectHealthUrl; else void Linking.openURL(connectHealthUrl); };
   const select = (m: Shown) => setMetric((cur) => nextShown(cur, m));
   const openWhatNow = () => { setMode("whatnow"); setSheetFrom(messages.length); setPicked(null); setHighlight(null); };
@@ -536,12 +525,9 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
 
   const top = (closing: boolean) => (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 18, paddingTop: 6, minHeight: 48 }}>
-      <Text style={{ flex: 1, fontFamily: T.face.semi, fontSize: 13, color: c.onSurfaceVariant }}>{dateText}</Text>
-      {day && !closing ? <Text style={{ fontFamily: T.face.semi, fontSize: 13, color: c.onSurfaceVariant, ...T.numeric }}>{hm(day.minutes)}</Text> : null}
-      <Pressable accessibilityRole="button" accessibilityLabel={closing ? t.backToPlate : t.conversation} onPress={() => setMode(closing ? "home" : "talk")}
-        style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface, alignItems: "center", justifyContent: "center" }}>
-        <UiIcon name={closing ? "x" : "message"} size={19} color={c.onSurface} />
-      </Pressable>
+      <Text style={{ flex: 1, ...T.type.microStrong, color: c.onSurfaceVariant }}>{dateText}</Text>
+      {day && !closing ? <Text style={{ ...T.type.microStrong, color: c.onSurfaceVariant, ...T.numeric }}>{hm(day.minutes)}</Text> : null}
+      <RoundButton label={closing ? t.backToPlate : t.conversation} tone="quiet" icon={closing ? "x" : "message"} onPress={() => setMode(closing ? "home" : "talk")} />
     </View>
   );
 
@@ -553,7 +539,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
         onContentSizeChange={() => list.current?.scrollToEnd({ animated: false })} />
       {showConsent ? (
         <View style={{ marginHorizontal: T.space.l, marginBottom: 8, gap: T.space.s, backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, borderRadius: T.radius.card, padding: T.space.l }}>
-          <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurface }}>{t.consentText}</Text>
+          <Text style={{ ...T.type.meta, color: c.onSurface }}>{t.consentText}</Text>
           <Button label={t.consentButton} onPress={() => void backend.consent().then(() => { setConsented(true); setReady(true); })} />
         </View>
       ) : null}
@@ -604,12 +590,12 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
               <View style={{ paddingTop: 1 }}><Mark kind={view.line.mark} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: T.face.displaySemi, fontSize: T.font.line, lineHeight: 24, letterSpacing: -0.2, color: c.onSurface, ...T.numeric }}>{view.line.text}</Text>
-                {view.line.sub ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant, marginTop: 2 }}>{view.line.sub}</Text> : null}
+                {view.line.sub ? <Text style={{ ...T.type.meta, color: c.onSurfaceVariant, marginTop: 2 }}>{view.line.sub}</Text> : null}
               </View>
             </View>
             <Figures parts={view.parts} selected={metric} onSelect={select} t={t} />
             {/* EX-01m6nze05k4np1swbj179esg8j: the legend names the food of each third, on every screen. */}
-            <Text style={{ fontFamily: T.face.body, fontSize: T.font.micro, color: c.onSurfaceVariant, textAlign: "center", marginTop: compact ? -6 : -4 }}>{t.legend}</Text>
+            <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, textAlign: "center", marginTop: compact ? -6 : -4 }}>{t.legend}</Text>
           </View>
 
           {mode === "whatnow" ? (
@@ -620,8 +606,8 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
               <View style={{ flex: 1, minHeight: tiny ? 4 : 8 }} />
               <View onLayout={measure("lower")}>
               {!healthConnected && !dismissedConnect ? (
-                <View style={{ marginHorizontal: 16, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, borderRadius: 16, padding: 10, paddingLeft: 14 }}>
-                  <Text style={{ flex: 1, fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant }}>{t.connectText}</Text>
+                <View style={{ marginHorizontal: 16, marginBottom: 12, flexDirection: "row", alignItems: "center", gap: 8, ...cardStyle(), padding: 10, paddingLeft: 14 }}>
+                  <Text style={{ flex: 1, ...T.type.micro, color: c.onSurfaceVariant }}>{t.connectText}</Text>
                   <Chip label={t.connectButton} selected onPress={connect} />
                   <Pressable accessibilityRole="button" accessibilityLabel={t.connectDismiss} onPress={() => setDismissedConnect(true)} style={{ width: 36, height: 44, alignItems: "center", justifyContent: "center" }}><UiIcon name="x" size={16} color={c.onSurfaceVariant} /></Pressable>
                 </View>
@@ -644,8 +630,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
           chips={!ready || mode === "talk"
             ? replies.map((r) => <Chip key={r} label={r} onPress={() => send(r, [])} />)
             : side === "would" && withSwitch
-              ? [<Chip key="now" ui="utensils" label={day && day.minutes < 10 * 60 && !shown.some((e) => e.kind === "meal") ? t.whatNowBreakfast : t.whatNow} onPress={openWhatNow} />,
-                 <Chip key="fridge" ui="camera" label={t.fridgeChip} onPress={() => void fridge()} />]
+              ? [<Chip key="now" ui="utensils" label={day && day.minutes < 10 * 60 && !shown.some((e) => e.kind === "meal") ? t.whatNowBreakfast : t.whatNow} onPress={openWhatNow} />]
               : usuals.slice(0, 6).map((u) => <Chip key={`${u.kind}-${u.name}`} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : shortName(u.name)} onPress={() => logUsual(u)} />)}
           onSend={(x, p) => {
             const intent = intentOf(withSwitch, side);
@@ -674,7 +659,7 @@ function Dock({ bar, chips, t, running, onSend, onFocus, onDraft, onStop, focusS
       {bar ? <ActionBar {...bar} /> : null}
       <View style={{ paddingTop: 10, paddingBottom: 14, paddingHorizontal: 14, gap: 8, borderTopWidth: 1, borderTopColor: c.outline, backgroundColor: c.surface }}>
         {side ? <SideSwitch side={side} onSide={onSide} t={t} /> : null}
-        {side && hint ? <Text style={{ fontFamily: T.face.body, fontSize: T.font.micro, color: c.onSurfaceVariant, textAlign: "center" }}>{t.sideHint}</Text> : null}
+        {side && hint ? <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, textAlign: "center" }}>{t.sideHint}</Text> : null}
         {chips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 14 }} style={{ marginHorizontal: -14 }}>{chips}</ScrollView> : null}
         <Composer t={t} running={running} placeholder={placeholder} onSend={onSend} onFocus={onFocus} onDraft={onDraft} onStop={onStop} focusSignal={focusSignal} />
       </View>
@@ -700,7 +685,7 @@ function RichText({ text }: { text: string }) {
 function Steps({ steps, done, t }: { steps: Step[]; done: boolean; t: Texts }) {
   const [open, setOpen] = useState(false);
   const w = stepWords(t);
-  const meta = { fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant } as const;
+  const meta = { ...T.type.micro, color: c.onSurfaceVariant } as const;
   if (done && !open) {
     return (
       <Pressable accessibilityRole="button" accessibilityLabel={t.stepsOpen} onPress={() => setOpen(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 32 }}>
@@ -727,12 +712,12 @@ function LoggedCard({ info, entry, undone, t, onEdit, onUndo }: { info: LoggedIn
   const name = entry?.name ?? info.name;
   const water = info.ml !== undefined || entry?.kind === "water";
   const amount = water ? `${entry?.ml ?? info.ml ?? 0} ml` : `${entry?.kcal ?? info.kcal} kcal`;
-  const meta = { fontFamily: T.face.body, fontSize: T.font.micro, color: c.onSurfaceVariant, ...T.numeric } as const;
+  const meta = { ...T.type.micro, color: c.onSurfaceVariant, ...T.numeric } as const;
   return (
-    <View style={{ backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14, gap: 6, opacity: undone ? 0.6 : 1 }}>
+    <View style={{ ...cardStyle(), paddingVertical: 10, paddingHorizontal: 14, gap: 6, opacity: undone ? 0.6 : 1 }}>
       <View style={{ flexDirection: "row", gap: 8 }}>
-        <Text numberOfLines={2} style={{ flex: 1, fontFamily: T.face.bold, fontSize: 15, color: c.onSurface, textDecorationLine: undone ? "line-through" : "none" }}>{water ? t.waterLabel : name}</Text>
-        <Text style={{ fontFamily: T.face.bold, fontSize: 15, color: c.onSurface, ...T.numeric }}>{amount}</Text>
+        <Text numberOfLines={2} style={{ flex: 1, ...T.type.label, color: c.onSurface, textDecorationLine: undone ? "line-through" : "none" }}>{water ? t.waterLabel : name}</Text>
+        <Text style={{ ...T.type.label, color: c.onSurface, ...T.numeric }}>{amount}</Text>
       </View>
       {entry && !water ? (
         <View style={{ flexDirection: "row", gap: 12 }}>
@@ -759,15 +744,16 @@ function NotSent({ reason, retry, t, onRetry }: { reason: string; retry: boolean
   return (
     <View style={{ alignSelf: "flex-end", alignItems: "flex-end", gap: 2, maxWidth: "86%" }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Text style={{ fontFamily: T.face.semi, fontSize: 13, color: c.warn }}>{t.notSent}</Text>
+        <Text style={{ ...T.type.microStrong, color: c.warn }}>{t.notSent}</Text>
         {retry ? (
           <Pressable accessibilityRole="button" onPress={onRetry} style={{ flexDirection: "row", alignItems: "center", gap: 4, minHeight: 36, paddingHorizontal: 8 }}>
             <UiIcon name="retry" size={14} color={c.primary} />
-            <Text style={{ fontFamily: T.face.bold, fontSize: 13, color: c.primary }}>{t.sendAgain}</Text>
+            <Text style={{ fontFamily: T.face.bold, fontSize: T.font.micro, color: c.primary }}>{t.sendAgain}</Text>
           </Pressable>
         ) : null}
       </View>
-      <Text style={{ fontFamily: T.face.body, fontSize: T.font.micro, color: c.onSurfaceVariant, textAlign: "right" }}>{reason}</Text>
+      {/* A reason that only repeats "try again" is left out: the line above already says it. */}
+      {reason === t.errGeneric ? null : <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, textAlign: "right" }}>{reason}</Text>}
     </View>
   );
 }
@@ -777,7 +763,7 @@ function SideSwitch({ side, onSide, t }: { side: Side; onSide: (s: Side) => void
   const half = (s: Side, label: string) => (
     <Pressable key={s} accessibilityRole="radio" accessibilityState={{ checked: side === s }} onPress={() => onSide(s)}
       style={{ flex: 1, minHeight: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: side === s ? c.strong : "transparent" }}>
-      <Text style={{ fontFamily: T.face.bold, fontSize: 14.5, color: side === s ? c.onStrong : c.onSurfaceVariant }}>{label}</Text>
+      <Text style={{ fontFamily: T.face.bold, fontSize: T.font.label, color: side === s ? c.onStrong : c.onSurfaceVariant }}>{label}</Text>
     </Pressable>
   );
   return (
@@ -792,13 +778,13 @@ function FoldedPlate({ parts, line, kcal, goal, minutes, t, onOpen }:
   { parts: Record<Drawn, ReturnType<typeof partOf>>; line: ReturnType<typeof lineWords>; kcal: number; goal: number; minutes: number; t: Texts; onOpen: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={t.backToPlate} onPress={onOpen}
-      style={{ marginHorizontal: 16, marginTop: 4, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, borderRadius: 18, paddingVertical: 6, paddingLeft: 6, paddingRight: 14, minHeight: 56 }}>
+      style={{ marginHorizontal: 16, marginTop: 4, flexDirection: "row", alignItems: "center", gap: 10, ...cardStyle(), borderRadius: 18, paddingVertical: 6, paddingLeft: 6, paddingRight: 14, minHeight: 56 }}>
       <Plate parts={parts} kcal={{ eaten: kcal, goal }} selected="kcal" size={44} mini labels={{ p: t.nameP, c: t.nameC, f: t.nameF }} />
       <Mark kind={line.mark} size={20} />
-      <Text numberOfLines={2} style={{ flex: 1, fontFamily: T.face.displaySemi, fontSize: 16, color: c.onSurface, ...T.numeric }}>{line.text}</Text>
+      <Text numberOfLines={2} style={{ flex: 1, fontFamily: T.face.displaySemi, fontSize: T.font.body, color: c.onSurface, ...T.numeric }}>{line.text}</Text>
       <View style={{ alignItems: "flex-end" }}>
-        <Text style={{ fontFamily: T.face.bold, fontSize: 14, color: c.onSurface, ...T.numeric }}>{amountText("kcal", kcal)}</Text>
-        <Text style={{ fontFamily: T.face.body, fontSize: T.font.micro, color: c.onSurfaceVariant, ...T.numeric }}>{hm(minutes)}</Text>
+        <Text style={{ fontFamily: T.face.bold, fontSize: T.font.meta, color: c.onSurface, ...T.numeric }}>{amountText("kcal", kcal)}</Text>
+        <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, ...T.numeric }}>{hm(minutes)}</Text>
       </View>
     </Pressable>
   );
@@ -821,7 +807,7 @@ function WhatNow({ t, messages, from, running, picked, onTap, onClose, onSend, o
         <Text style={{ flex: 1, fontFamily: T.face.display, fontSize: T.font.title, color: c.onSurface }}>{t.whatNow}</Text>
         <Pressable accessibilityRole="button" accessibilityLabel={t.close} onPress={onClose} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><UiIcon name="x" size={18} color={c.onSurfaceVariant} /></Pressable>
       </View>
-      <Text style={{ fontFamily: T.face.body, fontSize: 14, color: c.onSurfaceVariant }}>{running ? t.thinking : said || t.whatNowHint}</Text>
+      <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant }}>{running ? t.thinking : said || t.whatNowHint}</Text>
       <View style={{ flex: 1 }}>{options.length ? <Suggestions options={options} picked={picked} onTap={onTap} t={t} /> : null}</View>
       {options.length ? null : <Composer t={t} running={running} placeholder={t.whatNowHint} onSend={onSend} onStop={onStop} />}
     </View>

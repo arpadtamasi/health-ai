@@ -1,8 +1,26 @@
+import type React from "react";
 import { Pressable, Text, View } from "react-native";
 import { tokens as T } from "../theme/tokens";
 import { FoodIcon, UiIcon, type FoodCategory, type UiIconName } from "./icons";
 
 const c = T.color;
+
+/** BR-01m6pmf9avbbgd373z1jcvvaqw and the dock: the 44 px round control (camera, Send, Stop, the conversation, steppers). `primary` is
+ * an action (green), `strong` stops something, `quiet` is a ceramic circle with a hairline. */
+export function RoundButton({ label, onPress, tone = "primary", icon, expanded, children }:
+  { label: string; onPress: () => void; tone?: "primary" | "strong" | "quiet"; icon?: UiIconName; expanded?: boolean; children?: React.ReactNode }) {
+  const fg = tone === "quiet" ? c.onSurface : tone === "strong" ? c.onStrong : c.onPrimary;
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} {...(expanded !== undefined ? { accessibilityState: { expanded } } : {})} onPress={onPress}
+      style={{ width: T.size.touch, height: T.size.touch, borderRadius: T.size.touch / 2, alignItems: "center", justifyContent: "center",
+        backgroundColor: tone === "primary" ? c.primary : tone === "strong" ? c.strong : c.surface, borderWidth: tone === "quiet" ? 1 : 0, borderColor: c.outline }}>
+      {icon ? <UiIcon name={icon} size={20} color={fg} /> : children}
+    </Pressable>
+  );
+}
+
+/** A ceramic card on the cloth: a logged entry, a notice, the folded plate. A function, because the palette switches in place. */
+export const cardStyle = () => ({ backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, borderRadius: 16 }) as const;
 
 export function Button({ label, onPress, kind = "primary", disabled = false }: { label: string; onPress?: () => void; kind?: "primary" | "text"; disabled?: boolean }) {
   const primary = kind === "primary";
