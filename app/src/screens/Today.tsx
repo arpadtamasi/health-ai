@@ -93,8 +93,10 @@ const hm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The dock's text field, the photos waiting beside it (up to four: one meal can take several) and Send. */
-function Composer({ t, running, placeholder, onSend, onFocus, autoFocus = false }:
-  { t: Texts; running: boolean; placeholder: string; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; autoFocus?: boolean }) {
+function Composer({ t, running, placeholder, onSend, onFocus, autoFocus = false, focusSignal = 0 }:
+  { t: Texts; running: boolean; placeholder: string; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; autoFocus?: boolean; focusSignal?: number }) {
+  const input = useRef<TextInput>(null);
+  useEffect(() => { if (focusSignal) input.current?.focus(); }, [focusSignal]);
   const [tray, setTray] = useState<Photo[]>([]);
   const [draft, setDraft] = useState("");
   const camera = async () => { const p = await takePhoto(); if (p) setTray((x) => [...x, p].slice(0, 4)); };
@@ -120,7 +122,7 @@ function Composer({ t, running, placeholder, onSend, onFocus, autoFocus = false 
           style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
           <UiIcon name="camera" size={21} color={c.onPrimary} />
         </Pressable>
-        <TextInput value={draft} onChangeText={setDraft} placeholder={tray.length ? t.placeholderPhoto : placeholder} multiline placeholderTextColor={c.onSurfaceVariant}
+        <TextInput ref={input} value={draft} onChangeText={setDraft} placeholder={tray.length ? t.placeholderPhoto : placeholder} multiline placeholderTextColor={c.onSurfaceVariant}
           autoFocus={autoFocus} onFocus={() => { onFocus?.(); warmUp(); }}
           onKeyPress={(e) => { const k = e.nativeEvent as unknown as { key: string; shiftKey?: boolean }; if (Platform.OS === "web" && k.key === "Enter" && !k.shiftKey) { (e as unknown as { preventDefault?: () => void }).preventDefault?.(); send(); } }}
           style={[{ flex: 1, backgroundColor: c.surfaceLow, borderWidth: 1, borderColor: c.outline, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11, minHeight: 44, maxHeight: 120, fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
@@ -171,14 +173,18 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const [picked, setPicked] = useState<number | null>(null);
   const [dismissedConnect, setDismissedConnect] = useState(false);
   const [width, setWidth] = useState(390);
+  const [height, setHeight] = useState(800);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [failNote, setFailNote] = useState<string | null>(null);
+  const [focusSignal, setFocusSignal] = useState(0);
   const list = useRef<FlatList<Item>>(null);
 
   const load = useCallback(async () => {
     try {
       const [s, u, e] = await Promise.all([backend.state(), backend.usuals().catch(() => [] as Usual[]), backend.entriesToday().catch(() => [] as DayEntry[])]);
-      setState(s); setUsuals(u); setEntries(e); setLoadedAt(Date.now());
+      setState(s); setUsuals(u); setEntries(e); setLoadedAt(Date.now()); setLoadFailed(false);
       cacheSet("day", { state: s, usuals: u, entries: e, at: Date.now() });
-    } catch (err) { if (err instanceof ApiError && err.status === 401) onSignedOut(); }
+    } catch (err) { if (err instanceof ApiError && err.status === 401) onSignedOut(); else setLoadFailed(true); }
   }, [onSignedOut]);
   useEffect(() => { if (ready) void load(); }, [ready, load]);
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(id); }, []);
@@ -277,7 +283,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const hide = (id: string, on: boolean) => setHidden((h) => { const n = new Set(h); if (on) n.add(id); else n.delete(id); return n; });
   const undo = async (e: DayEntry) => {
     hide(e.id, true); setRecent(null); setHighlight(null);
-    try { await backend.unlog(e.id); await load(); hide(e.id, false); } catch { hide(e.id, false); }
+    try { await backend.unlog(e.id); await load(); hide(e.id, false); } catch { hide(e.id, false); setFailNote(t.undoFailed); }
   };
   const save = async (patch: EntryPatch) => {
     const before = editing;
@@ -292,12 +298,12 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
       await backend.updateEntry(patch);
       const what = [patch.kcal !== undefined && before ? `${before.kcal} → ${patch.kcal} kcal` : "", patch.time ?? "", patch.mealType ? t[`meal${patch.mealType}` as const] : "", patch.name ?? ""].filter(Boolean).join(", ");
       await refresh(patch.id, t.cardChanged(what));
-    } catch { /* the entry is as it was */ }
+    } catch { setFailNote(t.editFailed); /* the entry is as it was */ }
     setOverrides((o) => { const { [patch.id]: _, ...rest } = o; return rest; });
   };
   const remove = async (e: DayEntry) => {
     setEditing(null); setHighlight(null); hide(e.id, true);
-    try { await backend.deleteEntries([e.id]); await load(); hide(e.id, false); } catch { hide(e.id, false); }
+    try { await backend.deleteEntries([e.id]); await load(); hide(e.id, false); } catch { hide(e.id, false); setFailNote(t.deleteFailed); }
   };
   const deleteEntries = async (a: DeleteAsk): Promise<boolean> => { try { if (a.all) await backend.deleteAll(); else await backend.deleteEntries(a.ids); await load(); return true; } catch { return false; } };
   const send = (text: string, photos: Photo[], prefix = "") => {
@@ -347,7 +353,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
         if (p.type === "text" && p.text && !(user && p.text === t.photoQuestion && m.content.some((q) => q.type === "image"))) out.push({ key, time: time + i, node: <View style={bubble(user)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, lineHeight: 23, color: user ? c.onStrong : c.onSurface }}>{p.text}</Text></View> });
         else if (p.type === "tool-call" && p.toolName === "confirm_delete") out.push({ key, time: time + i, node: <ConfirmDelete ask={p.result as DeleteAsk} onConfirm={deleteEntries} /> });
       });
-      if (m.metadata?.custom?.failedPhoto) out.push({ key: `f-${m.id}`, time: time + 50, node: <View style={{ flexDirection: "row", gap: 8 }}><Chip label={t.describe} onPress={() => undefined} /></View> });
+      if (m.metadata?.custom?.failedPhoto) out.push({ key: `f-${m.id}`, time: time + 50, node: <View style={{ flexDirection: "row", gap: 8 }}><Chip label={t.describe} onPress={() => setFocusSignal((n) => n + 1)} /></View> });
     }
     if (running) out.push({ key: "thinking", time: Number.MAX_SAFE_INTEGER, node: <View style={bubble(false)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.thinking}</Text></View> });
     return out.sort((a, b) => a.time - b.time);
@@ -360,7 +366,9 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const tz = state?.timeZone ?? "UTC";
   const dateText = cap(new Intl.DateTimeFormat(lang === "hu" ? "hu-HU" : "en-GB", { weekday: "long", month: "long", day: "numeric", timeZone: tz }).format(new Date(now)));
   const status: Record<string, "pending" | "failed"> = Object.fromEntries(pending.map((p) => [p.tid, p.status]));
-  const plateSize = Math.max(200, Math.min(300, width - 32 - 76));
+  // The plate takes what is left once the line, the figures, today's entries, the button and the dock are placed: on a short screen
+  // the plate shrinks rather than the dock falling below the fold (EX-01m3w51cz41qvfw0mfa79pbphx, "visible without scrolling").
+  const plateSize = Math.max(170, Math.min(300, width - 32 - 76, height - 505));
   const pickedOption = mode === "whatnow" && picked !== null ? (() => {
     for (let i = messages.length - 1; i >= sheetFrom && i >= 0; i--) {
       const part = messages[i]!.content.find((p) => p.type === "tool-call" && p.toolName === "show_options");
@@ -375,7 +383,8 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const editable = (e: DayEntry) => e.kind === "meal" && e.source !== "google" && !status[e.id];
   const amountOf = (e: DayEntry) => (e.kind === "water" ? `${e.ml}\u00a0ml` : `${e.kcal}\u00a0kcal`);
   let bar: { text: string; error?: boolean; actions: BarAction[] } | null = null;
-  if (failed) bar = { text: `${t.failedSave} ${failed.entry.kind === "water" ? t.waterLabel : shortName(failed.entry.name)}`, error: true, actions: [{ label: t.retry, onPress: () => retry(failed, true) }, { label: t.discard, onPress: () => retry(failed, false) }] };
+  if (failNote) bar = { text: failNote, error: true, actions: [{ label: t.close, onPress: () => setFailNote(null) }] };
+  else if (failed) bar = { text: `${t.failedSave} ${failed.entry.kind === "water" ? t.waterLabel : shortName(failed.entry.name)}`, error: true, actions: [{ label: t.retry, onPress: () => retry(failed, true) }, { label: t.discard, onPress: () => retry(failed, false) }] };
   else if (barEntry && highlight) bar = { text: `${hm(minutesOf(barEntry.at, tz))} · ${barEntry.kind === "water" ? t.waterLabel : barEntry.name} · ${amountOf(barEntry)}`, actions: editable(barEntry) ? [{ label: t.cardEdit, onPress: () => setEditing(barEntry) }] : [] };
   else if (barEntry && recent) bar = { text: recent.note ?? t.loggedBar(barEntry.kind === "water" ? t.waterLabel : shortName(barEntry.name), amountOf(barEntry)),
     actions: [...(editable(barEntry) ? [{ label: t.cardEdit, onPress: () => setEditing(barEntry) }] : []), ...(barEntry.source !== "google" && !status[barEntry.id] ? [{ label: t.cardUndo, onPress: () => void undo(barEntry) }] : [])] };
@@ -407,7 +416,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.table }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+    <View style={{ flex: 1, backgroundColor: c.table }} onLayout={(e) => { setWidth(e.nativeEvent.layout.width); setHeight(e.nativeEvent.layout.height); }}>
       {!ready ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m, height: 48, paddingHorizontal: T.space.xl }}>
           <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={17} color={c.onPrimary} filled /></View>
@@ -419,7 +428,15 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
       {!ready ? talk : null}
 
       {ready && !view ? (
-        <View style={{ alignItems: "center", paddingTop: 12 }}><View style={{ width: plateSize, height: plateSize, borderRadius: plateSize / 2, backgroundColor: c.surface, opacity: 0.6 }} /></View>
+        <View style={{ alignItems: "center", paddingTop: 12, gap: 16 }}>
+          <View style={{ width: plateSize, height: plateSize, borderRadius: plateSize / 2, backgroundColor: c.stone, opacity: 0.35 }} />
+          {loadFailed ? (
+            <View style={{ alignItems: "center", gap: 10, paddingHorizontal: 24 }}>
+              <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface, textAlign: "center" }}>{t.loadFailed}</Text>
+              <Chip label={t.retry} selected onPress={() => void load()} />
+            </View>
+          ) : null}
+        </View>
       ) : null}
 
       {ready && view && day && mode === "talk" ? (
@@ -435,7 +452,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
             <Plate parts={view.parts} kcal={{ eaten: day.eaten.calories, goal: day.goals.calories }} selected={metric} highlight={highlight} size={plateSize}
               preview={pickedOption ? { p: pickedOption.protein, c: pickedOption.carbs, f: pickedOption.fat ?? 0 } : null}
               onSelect={select} labels={{ p: t.nameP, c: t.nameC, f: t.nameF }} />
-            <Glass part={view.parts.w} width={70} selected={metric === "w"} dim={metric !== "kcal" && metric !== "w"} highlight={highlight} onSelect={() => select("w")} label={t.nameW} />
+            <Glass part={view.parts.w} width={Math.max(46, Math.round(plateSize * 0.24))} selected={metric === "w"} dim={metric !== "kcal" && metric !== "w"} highlight={highlight} onSelect={() => select("w")} label={t.nameW} />
           </View>
           <View style={{ gap: 12, paddingTop: 12 }}>
             <View accessibilityLiveRegion="polite" style={{ flexDirection: "row", gap: 8, paddingHorizontal: 20 }}>
@@ -446,6 +463,8 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
               </View>
             </View>
             <Figures parts={view.parts} selected={metric} onSelect={select} t={t} />
+            {/* EX-01m6nze05k4np1swbj179esg8j: the legend names the food of each third. */}
+            <Text style={{ fontFamily: T.face.body, fontSize: 12, color: c.onSurfaceVariant, textAlign: "center", marginTop: -4 }}>{t.legend}</Text>
           </View>
 
           {mode === "whatnow" ? (
@@ -464,18 +483,19 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
               <View style={{ gap: 10, paddingBottom: 12 }}>
                 <DayStrip entries={shown} timeZone={tz} metric={metric} highlight={highlight} status={status} t={t}
                   onTap={(e) => { setRecent(null); setHighlight((h) => (h === e.id ? null : e.id)); }} />
-                <Pressable accessibilityRole="button" onPress={openWhatNow}
+                {/* EX-01m6nzdzz3r239egz1c4s68a98: after the eating window the button rests (BR-01m6nzdz57xbc4k501gg85aytx). */}
+                {day.minutes >= day.window.endHour * 60 ? null : <Pressable accessibilityRole="button" onPress={openWhatNow}
                   style={{ marginHorizontal: 16, height: 48, borderRadius: 24, borderWidth: 1.5, borderColor: c.primary, backgroundColor: c.surface, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   <UiIcon name="utensils" size={18} color={c.primary} />
                   <Text style={{ fontFamily: T.face.bold, fontSize: 15.5, color: c.primary }}>{day.minutes < 10 * 60 && !shown.some((e) => e.kind === "meal") ? t.whatNowBreakfast : t.whatNow}</Text>
-                </Pressable>
+                </Pressable>}
               </View>
             </>
           )}
         </>
       ) : null}
       {mode !== "whatnow" || !ready ? (
-        <Dock bar={mode === "talk" && highlight ? null : bar} t={t} running={running}
+        <Dock bar={mode === "talk" && highlight ? null : bar} t={t} running={running} focusSignal={focusSignal}
           chips={!ready || mode === "talk"
             ? replies.map((r) => <Chip key={r} label={r} onPress={() => send(r, [])} />)
             : usuals.slice(0, 6).map((u) => <Chip key={`${u.kind}-${u.name}`} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : shortName(u.name)} onPress={() => logUsual(u)} />)}
@@ -492,14 +512,14 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
  * history, so the first in the morning is often yesterday's breakfast (EX-01m3y1pv8jmdbqay69dw1xzwcx). In the conversation they are
  * the assistant's quick replies. One dock serves both, so the field keeps its focus when the plate folds.
  */
-function Dock({ bar, chips, t, running, onSend, onFocus }:
-  { bar: { text: string; error?: boolean; actions: BarAction[] } | null; chips: React.ReactNode[]; t: Texts; running: boolean; onSend: (text: string, photos: Photo[]) => void; onFocus: () => void }) {
+function Dock({ bar, chips, t, running, onSend, onFocus, focusSignal }:
+  { bar: { text: string; error?: boolean; actions: BarAction[] } | null; chips: React.ReactNode[]; t: Texts; running: boolean; onSend: (text: string, photos: Photo[]) => void; onFocus: () => void; focusSignal: number }) {
   return (
     <>
       {bar ? <ActionBar {...bar} /> : null}
       <View style={{ paddingTop: 10, paddingBottom: 14, paddingHorizontal: 14, gap: 8, borderTopWidth: 1, borderTopColor: c.outline, backgroundColor: c.surface }}>
         {chips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 14 }} style={{ marginHorizontal: -14 }}>{chips}</ScrollView> : null}
-        <Composer t={t} running={running} placeholder={t.placeholder} onSend={onSend} onFocus={onFocus} />
+        <Composer t={t} running={running} placeholder={t.placeholder} onSend={onSend} onFocus={onFocus} focusSignal={focusSignal} />
       </View>
     </>
   );

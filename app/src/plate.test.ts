@@ -80,3 +80,44 @@ test("an entry from Google Health only is a layer in its place, counted once", (
   assert.deepEqual(layers.map((l) => l.id), ["breakfast", "coffee", "lunch"]);
   assert.ok(Math.abs(layers[2]!.to - 141 / 185) < 1e-9);
 });
+
+// BR-01m6m432cqp8fkhggthg8a6720 (Each third of the plate fills with its own food, one portion per entry).
+const GEO = { cx: 120, cy: 120, r: 99, hub: 30 };
+// EX-01m6m4349m8hepns4mjyz1at22 (Half of the protein goal fills half of the protein third).
+test("half of the protein goal covers half of the lentil spots, from the middle outwards, a shade per entry", async () => {
+  const { spotsOf, spillSpotsOf, grainsOf } = await import("./plate.ts");
+  const entries = [meal("b", 7, { protein: 17 }), meal("e", 9, { protein: 13 }), meal("l", 13, { protein: 38 }), meal("t", 16, { protein: 12 })];
+  const part = partOf(day(17 * 60, { protein: 80 }), entries, "p");
+  const spots = spotsOf("p", GEO);
+  const grains = grainsOf(part, spots, (n) => spillSpotsOf("p", GEO, n));
+  assert.equal(grains.length, Math.round(spots.length / 2));
+  assert.deepEqual([...new Set(grains.map((g) => g.entry))], ["b", "e", "l", "t"]);
+  assert.deepEqual(grains.slice(0, 3).map((g) => g.shade), [0, 0, 0]);
+  assert.equal(grains.every((g) => !g.spilled), true);
+  const lastNear = Math.max(...grains.map((g) => g.d)), firstFar = Math.min(...spots.slice(grains.length).map((s) => s.d));
+  assert.ok(lastNear <= firstFar, "the grains fill from the middle");
+});
+
+// EX-01m6nzdzhdf1nz6r7t99vznk9w (Rice over the carb goal spills onto the rim and the table).
+test("rice above the carb goal spills onto the rim, the more the further over, and never beyond the cap", async () => {
+  const { spotsOf, spillSpotsOf, grainsOf, MAX_SPILL } = await import("./plate.ts");
+  const spots = spotsOf("c", GEO);
+  const over = grainsOf(partOf(day(17 * 60, { carbs: 300 }), [meal("x", 9, { carbs: 300 })], "c"), spots, (n) => spillSpotsOf("c", GEO, n));
+  const spilled = over.filter((g) => g.spilled);
+  assert.equal(over.length - spilled.length, spots.length);
+  assert.equal(spilled.length, Math.min(MAX_SPILL, Math.round((115 / 185) * spots.length)));
+  assert.ok(spilled.every((g) => Math.hypot(g.x - GEO.cx, g.y - GEO.cy) > GEO.r), "on the rim, outside the well");
+  const little = grainsOf(partOf(day(17 * 60, { carbs: 190 }), [meal("x", 9, { carbs: 190 })], "c"), spots, (n) => spillSpotsOf("c", GEO, n));
+  assert.ok(little.filter((g) => g.spilled).length < spilled.length);
+});
+
+// EX-01m6nze05k4np1swbj179esg8j (Each third holds its own food): each third has its own spots, inside it.
+test("each third has its own spots, inside its own sector, and the grains of the three differ in spacing", async () => {
+  const { spotsOf, THIRD_ANGLE } = await import("./plate.ts");
+  for (const t of ["p", "c", "f"] as const) {
+    const s = spotsOf(t, GEO);
+    assert.ok(s.length > 100, `${t}: ${s.length}`);
+    assert.ok(s.every((p) => Math.abs((((Math.atan2(p.y - 120, p.x - 120) * 180) / Math.PI - THIRD_ANGLE[t] + 540) % 360) - 180) < 60));
+  }
+  assert.ok(spotsOf("p", GEO).length > spotsOf("c", GEO).length && spotsOf("c", GEO).length > spotsOf("f", GEO).length);
+});

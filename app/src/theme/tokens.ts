@@ -1,5 +1,6 @@
 // The one place that decides how the app looks: the "Terített asztal" direction of change home-plate-and-glass (a table seen from
-// above). A tablecloth ground, ceramic white for the plate and the sheets, one colour of its own for each macro and for water (BR
+// above), with the grains of change grains-on-the-plate. A tablecloth ground, a dark stoneware plate, ceramic sheets, the colours of
+// the foods for each macro and blue for water (BR
 // BR-01m6m4323nzt0ma6qf6j5a0yxa "Each macro has its own colour, and words state the situation": no element changes colour to state
 // the situation), deep green for actions. A dark scheme follows the phone's setting. Components read `tokens.color` while they
 // render; `applyScheme` changes the values in place, so a re-render is all a scheme change needs (no remount, the conversation stays).
@@ -12,8 +13,12 @@ export interface Palette {
   table: string; surface: string; surfaceLow: string; surfaceHigh: string;
   plate: string; plateEdge: string; well: string; shadow: string;
   onSurface: string; onSurfaceVariant: string; outline: string;
-  /** The macros and water: identity colours, never states. */
+  /** The macros and water: the colours of their foods (lentils, rice, pumpkin seeds), never states; the second of each is the
+   * shade of every other entry, `grainEdge` the thin edge that keeps cream rice visible. */
   protein: string; carbs: string; fat: string; water: string;
+  protein2: string; carbs2: string; fat2: string; grainEdge: string;
+  /** The stoneware plate: an object, the same in light and dark mode (BR-01m6m432cqp8fkhggthg8a6720). */
+  stone: string; stone2: string; stoneWell: string; stoneRidge: string; stoneShadow: string; speck: string; stoneInk: string; stoneMuted: string; stonePlan: string;
   /** States in words and marks: done or on the plan, under the plan or near the cap, a failure. */
   good: string; goodText: string; warn: string; error: string;
   /** The strong neutral: outlines of the chosen part, the plan arc, the cap of the fat third. */
@@ -29,7 +34,10 @@ export const LIGHT: Palette = {
   table: "#e4eae1", surface: "#fbfcfa", surfaceLow: "#f1f4ef", surfaceHigh: "#e6ebe4",
   plate: "#ffffff", plateEdge: "#e9ede6", well: "#f1f4ef", shadow: "rgba(28, 48, 36, 0.14)",
   onSurface: "#17201b", onSurfaceVariant: "#59675f", outline: "#d2dacf",
-  protein: "#c4456b", carbs: "#e09a22", fat: "#5f8f45", water: "#3a87d0",
+  protein: "#e07a4f", carbs: "#f1e8d3", fat: "#7f9e47", water: "#3a87d0",
+  protein2: "#c9643b", carbs2: "#e2d4b2", fat2: "#66843a", grainEdge: "rgba(70, 52, 30, 0.38)",
+  stone: "#3b403d", stone2: "#2c302e", stoneWell: "#333835", stoneRidge: "#454b48", stoneShadow: "rgba(0, 0, 0, 0.5)", speck: "#9aa39d",
+  stoneInk: "#f1eee6", stoneMuted: "#b7bdb8", stonePlan: "rgba(241, 238, 230, 0.62)",
   good: "#1e6c42", goodText: "#1e6c42", warn: "#b04314", error: "#b3261e",
   ink: "#17201b", strong: "#1d5c4d", onStrong: "#ffffff", scrim: "#17201b66",
 };
@@ -40,7 +48,10 @@ export const DARK: Palette = {
   table: "#151c18", surface: "#1d2621", surfaceLow: "#232d28", surfaceHigh: "#2b3530",
   plate: "#242e29", plateEdge: "#2f3a34", well: "#1b231f", shadow: "rgba(0, 0, 0, 0.5)",
   onSurface: "#edf3ee", onSurfaceVariant: "#a0b1a7", outline: "#34413a",
-  protein: "#e2708f", carbs: "#f0b44a", fat: "#8dbb6a", water: "#63a9ec",
+  protein: "#e07a4f", carbs: "#f1e8d3", fat: "#7f9e47", water: "#63a9ec",
+  protein2: "#c9643b", carbs2: "#e2d4b2", fat2: "#66843a", grainEdge: "rgba(70, 52, 30, 0.38)",
+  stone: "#3b403d", stone2: "#2c302e", stoneWell: "#333835", stoneRidge: "#454b48", stoneShadow: "rgba(0, 0, 0, 0.5)", speck: "#9aa39d",
+  stoneInk: "#f1eee6", stoneMuted: "#b7bdb8", stonePlan: "rgba(241, 238, 230, 0.62)",
   good: "#74d59d", goodText: "#74d59d", warn: "#ff9b68", error: "#ff8a80",
   ink: "#edf3ee", strong: "#2f6b5b", onStrong: "#edf3ee", scrim: "#000000aa",
 };

@@ -38,7 +38,7 @@ export const BEHIND_SHARE = 0.08;
 export const METRIC_GOAL = (g: Goals, m: Metric): number => ({ kcal: g.calories, p: g.protein, c: g.carbs, f: g.fat, w: g.waterMl })[m];
 export const METRIC_EATEN = (e: Eaten, m: Metric): number => ({ kcal: e.calories, p: e.protein, c: e.carbs, f: e.fat, w: e.waterMl })[m];
 
-export type HeroKind = "morning" | "start" | "under" | "ahead" | "on" | "done" | "fatLeft" | "fatOver";
+export type HeroKind = "morning" | "start" | "under" | "ahead" | "on" | "done" | "fatLeft" | "fatOver" | "over" | "evening";
 export interface Hero {
   tone: Tone;
   kind: HeroKind;
@@ -47,9 +47,15 @@ export interface Hero {
   amount: number;
   /** A second sentence: which other number needs attention. */
   note?: { kind: "fatLeft" | "proteinBehind"; amount: number };
+  /** Over the calorie goal: the macros over their own goals, in grams over. */
+  overBy?: { metric: "p" | "c" | "f"; amount: number }[];
 }
 
 const round10 = (n: number) => Math.round(n / 10) * 10;
+/** BR-01m6nzdyz40bdbmtbn9ffze1v5 (Going over a goal is shown, never praised): more than this over the calorie goal is over. */
+export const OVER_KCAL = 50;
+/** BR-01m6nzdz57xbc4k501gg85aytx (In the evening the line says what still fits): this long before the window ends. */
+export const EVENING_MINUTES = 180;
 const hasMeals = (entries: DayEntry[]) => entries.some((e) => e.kind === "meal");
 
 /** The metric the person wants to see, judged against the plan for this time of day. */
@@ -65,7 +71,12 @@ export function judgeHero(d: DayInput, entries: DayEntry[], metric: Metric = "kc
   const withNote = (h: Hero): Hero => (metric === "kcal" && note ? { ...h, note } : h);
 
   if (metric === "f") return { tone: have > goal ? "behind" : "ok", kind: have > goal ? "fatOver" : "fatLeft", metric, amount: Math.abs(goal - have) };
+  if (metric === "kcal" && have - goal > OVER_KCAL) {
+    const overBy = (["c", "f", "p"] as const).map((m) => ({ metric: m, amount: Math.round(METRIC_EATEN(d.eaten, m) - METRIC_GOAL(d.goals, m)) })).filter((x) => x.amount > 0);
+    return { tone: "behind", kind: "over", metric, amount: Math.round(have - goal), overBy };
+  }
   if (metric === "kcal" && (d.minutes >= d.window.endHour * 60 || have >= goal)) return withNote({ tone: "done", kind: "done", metric, amount: proteinBehind > 0 ? proteinBehind : 0 });
+  if (metric === "kcal" && hasMeals(entries) && d.minutes >= d.window.endHour * 60 - EVENING_MINUTES) return { tone: "ok", kind: "evening", metric, amount: Math.round(goal - have), note: { kind: "proteinBehind", amount: Math.max(0, Math.round(proteinBehind)) } };
   if (metric === "kcal") {
     if (!hasMeals(entries)) return { tone: "ok", kind: "morning", metric, amount: goal };
     if (d.minutes < (d.window.startHour + 2) * 60) return withNote({ tone: "ok", kind: "start", metric, amount: d.eaten.protein });

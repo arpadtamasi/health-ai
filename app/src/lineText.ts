@@ -33,5 +33,9 @@ export function lineWords(h: Hero, d: DayInput, t: Texts, planNow: number): Line
       return { mark: eaten / goal >= 0.85 ? "behind" : "on", text: t.lineFatLeft(h.amount), sub: t.lineFatLeftSub(goal, Math.round(eaten)) };
     }
     case "fatOver": return { mark: "behind", text: t.lineFatOver(h.amount), sub: t.lineFatOverSub(METRIC_GOAL(d.goals, "f")) };
+    // BR-01m6nzdyz40bdbmtbn9ffze1v5: how far over, never "done".
+    case "over": return { mark: "behind", text: t.lineOver(h.amount), sub: t.lineOverSub(h.overBy ?? []) };
+    // BR-01m6nzdz57xbc4k501gg85aytx: what still fits, not how far under the plan.
+    case "evening": return { mark: "on", text: t.lineEvening(h.amount), sub: t.lineEveningSub(h.note?.amount ?? 0) };
   }
 }
