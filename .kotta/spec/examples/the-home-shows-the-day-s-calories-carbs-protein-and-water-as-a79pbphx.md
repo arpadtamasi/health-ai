@@ -6,7 +6,7 @@ subjects: [US-01m3w51bs6krjxa2rgb86qkft7, US-01m3rvr64zrzczabckjf6crb2z]
 provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
-  sources: [".kotta/changes/home-plate-and-glass/conversation.md · SZ1", ".kotta/changes/home-plate-and-glass/conversation.md · J1", ".kotta/changes/home-plate-and-glass/conversation.md · SZ4"]
+  sources: [".kotta/changes/ettem-ennek/conversation.md · J1", ".kotta/changes/home-plate-and-glass/conversation.md · SZ1", ".kotta/changes/home-plate-and-glass/conversation.md · J1", ".kotta/changes/home-plate-and-glass/conversation.md · SZ4"]
   quote: "Most szerintem nem kell az óriás kalória hero"
   inferred: "The numbers are sample values chosen by the assistant; reworked for the plate."
 ---
@@ -22,4 +22,4 @@ The person opens the app.
 
 ## Then
 
-The plate and the glass are at the top, the centre of the plate reads 660 of 2,100 kcal, and the line under it says 180 kcal under the plan; under the line the row shows protein, carbs, fat and water as eaten against the goal; there is no chart of the day and no large figure; today's entries, the "What should I eat now?" button and the dock with the text field are visible without scrolling.
+The plate and the glass are at the top, the centre of the plate reads 660 of 2,100 kcal, and the line under it says 180 kcal under the plan; under the line the row shows protein, carbs, fat and water as eaten against the goal; there is no chart of the day and no large figure; today's entries and the dock with its "Ettem · Ennék" switch and the text field are visible without scrolling.

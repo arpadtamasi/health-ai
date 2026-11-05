@@ -5,7 +5,7 @@ title: "In the evening the line says what still fits"
 provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
-  sources: [".kotta/changes/grains-on-the-plate/conversation.md · J1", ".kotta/changes/grains-on-the-plate/conversation.md · P1"]
+  sources: [".kotta/changes/ettem-ennek/conversation.md · J1", ".kotta/changes/grains-on-the-plate/conversation.md · J1", ".kotta/changes/grains-on-the-plate/conversation.md · P1"]
   quote: null
   inferred: "The critique found 'X kcal under the plan' at 21:40 with the button still pushing late eating; the wording is the assistant's; the hour was approved ('3 ok')."
 ---
@@ -13,7 +13,7 @@ provenance:
 
 ## Rule
 
-From three hours before the end of the eating window (19:00 for a 7:00 to 22:00 window) until its end, when the calories are not over the goal, the line SHALL say how many kcal still fit today and how much of it is protein, instead of how far under the plan the person is. After the end of the eating window, the "What should I eat now?" button SHALL NOT be shown.
+From three hours before the end of the eating window (19:00 for a 7:00 to 22:00 window) until its end, when the calories are not over the goal, the line SHALL say how many kcal still fit today and how much of it is protein, instead of how far under the plan the person is. After the end of the eating window, the dock's switch SHALL NOT be shown and the dock SHALL stay on "Ettem" (rule "The dock's switch says whether a message is what was eaten or what to eat").
 
 ## Rationale
 

@@ -6,7 +6,7 @@ actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
-  sources: [".kotta/changes/home-plate-and-glass/conversation.md · SZ1", ".kotta/changes/home-plate-and-glass/conversation.md · SZ3", ".kotta/changes/home-plate-and-glass/conversation.md · SZ4", ".kotta/changes/home-plate-and-glass/conversation.md · J1", ".kotta/changes/home-plate-and-glass/conversation.md · J2"]
+  sources: [".kotta/changes/ettem-ennek/conversation.md · J1", ".kotta/changes/home-plate-and-glass/conversation.md · SZ1", ".kotta/changes/home-plate-and-glass/conversation.md · SZ3", ".kotta/changes/home-plate-and-glass/conversation.md · SZ4", ".kotta/changes/home-plate-and-glass/conversation.md · J1", ".kotta/changes/home-plate-and-glass/conversation.md · J2"]
   quote: "A teljes felületet is újragondolhatod. A claude-ban kényelmes úgy, ahogy van."
   inferred: "The layout is the assistant's design (the 'Terített asztal' preview), which the owner reviewed and asked to be shown this way."
 ---
@@ -14,7 +14,7 @@ provenance:
 
 ## Story
 
-As a phone user, I want the app to be one screen: on top a plate and a glass that fill as I eat and drink, with the calories in the centre of the plate and one line under it that says where I stand; then a row with protein, carbs, fat and water; then today's entries and a "What should I eat now?" button; and at the bottom a dock with my usual items, the camera and the text field, so that I see where I stand and act on it without changing screens.
+As a phone user, I want the app to be one screen: on top a plate and a glass that fill as I eat and drink, with the calories in the centre of the plate and one line under it that says where I stand; then a row with protein, carbs, fat and water; then today's entries; and at the bottom a dock with a switch between logging what I ate and asking what to eat, my usual items, the camera and the text field, so that I see where I stand and act on it without changing screens.
 
 ## Value
 
