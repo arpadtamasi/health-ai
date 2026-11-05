@@ -7,7 +7,7 @@
 // no chart of the day, and the dock is visible without scrolling. The options of "What should I eat now?" are on a sheet under the figures, so that the plate shows
 // the picked one above it (EX-01m6m4332s0zwsvq9103fp9ff2). The chat is assistant-ui's local runtime with our own adapter.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, Linking, Platform, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from "react-native";
+import { AppState, FlatList, Image, Linking, Platform, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from "react-native";
 import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState, useLocalRuntime, type ChatModelAdapter, type ChatModelRunResult } from "@assistant-ui/react-native";
 import { ApiError, connectHealthUrl, warmUp, type ChatEvent, type DayEntry, type DayState, type EntryPatch, type Usual } from "../api/client";
 import { backend } from "../backend";
@@ -20,6 +20,7 @@ import { Figures } from "../components/Figures";
 import type { Option } from "../components/food";
 import { Glass } from "../components/Glass";
 import { UiIcon } from "../components/icons";
+import { Logo } from "../components/Logo";
 import { Mark } from "../components/Mark";
 import { Plate } from "../components/Plate";
 import { Suggestions } from "../components/Suggestions";
@@ -28,6 +29,7 @@ import { amountText, lineWords } from "../lineText";
 import { isLang, useT, type Lang, type Texts } from "../i18n";
 import { dayFraction } from "../pace";
 import { nextShown, partOf, type Drawn } from "../plate";
+import { BUILD, isNewer, onComeBack, publishedBuild } from "../update";
 import { takePhoto, type Photo } from "../photo";
 import { tokens as T } from "../theme/tokens";
 import { useScheme } from "../theme/scheme";
@@ -93,12 +95,14 @@ const hm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The dock's text field, the photos waiting beside it (up to four: one meal can take several) and Send. */
-function Composer({ t, running, placeholder, onSend, onFocus, autoFocus = false, focusSignal = 0 }:
-  { t: Texts; running: boolean; placeholder: string; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; autoFocus?: boolean; focusSignal?: number }) {
+function Composer({ t, running, placeholder, onSend, onFocus, onDraft, autoFocus = false, focusSignal = 0 }:
+  { t: Texts; running: boolean; placeholder: string; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; onDraft?: (typing: boolean) => void; autoFocus?: boolean; focusSignal?: number }) {
   const input = useRef<TextInput>(null);
   useEffect(() => { if (focusSignal) input.current?.focus(); }, [focusSignal]);
   const [tray, setTray] = useState<Photo[]>([]);
   const [draft, setDraft] = useState("");
+  const typing = draft.trim().length > 0 || tray.length > 0;
+  useEffect(() => { onDraft?.(typing); }, [typing, onDraft]);
   const camera = async () => { const p = await takePhoto(); if (p) setTray((x) => [...x, p].slice(0, 4)); };
   const canSend = (draft.trim().length > 0 || tray.length > 0) && !running;
   const send = () => { if (!canSend) return; onSend(draft.trim(), tray); setTray([]); setDraft(""); };
@@ -208,6 +212,29 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   }, []);
   const wasRunning = useRef(false);
   useEffect(() => { if (wasRunning.current && !running && ready) void loadRef.current(); wasRunning.current = running; }, [running, ready]);
+  // BR-01m6p2r4vmgte1n2wkwjx0q28w: coming back to the front loads the day again (EX-01m6p2r5ggm7nvtshx8yn4t4xs), or the newest version
+  // when nothing would be lost by it (EX-01m6p2r52g2z53nsyd9g8ney8y); a typed message, an open sheet or a waiting write keeps the page
+  // (EX-01m6p2r597gw7850rrrcnnfhvx). No button and no bar.
+  const typingRef = useRef(false);
+  const onDraft = useCallback((typing: boolean) => { typingRef.current = typing; }, []);
+  const busyRef = useRef({ sheetOpen: false, writing: false, ready: false });
+  busyRef.current = { sheetOpen: mode !== "home" || editing !== null, writing: pending.length > 0 || running, ready };
+  useEffect(() => {
+    let last = AppState.currentState;
+    const sub = AppState.addEventListener("change", (next) => {
+      const back = last !== "active" && next === "active";
+      last = next;
+      if (!back) return;
+      void (async () => {
+        const b = busyRef.current;
+        const busy = { typing: typingRef.current, sheetOpen: b.sheetOpen || !b.ready, writing: b.writing || netStatus().pending > 0 };
+        const newer = Platform.OS === "web" && isNewer(BUILD, await publishedBuild());
+        if (onComeBack(newer, busy) === "reload") { globalThis.location?.reload(); return; }
+        if (busyRef.current.ready) void loadRef.current();
+      })();
+    });
+    return () => sub.remove();
+  }, []);
   useEffect(() => { if (lastMeta.onboarded && !ready) { setReady(true); setMetric("kcal"); setMode("home"); } }, [lastMeta.onboarded, ready]);
 
   // Asking "what should I eat?" in the text field opens the same sheet as the button, with the options it got.
@@ -419,7 +446,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     <View style={{ flex: 1, backgroundColor: c.table }} onLayout={(e) => { setWidth(e.nativeEvent.layout.width); setHeight(e.nativeEvent.layout.height); }}>
       {!ready ? (
         <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.m, height: 48, paddingHorizontal: T.space.xl }}>
-          <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}><UiIcon name="heart" size={17} color={c.onPrimary} filled /></View>
+          <Logo size={30} />
           <Text style={{ fontFamily: T.face.display, fontSize: T.font.title, letterSpacing: -0.4, color: c.onSurface }}>{t.appName}</Text>
         </View>
       ) : top(mode === "talk")}
@@ -495,7 +522,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
         </>
       ) : null}
       {mode !== "whatnow" || !ready ? (
-        <Dock bar={mode === "talk" && highlight ? null : bar} t={t} running={running} focusSignal={focusSignal}
+        <Dock bar={mode === "talk" && highlight ? null : bar} t={t} running={running} focusSignal={focusSignal} onDraft={onDraft}
           chips={!ready || mode === "talk"
             ? replies.map((r) => <Chip key={r} label={r} onPress={() => send(r, [])} />)
             : usuals.slice(0, 6).map((u) => <Chip key={`${u.kind}-${u.name}`} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : shortName(u.name)} onPress={() => logUsual(u)} />)}
@@ -512,14 +539,14 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
  * history, so the first in the morning is often yesterday's breakfast (EX-01m3y1pv8jmdbqay69dw1xzwcx). In the conversation they are
  * the assistant's quick replies. One dock serves both, so the field keeps its focus when the plate folds.
  */
-function Dock({ bar, chips, t, running, onSend, onFocus, focusSignal }:
-  { bar: { text: string; error?: boolean; actions: BarAction[] } | null; chips: React.ReactNode[]; t: Texts; running: boolean; onSend: (text: string, photos: Photo[]) => void; onFocus: () => void; focusSignal: number }) {
+function Dock({ bar, chips, t, running, onSend, onFocus, onDraft, focusSignal }:
+  { bar: { text: string; error?: boolean; actions: BarAction[] } | null; chips: React.ReactNode[]; t: Texts; running: boolean; onSend: (text: string, photos: Photo[]) => void; onFocus: () => void; onDraft: (typing: boolean) => void; focusSignal: number }) {
   return (
     <>
       {bar ? <ActionBar {...bar} /> : null}
       <View style={{ paddingTop: 10, paddingBottom: 14, paddingHorizontal: 14, gap: 8, borderTopWidth: 1, borderTopColor: c.outline, backgroundColor: c.surface }}>
         {chips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 14 }} style={{ marginHorizontal: -14 }}>{chips}</ScrollView> : null}
-        <Composer t={t} running={running} placeholder={t.placeholder} onSend={onSend} onFocus={onFocus} focusSignal={focusSignal} />
+        <Composer t={t} running={running} placeholder={t.placeholder} onSend={onSend} onFocus={onFocus} onDraft={onDraft} focusSignal={focusSignal} />
       </View>
     </>
   );

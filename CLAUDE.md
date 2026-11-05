@@ -18,7 +18,9 @@ An Expo app (React Native + react-native-web, assistant-ui for the chat) is the 
 by Firebase Hosting (`firebase.json` rewrites only the API, `/mcp`, OAuth and `/health` paths to Cloud Run; every other path is the
 app). Signed out, the app shows the landing text and the Google sign-in. Run from `app/`: `npm test` (node:test), `npx tsc --noEmit`,
 `EXPO_PUBLIC_MOCK=1 npx expo export --platform web` for a sample-data build (never deployed; the deploy script checks for it).
-`site/` only provides the static files (icons) that are copied next to the export; its old Astro landing page is not served.
+The app's `public/` holds the page template (a home-screen web app: manifest, icons) and is copied next to the export; `site/` only
+provides robots.txt, and its old Astro landing page is not served. Each deploy stamps a build into the bundle and `/version.json`;
+the app loads the newer build when it comes back to the front. Icons: `cd app && node scripts/make-icons.mjs`.
 `scripts/deploy-frontend.sh` builds and deploys, `scripts/deploy-backend.sh` deploys the server (`MIN_INSTANCES=1` keeps one
 instance warm; the app is built for the slow first call), `scripts/deploy.sh` runs both.
 On GitHub, `.github/workflows/deploy.yml` runs the checks and `scripts/deploy.sh` on every push to `main` (or by hand), signed in

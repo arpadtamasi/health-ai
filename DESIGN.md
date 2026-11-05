@@ -460,7 +460,7 @@ The conversation-mode status: a 56px Ceramic row (18px radius) with the mini pla
 A bottom modal over the Scrim: Ceramic, 28px top corners, 20px padding, max 480px; Title and kcal at the top, the macro line in Meta, rows for name, portion (44px round steppers, 10% steps from 10 to 300%), time and meal type (chips); Save (primary button) beside a Remove danger chip.
 
 ### Sign-in surfaces
-The app's signed-out screen: Tablecloth ground, a 56px green tile with a filled heart, Display headline, Body text in Muted Ink, the primary button, and a Ceramic card with the Claude connector address and a Copy chip. The server pages (`server/src/auth/pages.ts`) carry the same palette through `--md-*` variables: `--md-surface` is the Tablecloth, `--md-surface-container-low` the Ceramic, Figtree body at 16px, Gabarito 800 h1 at 28px, a 48px green pill button.
+The app's signed-out screen: Tablecloth ground, the 56px "three grains" mark (a lentil, a grain of rice and a pumpkin seed on a stoneware tile, `app/src/components/Logo.tsx`; the same drawing makes every icon through `app/scripts/make-icons.mjs`), Display headline, Body text in Muted Ink, the primary button, and a Ceramic card with the Claude connector address and a Copy chip. The server pages (`server/src/auth/pages.ts`) carry the same palette through `--md-*` variables: `--md-surface` is the Tablecloth, `--md-surface-container-low` the Ceramic, Figtree body at 16px, Gabarito 800 h1 at 28px, a 48px green pill button.
 
 ## Do's and Don'ts
 

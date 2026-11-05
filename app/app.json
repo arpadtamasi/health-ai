@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "app",
+    "name": "Health AI",
     "slug": "app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#3b403d",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,6 +19,10 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "name": "Health AI",
+      "shortName": "Health AI",
+      "themeColor": "#e4eae1",
+      "backgroundColor": "#e4eae1",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
