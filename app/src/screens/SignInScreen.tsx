@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Linking, Platform, ScrollView, Text, View } from "react-native";
 import { API_BASE, signInUrl } from "../api/client";
 import { Button, Chip } from "../components/ui";
-import { UiIcon } from "../components/icons";
+import { Logo } from "../components/Logo";
 import { useT } from "../i18n";
 import { tokens as T } from "../theme/tokens";
 
@@ -31,9 +31,7 @@ export function SignInScreen() {
   };
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: c.table, padding: T.space.xl, justifyContent: "center", gap: T.space.l }}>
-      <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
-        <UiIcon name="heart" size={28} color={c.onPrimary} filled />
-      </View>
+      <Logo size={56} />
       <Text style={{ fontFamily: T.face.display, fontSize: T.font.display, lineHeight: 42, letterSpacing: -0.8, color: c.onSurface }}>{t.signInTitle}</Text>
       <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.signInText}</Text>
       <Button label={t.signInButton} onPress={go} />
@@ -53,9 +51,7 @@ export function SignInScreen() {
 export function Splash() {
   return (
     <View style={{ flex: 1, backgroundColor: c.table, alignItems: "center", justifyContent: "center" }}>
-      <View style={{ width: 72, height: 72, borderRadius: 18, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
-        <UiIcon name="heart" size={36} color={c.onPrimary} filled />
-      </View>
+      <Logo size={88} />
     </View>
   );
 }

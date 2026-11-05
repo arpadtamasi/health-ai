@@ -1,0 +1,19 @@
+change: app-update
+approved_by: Tamási Árpád
+approved_at: 2026-11-05T14:48:45.510Z
+approval_basis: sha256:2f3a4b4ec7d4e836e2431a8061e52f42a564e146c2e09bc126d7bade5afeaed1
+replaced: {}
+approved:
+  added:
+    - id: BR-01m6p2r4vmgte1n2wkwjx0q28w
+      title: The app loads the newest version and the day when it comes back
+    - id: EX-01m6p2r5ggm7nvtshx8yn4t4xs
+      title: A meal logged in Claude is on the plate when the app comes back
+    - id: EX-01m6p2r52g2z53nsyd9g8ney8y
+      title: A new version loads when the app comes back from the background
+    - id: EX-01m6p2r597gw7850rrrcnnfhvx
+      title: While a message is being typed the new version waits
+    - id: US-01m6p0kmp0aj2hyxnzehb7tx57
+      title: Load the new version from the home-screen app
+  changed: []
+  removed: []
