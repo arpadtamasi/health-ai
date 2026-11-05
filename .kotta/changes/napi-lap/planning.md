@@ -1,6 +1,6 @@
 ---
 change: napi-lap
-generated_at: 2026-11-05T22:47:52.135Z
+generated_at: 2026-11-05T23:23:54.346Z
 delta_hash: sha256:b3cb3be3cd0ed3b341ff01abe1dadd4bdc8026fd77470db780a67e8df4e71b3b
 ready_for_approval: true
 ---

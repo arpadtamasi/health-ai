@@ -19,3 +19,13 @@ Kézzel írt kivonat.
 **Ember:**
 
 > 1a 2a, számsor A, tedd ki
+
+## Kapu
+
+### J2 · 2026-11-05 23:2x UTC
+
+**Ágens:** 1. A beszélgetés minden nap új lapon indul (napváltás az időzónádban; korábbi napok nem látszanak; a modell csak a mait kapja; a tárolás marad). 2. A kezdőképernyőn nincs számsor (gramm a tányér közepén koppintásra, a pohár alatt a liter). Jóváhagyod mindkettőt?
+
+**Ember:**
+
+> Jóváhagyom mindkettőt
