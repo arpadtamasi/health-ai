@@ -1,7 +1,7 @@
 ---
 change: ennek-no-chip
-generated_at: 2026-11-05T21:51:39.499Z
-delta_hash: sha256:8cbaa11464543a0bebc69b6d376b3e99626038b45cd1e8a5c7a1a08ebae0d2a4
+generated_at: 2026-11-05T21:58:14.672Z
+delta_hash: sha256:d929be1e375028b1ca7b65a6b47c1746e1c9c57eaf72c13843198d67f39c964e
 ready_for_approval: true
 ---
 
@@ -12,7 +12,9 @@ Written by `kotta plan`. Every conflict below is a candidate awaiting a human's 
 ## Delta
 
 Added:
+- Ennék offers the usual foods that fit now (EX-dczn9kx4) — example, .kotta/changes/ennek-no-chip/model/examples/ennek-offers-the-usual-foods-that-fit-now-dczn9kx4.md
 - Send on Ennék with an empty field asks what to eat now (EX-rp2tm4z6) — example, .kotta/changes/ennek-no-chip/model/examples/send-on-ennek-with-an-empty-field-asks-what-to-eat-now-rp2tm4z6.md
+- When no usual food fits, Ennék has no chips (EX-qydw2dn7) — example, .kotta/changes/ennek-no-chip/model/examples/when-no-usual-food-fits-ennek-has-no-chips-qydw2dn7.md
 
 Changed:
 - The dock's switch says whether a message is what was eaten or what to eat (BR-1sh3t0yz) — business-rule, .kotta/changes/ennek-no-chip/model/business-rules/the-dock-s-switch-says-whether-a-message-is-what-was-eaten-o-1sh3t0yz.md
@@ -62,17 +64,19 @@ No narrative requirement bound to a node says something else than the node.
 
 ## (f) Provenance
 
-6 delta nodes: 0 stated, 4 partly-inferred, 2 inferred.
-Decided by: 0 human, 2 agent-proposed-human-approved, 4 agent-decided.
+8 delta nodes: 0 stated, 6 partly-inferred, 2 inferred.
+Decided by: 0 human, 2 agent-proposed-human-approved, 6 agent-decided.
 
 What the machine decided alone:
 
 - Ennék asks for options on the same sheet (EX-2raq04vm) — The time and the wording are made up for the example.
+- Ennék offers the usual foods that fit now (EX-dczn9kx4) — The numbers and the four-chip limit are the assistant's.
 - Send on Ennék with an empty field asks what to eat now (EX-rp2tm4z6) — Sending with an empty field is the assistant's proposal, so that asking stays one tap without the chip.
 - What to eat proposes carb-rich snacks when carbs are behind (EX-1f496wnr) — Sample foods and numbers are mine, for the mockup; reworked from the chat to the sheet.
 - The first chat sets constraints, goal and window before any suggestion (EX-gz4z1j4d) — The sample answers and numbers are mine, for the mockup.
+- When no usual food fits, Ennék has no chips (EX-qydw2dn7) — The numbers are made up for the example.
 
-Conversation: .kotta/changes/ennek-no-chip/conversation.md, cited 13 times. Read it for the why before calling anything inferred.
+Conversation: .kotta/changes/ennek-no-chip/conversation.md, cited 17 times. Read it for the why before calling anything inferred.
 - Unresolved: The dock's switch says whether a message is what was eaten or what to eat (BR-1sh3t0yz) cites “.kotta/changes/ettem-ennek/conversation.md · SZ1” — name the conversation as .kotta/changes/ennek-no-chip/conversation.md, the repository-relative path the board opens.
 - Unresolved: The dock's switch says whether a message is what was eaten or what to eat (BR-1sh3t0yz) cites “.kotta/changes/ettem-ennek/conversation.md · J1” — name the conversation as .kotta/changes/ennek-no-chip/conversation.md, the repository-relative path the board opens.
 - Unresolved: Choosing a suggestion previews it on the plate (EX-03fp9ff2) cites “.kotta/changes/home-plate-and-glass/conversation.md · J2” — name the conversation as .kotta/changes/ennek-no-chip/conversation.md, the repository-relative path the board opens.
