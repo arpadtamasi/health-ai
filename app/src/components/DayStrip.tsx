@@ -41,7 +41,7 @@ export function DayStrip({ entries, timeZone, metric, highlight, status, onTap, 
               disabled={s === "pending"} onPress={() => onTap(e)}
               style={{ flexDirection: "row", alignItems: "center", gap: 7, minHeight: 40, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1.5,
                 borderColor: s === "failed" ? c.error : on ? c.ink : c.outline, backgroundColor: c.surface, opacity: s === "pending" ? 0.55 : 1 }}>
-              <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: colorOf(mainOf(e)) }} />
+              <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: colorOf(mainOf(e)), borderWidth: 1, borderColor: c.grainEdge }} />
               <Text style={{ fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant, ...T.numeric }}>{hm(minutesOf(e.at, timeZone))}</Text>
               <Text numberOfLines={1} style={{ fontFamily: T.face.body, fontSize: 13, color: c.onSurface }}>{e.kind === "water" ? t.waterLabel : shortName(e.name)}</Text>
               <Text style={{ fontFamily: T.face.bold, fontSize: 13, color: c.onSurface, ...T.numeric }}>{s === "pending" ? "…" : amount(e)}</Text>

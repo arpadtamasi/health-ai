@@ -26,9 +26,9 @@
         "ink": "#17201b",
         "ink-muted": "#59675f",
         "hairline": "#d2dacf",
-        "protein-beet": "#c4456b",
-        "carbs-wheat": "#e09a22",
-        "fat-olive": "#5f8f45",
+        "protein-lentil": "#e07a4f",
+        "carbs-rice": "#f1e8d3",
+        "fat-pumpkin-seed": "#7f9e47",
         "water-blue": "#3a87d0",
         "good": "#1e6c42",
         "warn": "#b04314",
@@ -53,9 +53,9 @@
         "ink": "#edf3ee",
         "ink-muted": "#a0b1a7",
         "hairline": "#34413a",
-        "protein-beet": "#e2708f",
-        "carbs-wheat": "#f0b44a",
-        "fat-olive": "#8dbb6a",
+        "protein-lentil": "#e07a4f",
+        "carbs-rice": "#f1e8d3",
+        "fat-pumpkin-seed": "#7f9e47",
         "water-blue": "#63a9ec",
         "good": "#74d59d",
         "warn": "#ff9b68",
@@ -381,11 +381,11 @@
           "#e9f1e6"
         ]
       },
-      "protein-beet": {
+      "protein-lentil": {
         "role": "secondary",
-        "displayName": "Protein Beet",
+        "displayName": "Protein Lentil",
         "source": "app/src/theme/tokens.ts LIGHT.protein",
-        "dark": "#e2708f",
+        "dark": "#e07a4f",
         "purpose": "Identity colour of protein. Never a state.",
         "canonical": "oklch(57.6% 0.164 5.5)",
         "tonalRamp": [
@@ -399,11 +399,11 @@
           "#fee8ec"
         ]
       },
-      "carbs-wheat": {
+      "carbs-rice": {
         "role": "secondary",
-        "displayName": "Carbs Wheat",
+        "displayName": "Carbs Rice",
         "source": "app/src/theme/tokens.ts LIGHT.carbs",
-        "dark": "#f0b44a",
+        "dark": "#f1e8d3",
         "purpose": "Identity colour of carbs. Never a state.",
         "canonical": "oklch(73.7% 0.147 74.3)",
         "tonalRamp": [
@@ -417,11 +417,11 @@
           "#ffebd3"
         ]
       },
-      "fat-olive": {
+      "fat-pumpkin-seed": {
         "role": "secondary",
-        "displayName": "Fat Olive",
+        "displayName": "Fat Pumpkin Seed",
         "source": "app/src/theme/tokens.ts LIGHT.fat",
-        "dark": "#8dbb6a",
+        "dark": "#7f9e47",
         "purpose": "Identity colour of fat. Never a state.",
         "canonical": "oklch(59.8% 0.117 135.7)",
         "tonalRamp": [
@@ -794,11 +794,11 @@
           "#e3f3ea"
         ]
       },
-      "protein-beet-dark": {
+      "protein-lentil-dark": {
         "role": "secondary",
-        "displayName": "Protein Beet (dark)",
+        "displayName": "Protein Lentil (dark)",
         "source": "app/src/theme/tokens.ts DARK.protein",
-        "light": "protein-beet",
+        "light": "protein-lentil",
         "canonical": "oklch(68.6% 0.145 4.4)",
         "tonalRamp": [
           "#1d0108",
@@ -811,11 +811,11 @@
           "#fee8ec"
         ]
       },
-      "carbs-wheat-dark": {
+      "carbs-rice-dark": {
         "role": "secondary",
-        "displayName": "Carbs Wheat (dark)",
+        "displayName": "Carbs Rice (dark)",
         "source": "app/src/theme/tokens.ts DARK.carbs",
-        "light": "carbs-wheat",
+        "light": "carbs-rice",
         "canonical": "oklch(80.7% 0.139 78.5)",
         "tonalRamp": [
           "#120900",
@@ -828,11 +828,11 @@
           "#ffeccf"
         ]
       },
-      "fat-olive-dark": {
+      "fat-pumpkin-seed-dark": {
         "role": "secondary",
-        "displayName": "Fat Olive (dark)",
+        "displayName": "Fat Pumpkin Seed (dark)",
         "source": "app/src/theme/tokens.ts DARK.fat",
-        "light": "fat-olive",
+        "light": "fat-pumpkin-seed",
         "canonical": "oklch(74.0% 0.120 132.8)",
         "tonalRamp": [
           "#050e00",
@@ -1092,7 +1092,7 @@
       "kind": "custom",
       "refersTo": "figure",
       "description": "Four equal cells, identity dot and name over eaten / goal; the chosen one is ink-outlined.",
-      "html": "<div class=\"ds-figs\"><button class=\"ds-fig ds-fig-on\"><span class=\"ds-fig-n\"><i style=\"background:#c4456b\"></i>Fehérje</span><b>35 / 160 g</b></button><button class=\"ds-fig\"><span class=\"ds-fig-n\"><i style=\"background:#e09a22\"></i>Szénh.</span><b>80 / 185 g</b></button><button class=\"ds-fig\"><span class=\"ds-fig-n\"><i style=\"background:#5f8f45\"></i>Zsír</span><b>27 / 80 g</b></button><button class=\"ds-fig\"><span class=\"ds-fig-n\"><i style=\"background:#3a87d0\"></i>Víz</span><b>0,5 / 2,5 l</b></button></div>",
+      "html": "<div class=\"ds-figs\"><button class=\"ds-fig ds-fig-on\"><span class=\"ds-fig-n\"><i style=\"background:#e07a4f\"></i>Fehérje</span><b>35 / 160 g</b></button><button class=\"ds-fig\"><span class=\"ds-fig-n\"><i style=\"background:#f1e8d3\"></i>Szénh.</span><b>80 / 185 g</b></button><button class=\"ds-fig\"><span class=\"ds-fig-n\"><i style=\"background:#7f9e47\"></i>Zsír</span><b>27 / 80 g</b></button><button class=\"ds-fig\"><span class=\"ds-fig-n\"><i style=\"background:#3a87d0\"></i>Víz</span><b>0,5 / 2,5 l</b></button></div>",
       "css": ".ds-figs{display:flex;gap:4px;padding:0 12px;background:#e4eae1} .ds-fig{flex:1;min-width:0;min-height:44px;padding:5px 6px;border-radius:14px;border:1.5px solid transparent;background:transparent;text-align:left;cursor:pointer} .ds-fig:focus-visible{outline:3px solid #1d5c4d;outline-offset:1px} .ds-fig-on{border-color:#17201b;background:#fbfcfa} .ds-fig-n{display:flex;align-items:center;gap:5px;font-family:Figtree, system-ui, -apple-system, \"Segoe UI\", sans-serif;font-weight:600;font-size:12.5px;color:#17201b} .ds-fig-n i{width:9px;height:9px;border-radius:5px;display:block} .ds-fig b{display:block;font-family:Figtree, system-ui, -apple-system, \"Segoe UI\", sans-serif;font-weight:700;font-size:13px;color:#17201b;font-variant-numeric:tabular-nums}"
     },
     {
@@ -1100,7 +1100,7 @@
       "kind": "chip",
       "refersTo": "day-entry",
       "description": "An entry in the Ma eddig strip: main-macro dot, time, short name, amount. Highlighted ink, failed red, saving dimmed.",
-      "html": "<div class=\"ds-strip\"><button class=\"ds-entry\"><i style=\"background:#5f8f45\"></i><span class=\"ds-t\">10:30</span><span>Cappuccino</span><b>90</b></button><button class=\"ds-entry ds-entry-on\"><i style=\"background:#3a87d0\"></i><span class=\"ds-t\">11:15</span><span>Víz</span><b>250 ml</b></button><button class=\"ds-entry ds-entry-failed\"><i style=\"background:#c4456b\"></i><span class=\"ds-t\">12:40</span><span>Túró</span><b>180</b></button></div>",
+      "html": "<div class=\"ds-strip\"><button class=\"ds-entry\"><i style=\"background:#7f9e47\"></i><span class=\"ds-t\">10:30</span><span>Cappuccino</span><b>90</b></button><button class=\"ds-entry ds-entry-on\"><i style=\"background:#3a87d0\"></i><span class=\"ds-t\">11:15</span><span>Víz</span><b>250 ml</b></button><button class=\"ds-entry ds-entry-failed\"><i style=\"background:#e07a4f\"></i><span class=\"ds-t\">12:40</span><span>Túró</span><b>180</b></button></div>",
       "css": ".ds-strip{display:flex;gap:6px;padding:8px 16px;background:#e4eae1;overflow-x:auto} .ds-entry{display:flex;align-items:center;gap:7px;min-height:40px;padding:0 10px;border-radius:12px;border:1.5px solid #d2dacf;background:#fbfcfa;font-family:Figtree, system-ui, -apple-system, \"Segoe UI\", sans-serif;font-size:13px;color:#17201b;white-space:nowrap;cursor:pointer} .ds-entry:focus-visible{outline:3px solid #1d5c4d;outline-offset:1px} .ds-entry i{width:9px;height:9px;border-radius:5px;display:block} .ds-entry .ds-t{color:#59675f;font-variant-numeric:tabular-nums} .ds-entry b{font-weight:700;font-variant-numeric:tabular-nums} .ds-entry-on{border-color:#17201b} .ds-entry-failed{border-color:#b3261e}"
     },
     {
@@ -1130,7 +1130,7 @@
   ],
   "narrative": {
     "northStar": "Terített asztal (the laid table, seen from above)",
-    "overview": "The whole app is one table. The page is a tablecloth, pale sage in daylight (#e4eae1) and near-black green at night (#151c18). On it stand two objects: a ceramic plate cut into three equal thirds for protein, carbs and fat, with the calories in its hub, and a tall glass for water. Everything you eat lands on the plate as a layer, each third and the glass filling by area from the centre (or from the bottom). The sheets, the dock, the cards and the chips are the same ceramic as the plate (#fbfcfa), so the eye reads two materials only: cloth and ceramic.\n\nColour is identity, never verdict. Each macro has a colour of its own (protein beet, carbs wheat, fat olive, water blue) and keeps it whatever happens. Where you stand is said by a sentence under the plate, in Gabarito, beside a small drawn mark: an arrow down when you are under the plan, up when ahead, a dot when on it, a tick when done. The gap is drawn as hatching, the plan for now as a dotted arc, the fat cap as a thick ink rim. Deep green (#1d5c4d) is kept for the things you press.\n\nThe home is dense but calm: one screen, nothing to scroll, the dock always in reach. There is no big standalone number and no chart of the day; the plate and the line are the summary. The system rejects the retired plain Material 3 look (Roboto, a blue seed, tonal containers for state) and the earlier \"Paprika\" palette; it follows the phone into dark mode with its own full palette rather than an inversion.",
+    "overview": "The whole app is one table. The page is a tablecloth, pale sage in daylight (#e4eae1) and near-black green at night (#151c18). On it stand two objects: a ceramic plate cut into three equal thirds for protein, carbs and fat, with the calories in its hub, and a tall glass for water. Everything you eat lands on the plate as a layer, each third and the glass filling by area from the centre (or from the bottom). The sheets, the dock, the cards and the chips are the same ceramic as the plate (#fbfcfa), so the eye reads two materials only: cloth and ceramic.\n\nColour is identity, never verdict. Each macro has a colour of its own (protein lentil, carbs rice, fat pumpkin-seed olive, water blue) and keeps it whatever happens. Where you stand is said by a sentence under the plate, in Gabarito, beside a small drawn mark: an arrow down when you are under the plan, up when ahead, a dot when on it, a tick when done. The gap is drawn as hatching, the plan for now as a dotted arc, the fat cap as a thick ink rim. Deep green (#1d5c4d) is kept for the things you press.\n\nThe home is dense but calm: one screen, nothing to scroll, the dock always in reach. There is no big standalone number and no chart of the day; the plate and the line are the summary. The system rejects the retired plain Material 3 look (Roboto, a blue seed, tonal containers for state) and the earlier \"Paprika\" palette; it follows the phone into dark mode with its own full palette rather than an inversion.",
     "keyCharacteristics": [
       "Two materials: tablecloth ground, ceramic surfaces; depth comes from tone, a 1px hairline and the plate's own shadow.",
       "Four identity colours (protein, carbs, fat, water) that never change to signal a state.",
@@ -1142,7 +1142,7 @@
     "rules": [
       {
         "name": "The Own Colour Rule",
-        "body": "Protein is beet, carbs wheat, fat olive, water blue, always. No macro, layer, dot or glass changes hue to say behind, ahead, done or over.",
+        "body": "Protein is lentil, carbs rice, fat pumpkin-seed olive, water blue, always. No macro, layer, dot or glass changes hue to say behind, ahead, done or over.",
         "section": "colors"
       },
       {
@@ -1177,7 +1177,7 @@
       }
     ],
     "dos": [
-      "Do draw each macro and water in its own identity colour (#c4456b, #e09a22, #5f8f45, #3a87d0; dark #e2708f, #f0b44a, #8dbb6a, #63a9ec) everywhere it appears: layer, hatching, dot.",
+      "Do draw each macro and water in its own identity colour (#e07a4f, #f1e8d3, #7f9e47, #3a87d0; dark #e07a4f, #f1e8d3, #7f9e47, #63a9ec) everywhere it appears: layer, hatching, dot.",
       "Do say the situation in words first, with a drawn mark, hatching, a dotted plan arc or an ink rim beside it.",
       "Do mark \"chosen\" with an ink outline and step the rest back by opacity.",
       "Do keep Deep Table Green (#1d5c4d / #86d4b9) for what can be pressed.",

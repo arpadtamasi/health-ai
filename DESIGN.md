@@ -1,6 +1,6 @@
 ---
 name: Health AI
-description: 'Terített asztal: the day as a table seen from above, a ceramic plate and a glass on a tablecloth, each macro in its own colour, the situation said in words and drawn marks.'
+description: 'Terített asztal: the day as a table seen from above, a dark stoneware plate of lentils, rice and pumpkin seeds and a glass on a tablecloth, each macro in its food's colour, the situation said in words and drawn marks.'
 colors:
   action-green: "#1d5c4d"
   on-action: "#ffffff"
@@ -17,9 +17,12 @@ colors:
   ink: "#17201b"
   ink-muted: "#59675f"
   hairline: "#d2dacf"
-  protein-beet: "#c4456b"
-  carbs-wheat: "#e09a22"
-  fat-olive: "#5f8f45"
+  protein-lentil: "#e07a4f"
+  carbs-rice: "#f1e8d3"
+  fat-pumpkin-seed: "#7f9e47"
+  stoneware: "#3b403d"
+  stoneware-deep: "#2c302e"
+  stoneware-ridge: "#454b48"
   water-blue: "#3a87d0"
   good: "#1e6c42"
   warn: "#b04314"
@@ -42,9 +45,9 @@ colors:
   ink-dark: "#edf3ee"
   ink-muted-dark: "#a0b1a7"
   hairline-dark: "#34413a"
-  protein-beet-dark: "#e2708f"
-  carbs-wheat-dark: "#f0b44a"
-  fat-olive-dark: "#8dbb6a"
+  protein-lentil-dark: "#e07a4f"
+  carbs-rice-dark: "#f1e8d3"
+  fat-pumpkin-seed-dark: "#7f9e47"
   water-blue-dark: "#63a9ec"
   good-dark: "#74d59d"
   warn-dark: "#ff9b68"
@@ -281,9 +284,9 @@ components:
 
 **Creative North Star: "Terített asztal" (the laid table, seen from above)**
 
-The whole app is one table. The page is a tablecloth, pale sage in daylight (#e4eae1) and near-black green at night (#151c18). On it stand two objects: a ceramic plate cut into three equal thirds for protein, carbs and fat, with the calories in its hub, and a tall glass for water. Everything you eat lands on the plate as a layer, each third and the glass filling by area from the centre (or from the bottom). The sheets, the dock, the cards and the chips are the same ceramic as the plate (#fbfcfa), so the eye reads two materials only: cloth and ceramic.
+The whole app is one table. The page is a tablecloth, pale sage in daylight (#e4eae1) and near-black green at night (#151c18). On it stand two objects: a dark speckled stoneware plate (#3b403d), divided by raised ridges into three equal thirds, with the calories on its hub, and a tall glass for water. Each third fills with grains of its own food as you eat: red lentils for protein, rice for carbs, pumpkin seeds for fat, from the middle outwards, every other entry a shade deeper; above a goal the grains spill onto the rim. The plate is an object and looks the same in light and dark mode. The sheets, the dock, the cards and the chips are ceramic (#fbfcfa), so the eye reads three materials: cloth, stoneware and ceramic.
 
-Colour is identity, never verdict. Each macro has a colour of its own (protein beet, carbs wheat, fat olive, water blue) and keeps it whatever happens. Where you stand is said by a sentence under the plate, in Gabarito, beside a small drawn mark: an arrow down when you are under the plan, up when ahead, a dot when on it, a tick when done. The gap is drawn as hatching, the plan for now as a dotted arc, the fat cap as a thick ink rim. Deep green (#1d5c4d) is kept for the things you press.
+Colour is identity, never verdict. Each macro has the colour of its food (protein lentil coral, carbs rice cream, fat pumpkin-seed olive, water blue) and the shape of its grain, and keeps both whatever happens. Where you stand is said by a sentence under the plate, in Gabarito, beside a small drawn mark: an arrow down when you are under the plan, up when ahead, a dot when on it, a tick when done. The plan for now is a dashed contour in each third; the gap is the empty space inside it. Over the goal the line says how far over, and the grains spill. Deep green (#1d5c4d) is kept for the things you press.
 
 The home is dense but calm: one screen, nothing to scroll, the dock always in reach. There is no big standalone number and no chart of the day; the plate and the line are the summary. The system rejects the retired plain Material 3 look (Roboto, a blue seed, tonal containers for state) and the earlier "Paprika" palette; it follows the phone into dark mode with its own full palette rather than an inversion.
 
@@ -304,9 +307,9 @@ A muted sage-and-ceramic table carrying four saturated food colours and one deep
 - **Pale Leaf** (#d8e9e0, text #0e3a30; dark #24453b, text #cdeee1): the quiet action container. A selected chip (meal type in the edit sheet, the "Connect" chip of the Health banner).
 
 ### Secondary: the macro identities
-- **Protein Beet** (#c4456b; dark #e2708f): the protein third, its dot in the figures row and on day entries.
-- **Carbs Wheat** (#e09a22; dark #f0b44a): the carbs third and its dot.
-- **Fat Olive** (#5f8f45; dark #8dbb6a): the fat third and its dot.
+- **Protein Lentil** (#e07a4f, every other entry #c9643b): the lentils of the protein third, its dot in the figures row and on day entries.
+- **Carbs Rice** (#f1e8d3, every other entry #e2d4b2, with a thin edge rgba(70,52,30,.38)): the rice of the carbs third and its dot.
+- **Fat Pumpkin Seed** (#7f9e47, every other entry #66843a): the seeds of the fat third and its dot.
 - **Water Blue** (#3a87d0; dark #63a9ec): the glass and its dot.
 
 These four are drawn at full strength as layers, at 60% opacity in the 45 degree hatching of the gap, at 28% fill under a dashed ink outline for a previewed suggestion, and at 22% for layers that are not the highlighted entry.
@@ -333,7 +336,7 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 - **Table Shadow** (rgba(28,48,36,0.14); dark rgba(0,0,0,0.5)): the shadow of the plate and the glass.
 
 ### Named Rules
-**The Own Colour Rule.** Protein is beet, carbs wheat, fat olive, water blue, always. No macro, layer, dot or glass changes hue to say behind, ahead, done or over.
+**The Own Colour Rule.** Protein is lentil coral, carbs rice cream, fat pumpkin-seed olive, water blue, always, each with its own grain shape. No macro, layer, dot or glass changes hue to say behind, ahead, done or over.
 
 **The Words-and-Marks Rule.** The situation is said by the line under the plate, by a drawn mark (arrow down, arrow up, dot, tick in a 2px ring), by hatching for the lag, a dotted ink arc for the plan, a thick ink rim for the fat cap, and a spill onto the rim for an overrun. State ink may tint these marks and words; it never stands alone.
 
@@ -462,7 +465,7 @@ The app's signed-out screen: Tablecloth ground, a 56px green tile with a filled 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** draw each macro and water in its own identity colour (#c4456b, #e09a22, #5f8f45, #3a87d0; dark #e2708f, #f0b44a, #8dbb6a, #63a9ec) everywhere it appears: layer, hatching, dot.
+- **Do** draw each macro and water in its own identity colour (#e07a4f, #f1e8d3, #7f9e47, #3a87d0; water #63a9ec in dark mode) everywhere it appears: grain, dot, glass.
 - **Do** say the situation in words first, with a drawn mark, hatching, a dotted plan arc or an ink rim beside it.
 - **Do** mark "chosen" with an ink outline and step the rest back by opacity.
 - **Do** keep Deep Table Green (#1d5c4d / #86d4b9) for what can be pressed.
