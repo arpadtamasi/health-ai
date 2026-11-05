@@ -66,7 +66,7 @@ const adapter: ChatModelAdapter = {
       const tx = m.content.filter((p) => p.type === "text").map((p) => (p as { text: string }).text).join(" ");
       const pics = withPhotos.has(i) ? imagesOf(m) : [];
       return tx ? [{ role: m.role === "user" ? ("user" as const) : ("assistant" as const), text: tx, ...(pics.length ? { images: pics } : {}) }] : [];
-    });
+    }).slice(-40); // the agent reads the latest turns; a long day's conversation goes out as its tail (BR-01m6ph6dq7aszxhxgzz4kgr8d4)
     let live = emptyLive();
     let fresh = false;
     let wake: (() => void) | null = null;

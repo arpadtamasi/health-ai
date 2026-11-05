@@ -180,6 +180,17 @@ describe("the chat", () => {
     expect((await talk(t2, s2.cookie, { message: "  " })).status).toBe(400);
   });
 
+  // BR-01m6ph6dq7aszxhxgzz4kgr8d4 (The conversation keeps what happened in it): a long day's conversation still sends; the agent
+  // reads the latest turns, so a longer history or a long earlier reply is not a reason to refuse the message.
+  it("takes a message after a long day's conversation", async () => {
+    const t = makeTestApp({ now: () => NOW, ai: { model: agentModel(reply("Beírtam.")), modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    const history = Array.from({ length: 90 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", text: i === 1 ? "x".repeat(5000) : `üzenet ${i}` }));
+    const r = await talk(t, cookie, { message: "Egy liter víz", history });
+    expect(r.status).toBe(200);
+  });
+
   it("sets the person up in conversation, then waits for their own consent tap", async () => {
     const model = agentModel(toolCall("save_settings", { calories: 2140, window: { startHour: 7, endHour: 22 }, constraints: ["nuts"] }), reply("Elmentettem. Koppints az Elfogadomra."));
     const t = makeTestApp({ now: () => NOW, ai: { model, modelName: "m", dailyTokenLimit: 100000 } });
