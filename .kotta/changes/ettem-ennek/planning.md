@@ -1,8 +1,8 @@
 ---
 change: ettem-ennek
-generated_at: 2026-11-05T18:59:41.594Z
-delta_hash: sha256:39d36d2200d1725e59e0055357fbbff7b939111b43ba7bde1e6cc61f9e89f2ff
-ready_for_approval: false
+generated_at: 2026-11-05T19:03:32.680Z
+delta_hash: sha256:80e174d770de9493e48a41874bfd1ede8aba9817da4f2ef703d84d9b5d8700d9
+ready_for_approval: true
 ---
 
 # Planning: ettem-ennek
@@ -58,11 +58,18 @@ The accepted model with this delta applied validates as a whole.
 The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:
 
 <!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
+- judged: "A photo of a fridge proposes and logs nothing" sends the photo "asking what to have for dinner"; the switch rule first took everything on "Ettem" as eaten, and the photo rule asked a question for a fridge on "Ettem". Both now yield to a message that itself asks what to eat, so the example holds on either side.
+- judged: "Ask what to eat to catch up" kept "asking 'what should I eat?' in the text field opens the same sheet"; the switch rule now says the same for "Ettem".
+- judged: "What to eat proposes carb-rich snacks…", "Choosing a suggestion previews it on the plate" and "The first chat sets constraints…" tap "What should I eat now?"; that is now the first chip on the "Ennék" side and the sheet keeps its name, so they hold.
+- judged: "In the evening the line says what still fits", "After the eating window…", "The home shows the day's calories…" and "Open on a full-screen home…" named the button under the plate; reworked in this delta to the switch.
+- judged: "The dock offers the usual items…", "The dock offers yesterday's breakfast", "Typing with the keyboard open keeps a one-line status" and "The conversation opens on a sheet…" are unchanged on "Ettem", the side the dock opens on the first time.
+- judged: "A photo logs what it shows" asked for "a card with Edit and Undo"; the new rule keeps that card in the conversation instead of a six-second bar, which the earlier "Start logging…" note ("this change replaces the card in the thread") had removed for chips only. Chips keep the bar.
+- judged: the quality "The app stays usable on a slow response" (a write is never repeated by itself) holds: "Újra" sends again only on a tap.
 <!-- /kotta:judged -->
 
 ## (d) Silences
 
-- Open: The dock's switch says whether a message is what was eaten or what to eat (BR-1sh3t0yz) BR-1sh3t0yz/Q1 — Which labels: "Ettem · Ennék", "Beírom · Ajánlj" or "Napló · Ötlet"? (.kotta/changes/ettem-ennek/model/business-rules/the-dock-s-switch-says-whether-a-message-is-what-was-eaten-o-1sh3t0yz.md:28)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 
@@ -71,13 +78,10 @@ No narrative requirement bound to a node says something else than the node.
 ## (f) Provenance
 
 15 delta nodes: 1 stated, 10 partly-inferred, 4 inferred.
-Decided by: 1 human, 4 agent-proposed-human-approved, 10 agent-decided.
+Decided by: 1 human, 7 agent-proposed-human-approved, 7 agent-decided.
 
 What the machine decided alone:
 
-- A photo logs what it shows (BR-g5fgz0ne) — Derived from the owner's usage logs; the rule's wording is the assistant's. How a photo and the side of the switch combine is the assistant's proposal.
-- The conversation keeps what happened in it (BR-z4kgr8d4) — The comparison with Claude and ChatGPT and the five gaps are the assistant's; keeping a photo for two more messages is the assistant's choice.
-- The dock's switch says whether a message is what was eaten or what to eat (BR-1sh3t0yz) — The label pair, the remembered side, the one-time hint and the changing chips are the assistant's proposal (preview Ettem, ennék, emlékszem).
 - A lunch photo from the gallery is logged afterwards (EX-ahg41g4r) — The times and the dish are made up for the example.
 - A message that did not go out can be sent again (EX-gyy2r9tr) — The dish is made up for the example; that Újra sends exactly once follows the slow-response quality.
 - A question about the photo still sees the photo (EX-kd33xszg) — The question is the one in the preview.

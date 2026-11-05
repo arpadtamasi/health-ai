@@ -4,7 +4,7 @@ form: business-rule
 title: The conversation keeps what happened in it
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources: [".kotta/changes/ettem-ennek/conversation.md · SZ1", ".kotta/changes/ettem-ennek/conversation.md · J2"]
   quote: "ha beszélgetésbe/fotóba kerülök, az lenne a jó, ha kb ugyanaz az élmény lenne, mint a claude/chatgpt"
   inferred: "The comparison with Claude and ChatGPT and the five gaps are the assistant's; keeping a photo for two more messages is the assistant's choice."

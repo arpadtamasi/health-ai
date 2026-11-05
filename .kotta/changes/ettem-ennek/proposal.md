@@ -24,4 +24,5 @@ of habits and of what is at home (J3: later, to be thought through). Preview: th
 
 ## Open decisions
 
-- The switch's labels: "Ettem · Ennék", "Beírom · Ajánlj" or "Napló · Ötlet".
+None: the labels are "Ettem · Ennék" (J4). Learning from the log (when and why the person snacks) goes with memory into a
+separate concept (J4).
