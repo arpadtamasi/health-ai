@@ -483,6 +483,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
               <View style={{ gap: 10, paddingBottom: 12 }}>
                 <DayStrip entries={shown} timeZone={tz} metric={metric} highlight={highlight} status={status} t={t}
                   onTap={(e) => { setRecent(null); setHighlight((h) => (h === e.id ? null : e.id)); }} />
+                {/* EX-01m6nzdzz3r239egz1c4s68a98: after the eating window the button rests (BR-01m6nzdz57xbc4k501gg85aytx). */}
                 {day.minutes >= day.window.endHour * 60 ? null : <Pressable accessibilityRole="button" onPress={openWhatNow}
                   style={{ marginHorizontal: 16, height: 48, borderRadius: 24, borderWidth: 1.5, borderColor: c.primary, backgroundColor: c.surface, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   <UiIcon name="utensils" size={18} color={c.primary} />
