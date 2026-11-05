@@ -46,7 +46,18 @@ A `kotta narrative` desztillátuma. Az időpontok UTC-ben. A párosítás heuris
 
 Az ágens javasolta, az ember jóváhagyta (`agent-proposed-human-approved`).
 
-Nincs jóváhagyott javaslat.
+Kézzel felvéve az ágens által (2026-11-05), a kapu előtti kérdésekből.
+
+### J1 · 2026-11-05 14:05 UTC
+
+**Ágens**: három kérdés: (1) a) sötét, pöttyös kőedény vagy b) a mostani világos kerámia; (2) mennyi számít túlevésnek: a) bármennyi, b) 50 kcal fölött, c) 5% fölött; (3) hány órától szóljon az esti mondat, javaslat 19:00, három órával az ablak vége előtt.
+
+**Ember**:
+
+> 1a
+> 2b
+> 3 ok
+
 
 ## Elvetett utak
 

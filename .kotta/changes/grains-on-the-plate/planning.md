@@ -1,8 +1,8 @@
 ---
 change: grains-on-the-plate
-generated_at: 2026-11-05T13:48:59.505Z
-delta_hash: sha256:e1cf7b475cd526dab2b26e75f739b87cd9722adb567266892eb0b4f4b83a8e06
-ready_for_approval: false
+generated_at: 2026-11-05T13:53:09.247Z
+delta_hash: sha256:958dc73b1c33b320666d546445c1b5737e06bc243402c15e3ad1d8962c76f30a
+ready_for_approval: true
 ---
 
 # Planning: grains-on-the-plate
@@ -64,9 +64,7 @@ The machine's candidates are mechanical and narrow. Contradictions the agent fou
 
 ## (d) Silences
 
-- Open: Going over a goal is shown, never praised (BR-9ffze1v5) BR-9ffze1v5/Q1 — How far over the calorie goal counts as over? (a) any amount over; (b) more than 50 kcal; (c) more than 5 percent, about 105 kcal. Within the tolerance the day is done as before. The assistant suggests (b). (.kotta/changes/grains-on-the-plate/model/business-rules/going-over-a-goal-is-shown-never-praised-9ffze1v5.md:28)
-- Open: In the evening the line says what still fits (BR-gg85aytx) BR-gg85aytx/Q1 — From what hour should the evening wording start? (The assistant suggests 19:00, three hours before the end of a 7:00 to 22:00 window; it could also be relative to the window's end.) (.kotta/changes/grains-on-the-plate/model/business-rules/in-the-evening-the-line-says-what-still-fits-gg85aytx.md:28)
-- Open: Each third of the plate fills with its own food, one portion per entry (BR-hg8a6720) BR-hg8a6720/Q1 — Which plate should the grains sit on: the dark speckled stoneware, where all three natural colours stand out and look the same in light and dark mode, or the light ceramic of today, where the rice needs a thin brown edge? (The assistant suggests the dark stoneware.) (.kotta/changes/grains-on-the-plate/model/business-rules/the-plate-fills-each-third-by-area-one-layer-per-entry-hg8a6720.md:28)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 
@@ -75,12 +73,10 @@ No narrative requirement bound to a node says something else than the node.
 ## (f) Provenance
 
 14 delta nodes: 0 stated, 14 partly-inferred, 0 inferred.
-Decided by: 0 human, 4 agent-proposed-human-approved, 10 agent-decided.
+Decided by: 0 human, 6 agent-proposed-human-approved, 8 agent-decided.
 
 What the machine decided alone:
 
-- Going over a goal is shown, never praised (BR-9ffze1v5) — The critique found 2,735 of 2,100 kcal shown as 'Mára kész.' with a tick; the owner liked overflow as the sign of it. The tolerance is an open decision.
-- In the evening the line says what still fits (BR-gg85aytx) — The critique found 'X kcal under the plan' at 21:40 with the button still pushing late eating; the switch hour and the wording are the assistant's proposal, put to the owner as open decisions.
 - After the eating window What should I eat now is gone (EX-c4s68a98) — The window is the sample 7:00 to 22:00.
 - At 21:40 the line says what still fits (EX-pjhjvnaj) — The numbers are sample values.
 - Calories over the goal say how far over, not done (EX-f8rpdk03) — The numbers are those of the critique.
@@ -90,7 +86,7 @@ What the machine decided alone:
 - The fat third shows the cap (EX-bcjm3w2z) — The numbers and the wording are sample values chosen by the assistant; reworked for the plate; reworked for the grains.
 - When the day is closed the line says the day is done (EX-fsqz9p9v) — Reworked from the dark hero; the numbers and the wording are sample values chosen by the assistant; narrowed by 'Going over a goal is shown, never praised'.
 
-Conversation: .kotta/changes/grains-on-the-plate/conversation.md, cited 27 times. Read it for the why before calling anything inferred.
+Conversation: .kotta/changes/grains-on-the-plate/conversation.md, cited 31 times. Read it for the why before calling anything inferred.
 - Unresolved: Each macro has its own colour, and words state the situation (BR-6j5a0yxa) cites “.kotta/changes/archive/2026-11-05-home-plate-and-glass/conversation.md · J2” — name the conversation as .kotta/changes/grains-on-the-plate/conversation.md, the repository-relative path the board opens.
 - Unresolved: Fat over the cap spills onto the rim of the plate (EX-nb3ga68e) cites “.kotta/changes/home-plate-and-glass/conversation.md · J2” — name the conversation as .kotta/changes/grains-on-the-plate/conversation.md, the repository-relative path the board opens.
 - Unresolved: Half of the protein goal fills half of the protein third (EX-jyz1at22) cites “.kotta/changes/home-plate-and-glass/conversation.md · SZ1” — name the conversation as .kotta/changes/grains-on-the-plate/conversation.md, the repository-relative path the board opens.

@@ -15,8 +15,12 @@ Preview: https://claude.ai/artifact/9k2b7KXfWeQyiQr6whyGHU
 
 Outside the model but part of the work: the grains are drawn with the existing react-native-svg (no Skia, which would add about 2.9 MB to the first web load); DESIGN.md and the app tokens follow the new colours. The critique's plain defects (the dock below the fold on short screens, silent failures) keep existing promises and are fixed without a change.
 
+## Decided at planning
+
+- The plate is dark speckled stoneware ("1a").
+- More than 50 kcal over the calorie goal counts as over ("2b").
+- The evening wording starts three hours before the end of the eating window, 19:00 for 7:00 to 22:00 ("3 ok").
+
 ## Open decisions
 
-- Which plate: dark stoneware or light ceramic (see the plate rule).
-- How far over the calorie goal counts as over (see the over rule).
-- From what hour the evening wording starts (see the evening rule).
+None.

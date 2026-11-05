@@ -6,7 +6,7 @@ subjects: [BR-01m6nzdyz40bdbmtbn9ffze1v5]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/grains-on-the-plate/conversation.md · P1"]
+  sources: [".kotta/changes/grains-on-the-plate/conversation.md · J1", ".kotta/changes/grains-on-the-plate/conversation.md · P1"]
   quote: null
   inferred: "The numbers are those of the critique."
 ---
@@ -22,4 +22,4 @@ The person opens the app.
 
 ## Then
 
-The line says "Kereten felül: +635 kcal." and names carbs +115 g and fat +12 g; there is no tick and no "Mára kész.".
+The line says "Kereten felül: +635 kcal." and names carbs +115 g and fat +12 g; there is no tick and no "Mára kész.". At 2,140 kcal, 40 over, the day would still be done.
