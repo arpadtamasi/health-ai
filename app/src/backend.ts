@@ -1,12 +1,15 @@
 // One seam between the screens and the data: the real API (the same origin on the web) or sample data for design work.
 // EXPO_PUBLIC_MOCK=1 selects the sample data.
-import { api, type ChatReply, type HistoryTurn, type DayEntry, type DayState, type EntryPatch, type Me, type Usual } from "./api/client";
+import { api, chatStream, type ChatInput, type ChatReply, type HistoryTurn, type DayEntry, type DayState, type EntryPatch, type Me, type Usual } from "./api/client";
+import type { StreamLine } from "./stream";
 import type { Option } from "./components/food";
 
 export interface Backend {
   me(): Promise<Me>;
   state(): Promise<DayState>;
-  chat(input: Parameters<typeof api.chat>[0]): Promise<ChatReply>;
+  chat(input: ChatInput): Promise<ChatReply>;
+  /** BR-01m6pmf9avbbgd373z1jcvvaqw: the chat, its steps and text as they come. */
+  chatStream(input: ChatInput, onLine: (l: StreamLine) => void, signal?: AbortSignal): Promise<ChatReply>;
   consent(): Promise<void>;
   chatHistory(): Promise<HistoryTurn[]>;
   usuals(): Promise<Usual[]>;
@@ -25,6 +28,7 @@ export const realBackend: Backend = {
   me: () => api.me(),
   state: () => api.state(),
   chat: (input) => api.chat(input),
+  chatStream: (input, onLine, signal) => chatStream(input, onLine, signal),
   consent: async () => { await api.consent(); },
   chatHistory: async () => (await api.chatHistory()).turns,
   usuals: async () => (await api.usuals()).usuals,

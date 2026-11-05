@@ -1,6 +1,7 @@
 // The app talks to the same origin on the web (Firebase Hosting rewrites /api/* to Cloud Run), with the __session cookie.
 // Every request that changes anything also sends the custom header, as CSRF protection.
 import { track, withRetry, withTimeout } from "../net";
+import { lineReader, type StreamLine } from "../stream";
 import type { DayEntry } from "../day";
 import type { Option } from "../components/food";
 
@@ -38,7 +39,7 @@ export type ChatEvent =
   | { type: "settings_saved" }
   | { type: "replies"; replies: string[] }
   | { type: "language"; language: "en" | "hu" };
-export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean; language: "en" | "hu" | null }
+export interface ChatReply { events: ChatEvent[]; needsConsent: boolean; onboarded: boolean; language: "en" | "hu" | null; stopped?: boolean }
 /** A stored message of the conversation (the server keeps the chat during the test). */
 export interface HistoryTurn { role: "user" | "assistant"; at: number; text?: string; images?: number; events?: ChatEvent[] }
 export interface ChatTurn { role: "user" | "assistant"; text: string; images?: { mediaType: "image/jpeg"; dataBase64: string }[] }
@@ -99,6 +100,62 @@ export const signInUrl = `${API_BASE}/api/auth/start`;
 /** Connecting Google Health afterwards: the same sign-in, asking for the Health permissions. */
 export const connectHealthUrl = `${API_BASE}/api/auth/connect-health`;
 
+export type ChatInput = { message: string; history: ChatTurn[]; images?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string }[]; intent?: "ate" | "would" };
+
+/** The Cloud Run service's own address: the streamed chat goes there, past Firebase Hosting, which holds a stream back until it ends. */
+export const STREAM_BASE = process.env.EXPO_PUBLIC_STREAM_BASE ?? "";
+
+/**
+ * BR-01m6pmf9avbbgd373z1jcvvaqw (A reply arrives as it is written, with its steps): the chat, streamed. A ticket comes from the
+ * session (through Hosting), the reply straight from the service, one line at a time to `onLine`; Stop aborts `signal`. Without a
+ * stream address (a local build) the whole reply comes through Hosting as before. QA-01m6pmf9hz17nxcj3tedpxmbyr: the slow-connection
+ * notice watches the wait for the first line, not the whole reply.
+ */
+export async function chatStream(input: ChatInput, onLine: (l: StreamLine) => void, signal?: AbortSignal): Promise<ChatReply> {
+  if (!STREAM_BASE || typeof TextDecoder === "undefined") return api.chat(input);
+  const { ticket } = await call<{ ticket: string }>("POST", "/chat/ticket", {});
+  const ctl = new AbortController();
+  const stop = () => ctl.abort();
+  signal?.addEventListener("abort", stop);
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, TIMEOUT_MS);
+  let first: () => void = () => undefined;
+  void track(new Promise<void>((r) => { first = r; }));
+  try {
+    const res = await fetch(`${STREAM_BASE}/api/stream/chat`, {
+      method: "POST", signal: ctl.signal,
+      headers: { authorization: `Bearer ${ticket}`, "content-type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) { const j = (await res.json().catch(() => ({}))) as { error?: string }; throw new ApiError(res.status, j.error ?? "error", j); }
+    const read = lineReader();
+    const dec = new TextDecoder();
+    let reply: ChatReply | undefined;
+    const take = (chunk: string) => {
+      for (const l of read(chunk)) {
+        first();
+        if (l.type === "done") reply = l.reply as ChatReply;
+        else if (l.type === "error") throw new ApiError(l.status, l.error ?? "error", l);
+        else onLine(l);
+      }
+    };
+    const reader = res.body?.getReader();
+    if (reader) for (;;) { const { done, value } = await reader.read(); if (done) break; take(dec.decode(value, { stream: true })); }
+    else take(await res.text());
+    take("\n");
+    if (!reply) throw new ApiError(0, "network", {});
+    return reply;
+  } catch (e) {
+    if (timedOut) throw new ApiError(0, "timeout", {});
+    if (signal?.aborted) throw new ApiError(0, "stopped", {});
+    throw e;
+  } finally {
+    first();
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", stop);
+  }
+}
+
 export const api = {
   me: () => call<Me>("GET", "/me"),
   settings: () => call<{ settings: Settings | null }>("GET", "/settings"),
@@ -114,7 +171,7 @@ export const api = {
   choice: (body: { options: { rank: number; name: string; kcal: number; carbs: number; protein: number; fat?: number }[]; chosenRank: number | null }) => call<{ ok: true }>("POST", "/choice", body),
   entriesToday: () => call<{ entries: DayEntry[] }>("GET", "/entries/today"),
   updateEntry: (patch: EntryPatch) => call<{ entry: DayEntry }>("POST", "/entries/update", patch),
-  chat: (input: { message: string; history: ChatTurn[]; images?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string }[]; intent?: "ate" | "would" }) => call<ChatReply>("POST", "/chat", input),
+  chat: (input: ChatInput) => call<ChatReply>("POST", "/chat", input),
   chatHistory: () => call<{ turns: HistoryTurn[] }>("GET", "/chat/history?limit=60"),
   consent: () => call<{ ok: true }>("POST", "/consent", {}),
   usuals: () => call<{ usuals: Usual[] }>("GET", "/usuals"),

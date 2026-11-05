@@ -154,7 +154,22 @@ const HISTORY_TURNS = 20;
 export interface AgentDeps { model: ModelClient; modelName: string }
 /** The side of the dock's switch the message was sent on (BR-01m6ph6dgw3qxzxjjy1sh3t0yz); none from the conversation sheet. */
 export type Intent = "ate" | "would";
-export interface AgentInput { history: ChatTurn[]; message: string; images?: ImageInput[]; intent?: Intent }
+/** BR-01m6pmf9avbbgd373z1jcvvaqw (A reply arrives as it is written, with its steps): what the reply does, as it happens. A step is
+ * a tool (or reading the photo) with a start and an end; `delta` is text as the model writes it, `text_set` replaces the text
+ * written so far (a claim the agent dropped), and `event` is a card or a sheet as soon as it exists. */
+export type StreamEvent =
+  | { type: "step"; id: string; tool: string; detail?: string; state: "start" | "done" }
+  | { type: "delta"; text: string }
+  | { type: "text_set"; text: string }
+  | { type: "event"; event: ChatEvent };
+
+export interface AgentInput {
+  history: ChatTurn[]; message: string; images?: ImageInput[]; intent?: Intent;
+  /** Receives the reply as it happens; without it the reply comes only at the end, as before. */
+  emit?: (e: StreamEvent) => void;
+  /** Stop: no model turn and no tool after it; what was logged before it stays. */
+  signal?: AbortSignal;
+}
 
 /** Photos stay visible for the two user messages after the one they came with, and never more than four of them. */
 export const PHOTO_TURNS = 2;
@@ -167,12 +182,23 @@ export const intentNote = (intent: Intent | undefined): string | undefined =>
     : intent === "would"
       ? "(Sent on the \"Ennék\" side: the person asks what to eat. Call suggest_options; never log_meal, whatever the photo shows.)"
       : undefined;
-export interface AgentResult { events: ChatEvent[]; usage: Usage }
+export interface AgentResult { events: ChatEvent[]; usage: Usage; stopped?: boolean }
 
 const asNumber = (x: unknown): number | undefined => (typeof x === "number" && Number.isFinite(x) ? x : undefined);
 
 export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput): Promise<AgentResult> {
   const events: ChatEvent[] = [];
+  const emit = input.emit ?? (() => undefined);
+  // The text shown so far (kept turns only), so that a dropped claim can be taken back and turns are set apart.
+  let shown = "";
+  let turnText = "";
+  const say = (delta: string) => { if (!turnText && shown) emit({ type: "delta", text: "\n\n" }); turnText += delta; emit({ type: "delta", text: delta }); };
+  const keepTurn = () => { if (turnText) shown += (shown ? "\n\n" : "") + turnText; turnText = ""; };
+  // Every card or sheet goes out as soon as it exists; a question the agent asks is text the person reads at once.
+  const push = (e: ChatEvent) => {
+    events.push(e);
+    if (e.type === "text") { say(e.text); keepTurn(); } else emit({ type: "event", event: e });
+  };
   const usage: Usage = { inputTokens: 0, outputTokens: 0 };
 
   const recent = input.history.slice(-HISTORY_TURNS);
@@ -226,7 +252,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           if (Array.isArray(args["constraints"])) patch.constraints = args["constraints"].filter((c): c is string => typeof c === "string");
           const r = await env.saveSettings(patch);
           if (!r.ok) return JSON.stringify({ error: r.error });
-          events.push({ type: "settings_saved" });
+          push({ type: "settings_saved" });
           return JSON.stringify({ saved: true });
         }
         case "suggest_options": {
@@ -234,7 +260,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const r = await env.suggest({ ...(optionsText ? { optionsText } : {}), ...(images.length ? { images } : {}) });
           if (r.kind === "not_ready") return JSON.stringify({ error: "Setup is not done yet. Finish the setup conversation first." });
           if (r.kind === "options") {
-            events.push({ type: "options", options: r.options, basis: r.basis, source: images.length ? "photo" : "typed" });
+            push({ type: "options", options: r.options, basis: r.basis, source: images.length ? "photo" : "typed" });
             return JSON.stringify({ shown: r.options.map((o) => `${o.rank}. ${o.name} (${o.kcal} kcal, ${o.carbs} g carbs, ${o.protein} g protein)`) });
           }
           return JSON.stringify({ shown: [], reason: r.reason });
@@ -243,14 +269,14 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const l = args["language"];
           if (typeof l !== "string" || !(LANGUAGES as readonly string[]).includes(l)) return JSON.stringify({ error: `Supported languages: ${LANGUAGES.join(", ")}` });
           await env.setLanguage(l as Language);
-          events.push({ type: "language", language: l as Language });
+          push({ type: "language", language: l as Language });
           return JSON.stringify({ saved: true });
         }
         case "log_water": {
           const ml = asNumber(args["ml"]);
           if (ml === undefined || ml < 10 || ml > 5000) return JSON.stringify({ error: "Give the amount in millilitres, from 10 to 5000." });
           const r = await env.logWater(Math.round(ml));
-          events.push({ type: "logged_water", ml: Math.round(ml), id: r.id });
+          push({ type: "logged_water", ml: Math.round(ml), id: r.id });
           return JSON.stringify({ logged: true, ...(r.left ? { leftTodayMl: r.left.waterMl } : {}) });
         }
         case "list_entries": {
@@ -263,13 +289,13 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const known = await env.recentEntries();
           const picked = all ? [] : known.filter((e) => wanted.includes(e.id));
           if (!all && picked.length === 0) return JSON.stringify({ error: "None of those ids is one of the person's recent entries. Call list_entries first." });
-          events.push({ type: "confirm_delete", ids: picked.map((e) => e.id), all, labels: picked.map((e) => `${e.name} ${e.detail} (${e.when})`) });
+          push({ type: "confirm_delete", ids: picked.map((e) => e.id), all, labels: picked.map((e) => `${e.name} ${e.detail} (${e.when})`) });
           return JSON.stringify({ shown: "A confirmation card is on the screen. Nothing is deleted until the person taps it." });
         }
         case "ask": {
           const q = typeof args["question"] === "string" ? args["question"].trim() : "";
           if (!q) return JSON.stringify({ error: "Give the question." });
-          events.push({ type: "text", text: q });
+          push({ type: "text", text: q });
           asked = true;
           return JSON.stringify({ shown: true });
         }
@@ -277,7 +303,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const list = Array.isArray(args["replies"]) ? args["replies"].filter((r): r is string => typeof r === "string") : [];
           const replies = [...new Set(list.map((r) => r.trim()).filter((r) => r.length > 0 && r.length <= 24))].slice(0, 4);
           if (replies.length < 2) return JSON.stringify({ error: "Give 2 to 4 short answers." });
-          events.push({ type: "replies", replies });
+          push({ type: "replies", replies });
           return JSON.stringify({ shown: true });
         }
         case "log_meal": {
@@ -289,7 +315,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
             name: nm, kcal, carbs, protein, ...(fat !== undefined ? { fat } : {}), ...(ingredients?.length ? { ingredients } : {}),
             ...(images.length ? { source: "photo" as const } : {}), ...(args["fromLabel"] === true ? { estimate: false } : {}),
           });
-          events.push({ type: "logged", name: nm, kcal: Math.round(kcal), id: r.id });
+          push({ type: "logged", name: nm, kcal: Math.round(kcal), id: r.id });
           return JSON.stringify({ logged: true, ...(r.left ? { leftToday: r.left } : {}) });
         }
         case "update_entry": {
@@ -303,7 +329,7 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
           const id = typeof args["id"] === "string" && args["id"] ? args["id"] : undefined;
           const r = await env.updateEntry(id, patch);
           if (!r.ok) return JSON.stringify({ error: r.error });
-          events.push({ type: "updated", id: r.id, name: r.name, kcal: r.kcal });
+          push({ type: "updated", id: r.id, name: r.name, kcal: r.kcal });
           return JSON.stringify({ updated: true, ...(r.left ? { leftToday: r.left } : {}) });
         }
         default:
@@ -319,9 +345,23 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
   const CLAIM = /napl[oó]z|felír|rögzít|\blogged\b|\brecorded\b/i;
   let forceNext = images.length > 0;   // a photo has to end in a log, options or a question, never in an empty promise
   let corrected = false;
+  const stopped = () => input.signal?.aborted === true;
+  // EX-01m6pmf9repmym9yf87emkrjph: a photo's first step shows before the model's first word (QA-01m6pmf9hz17nxcj3tedpxmbyr,
+  // EX-01m6pnhv4v91k77sfz14pka5ka: within 1.5 s, since nothing waits for the model before it).
+  if (images.length) emit({ type: "step", id: "photo", tool: "photo", state: "start" });
   for (let step = 0; step < MAX_STEPS; step++) {
+    if (stopped()) break;
     const sent = step === 0 ? [...turns] : turns.map((t) => ({ ...t, content: t.content.map((b): Block => (b.type === "image" ? { type: "text", text: "(photo attached)" } : b)) }));
-    const res = await deps.model.converse({ model: deps.modelName, system, turns: sent, tools: TOOLS, maxTokens: 800, ...(forceNext ? { forceTool: true } : {}) });
+    let res: Awaited<ReturnType<ModelClient["converse"]>>;
+    try {
+      res = await deps.model.converse({ model: deps.modelName, system, turns: sent, tools: TOOLS, maxTokens: 800, ...(forceNext ? { forceTool: true } : {}) },
+        { onText: say, ...(input.signal ? { signal: input.signal } : {}) });
+    } catch (e) {
+      // EX-01m6pmf9zhdr5wntczz8ncfdrj / EX-01m6pmfa63nj89cdaa8jn68ceq: Stop keeps what was written and logged, and does nothing more.
+      if (stopped()) { if (turnText.trim()) events.push({ type: "text", text: turnText.trim() }); keepTurn(); break; }
+      throw e;
+    }
+    if (step === 0 && images.length) emit({ type: "step", id: "photo", tool: "photo", state: "done" });
     forceNext = false;
     usage.inputTokens += res.usage.inputTokens;
     usage.outputTokens += res.usage.outputTokens;
@@ -330,16 +370,39 @@ export async function runAgent(deps: AgentDeps, env: AgentEnv, input: AgentInput
     // The model said it logged something but called no tool: that is not true, so the claim is dropped and it is made to act.
     if (calls.length === 0 && !corrected && !events.some((e) => LOGGED.has(e.type)) && texts.some((x) => CLAIM.test(x.text))) {
       corrected = true;
+      turnText = "";
+      emit({ type: "text_set", text: shown });
       turns.push({ role: "assistant", content: res.content });
       turns.push({ role: "user", content: [{ type: "text", text: "(system) You said you logged something but called no tool, so nothing was logged. Call log_meal, log_water or update_entry now with the right values, or call ask if you need to know more." }] });
       forceNext = true;
       continue;
     }
     for (const x of texts) events.push({ type: "text", text: x.text.trim() });
+    keepTurn();
     if (res.stopReason !== "tool_use" || calls.length === 0) break;
+    if (stopped()) break;
     turns.push({ role: "assistant", content: res.content });
-    turns.push({ role: "user", content: await Promise.all(calls.map(async (c): Promise<Block> => ({ type: "tool_result", toolUseId: c.id, content: await run(c.name, c.input) }))) });
+    turns.push({ role: "user", content: await Promise.all(calls.map(async (c): Promise<Block> => {
+      const step = stepOf(c.name, c.input);
+      if (step) emit({ type: "step", id: c.id, ...step, state: "start" });
+      const content = await run(c.name, c.input);
+      if (step) emit({ type: "step", id: c.id, ...step, state: "done" });
+      return { type: "tool_result", toolUseId: c.id, content };
+    })) });
     if (asked) break;
   }
-  return { events, usage };
+  return { events, usage, ...(stopped() ? { stopped: true } : {}) };
+}
+
+/** The line a tool shows while it runs; tools the person would not call a step (the language, quick replies, a question) show none. */
+export function stepOf(name: string, raw: unknown): { tool: string; detail?: string } | undefined {
+  const a = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const str = (k: string) => (typeof a[k] === "string" && a[k] ? String(a[k]) : undefined);
+  switch (name) {
+    case "log_meal": { const d = str("name"); return { tool: name, ...(d ? { detail: d } : {}) }; }
+    case "update_entry": { const d = str("name"); return { tool: name, ...(d ? { detail: d } : {}) }; }
+    case "log_water": return { tool: name, ...(typeof a["ml"] === "number" ? { detail: `${Math.round(a["ml"])} ml` } : {}) };
+    case "get_today": case "suggest_options": case "list_entries": case "request_delete": case "save_settings": case "estimate_calories": return { tool: name };
+    default: return undefined;
+  }
 }

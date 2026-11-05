@@ -114,6 +114,11 @@ const en = {
   placeholderWould: "What do you fancy? Or photograph what you have…",
   photoNow: "Take a photo", photoGallery: "From the gallery", fridgeChip: "Photo of the fridge",
   notSent: "Not sent", sendAgain: "Send again", undone: "Undone", editEntry: "Edit",
+  // BR-01m6pmf9avbbgd373z1jcvvaqw: the steps of a reply, as they happen.
+  stepPhoto: "Looking at the photo", stepToday: "Reading today", stepLog: (d?: string) => (d ? `Logging: ${d}` : "Logging"),
+  stepWater: (d?: string) => (d ? `Logging ${d} of water` : "Logging water"), stepOptions: "Finding options", stepUpdate: (d?: string) => (d ? `Changing: ${d}` : "Changing"),
+  stepEntries: "Reading your entries", stepDelete: "Preparing the delete", stepSettings: "Saving the setting", stepEstimate: "Working out the daily goal",
+  stepOther: "Working on it", stop: "Stop", stepsOpen: "Show the steps",
 };
 
 /** Hungarian case endings after a figure with its unit: "180 kcal-lal", "16 g-mal", "0,3 l-rel"; "160 g-ból"; "840 kcal-nál". */
@@ -231,6 +236,11 @@ const hu: typeof en = {
   placeholderWould: "Mire vágysz? Vagy fotózd le, mi van itthon…",
   photoNow: "Fénykép most", photoGallery: "A galériából", fridgeChip: "Fotó a hűtőről",
   notSent: "Nem ment el", sendAgain: "Újra", undone: "Visszavonva", editEntry: "Szerkesztés",
+  // BR-01m6pmf9avbbgd373z1jcvvaqw: the steps of a reply, as they happen.
+  stepPhoto: "Megnézem a képet", stepToday: "Megnézem a mai napot", stepLog: (d?: string) => (d ? `Beírom: ${d}` : "Beírom"),
+  stepWater: (d?: string) => (d ? `Beírom: ${d} víz` : "Beírom a vizet"), stepOptions: "Ajánlatot keresek", stepUpdate: (d?: string) => (d ? `Átírom: ${d}` : "Átírom"),
+  stepEntries: "Megnézem a bejegyzéseket", stepDelete: "Előkészítem a törlést", stepSettings: "Elmentem a beállítást", stepEstimate: "Kiszámolom a napi célt",
+  stepOther: "Dolgozom rajta", stop: "Leállítás", stepsOpen: "Lépések megnyitása",
 };
 
 export const TEXTS = { en, hu } as const;
