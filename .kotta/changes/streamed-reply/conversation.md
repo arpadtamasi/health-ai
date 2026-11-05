@@ -70,6 +70,18 @@ B2; a lekérdezés elvetve.
 
 > 1 igen 2 igen
 
+### J4 · 2026-11-05 20:3x UTC
+
+**Ember:**
+
+> Szavanként vagy bejövő tokenenként? Ne bonyolítsuk…
+
+**Ágens:** Bejövő darabonként, ahogy a modell küldi, mesterséges adagolás nélkül; a példákban javítva. Jóváhagyod így?
+
+**Ember:**
+
+> Akkor ok
+
 ## Kérdések és válaszok
 
 ### K1 · 2026-11-05 19:36 UTC

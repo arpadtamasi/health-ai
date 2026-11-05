@@ -1,0 +1,24 @@
+change: streamed-reply
+approved_by: Tamási Árpád
+approved_at: 2026-11-05T20:28:42.351Z
+approval_basis: sha256:8156e10bdd6dcf17b21e513bef51897636d85acd61402e135f65e3e7cd43a549
+replaced:
+  BR-01m6ph6dq7aszxhxgzz4kgr8d4: sha256:ff5103cd290b5f3df094c98d7f36f517c672adcc29d03efbe5fab278a0507e53
+approved:
+  added:
+    - id: BR-01m6pmf9avbbgd373z1jcvvaqw
+      title: A reply arrives as it is written, with its steps
+    - id: EX-01m6pmf9repmym9yf87emkrjph
+      title: A photo reply shows its steps before its words
+    - id: EX-01m6pmfa63nj89cdaa8jn68ceq
+      title: Stop before anything was logged logs nothing
+    - id: EX-01m6pmf9zhdr5wntczz8ncfdrj
+      title: Stop keeps what was already logged
+    - id: EX-01m6pnhv4v91k77sfz14pka5ka
+      title: The first step shows within a second and a half
+    - id: QA-01m6pmf9hz17nxcj3tedpxmbyr
+      title: The answer starts to show at once
+  changed:
+    - id: BR-01m6ph6dq7aszxhxgzz4kgr8d4
+      title: The conversation keeps what happened in it
+  removed: []
