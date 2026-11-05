@@ -4,7 +4,7 @@ form: quality-attribute
 title: The answer starts to show at once
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources: [".kotta/changes/streamed-reply/conversation.md · SZ1"]
   quote: null
   inferred: "That the start of an answer is a quality to measure is the assistant's reading of the owner's wish for a flowing reply; the measure is an open decision."
@@ -33,8 +33,4 @@ The person's message SHALL show at once, a first sign of the answer (a step or t
 
 ## Measure
 
-To be set by the owner: how many seconds after Send the first step or word shows on a warm service, and after a quiet hour.
-
-## Open decisions
-
-- How soon must the first step or word show after Send on a warm service, and how soon after a quiet hour?
+The first step or word shows within 1.5 seconds of Send while the service is running, and within 6 seconds after a quiet hour; until then the "the connection is slow" notice of the slow-response quality shows as before (J3: "2 igen").

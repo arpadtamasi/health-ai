@@ -62,6 +62,14 @@ B vagy C, a próba szerint; meleg példány nem kell.
 
 B2; a lekérdezés elvetve.
 
+### J3 · 2026-11-05 20:2x UTC
+
+**Ágens:** 1) A kész válasz után a lépések tűnjenek el, vagy csukódjanak egy halvány sorba (javaslat: csukódjanak)? 2) Az első lépés vagy szó 1,5 s-on belül, ha a szerver fut, 6 s-on belül egy csendes óra után (javaslat)?
+
+**Ember:**
+
+> 1 igen 2 igen
+
 ## Kérdések és válaszok
 
 ### K1 · 2026-11-05 19:36 UTC

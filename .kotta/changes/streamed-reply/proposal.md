@@ -22,5 +22,4 @@ made (SZ2).
 
 ## Open decisions
 
-- After a reply is done, do its steps disappear or stay folded into one line?
-- How soon must the first step or word show after Send, on a warm service and after a quiet hour?
+None: steps fold into one line when done; first sign within 1.5 s warm, 6 s after a quiet hour (J3).
