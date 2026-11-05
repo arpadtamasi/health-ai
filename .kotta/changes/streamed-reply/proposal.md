@@ -14,10 +14,11 @@ made (SZ2).
 - The start of an answer becomes a measured quality: "The answer starts to show at once" (its measure is open).
 - "The conversation keeps what happened in it" points to the new rule instead of "the next change".
 - The message model follows the oktat-ai chat (assistant-core): a status, the growing text, a list of steps, an error
-  with Újra. Transport: the app asks for the reply's progress twice a second while the send request is open; the
-  server keeps that progress in Firestore. A probe settled this (J1): through Firebase Hosting, five lines written one a
-  second all arrived together after 5.2 s, so a streamed request would not flow. No warm instance (J1). The temporary
-  probe is removed.
+  with Újra. Transport: the reply streams straight from the Cloud Run service's own address, past Firebase Hosting,
+  which holds a streamed response back until it ends (the probe: five lines written one a second all arrived together
+  after 5.2 s). The app first gets a short-lived ticket through Hosting (where the sign-in cookie lives) and opens the
+  stream with it; the service allows the app's origin (CORS). Polling was turned down (J2). The address can later move to
+  an own domain by a Cloud Run domain mapping. No warm instance (J1). The temporary probe is removed.
 
 ## Open decisions
 

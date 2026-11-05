@@ -40,6 +40,28 @@ Az ágens javasolta, az ember jóváhagyta (`agent-proposed-human-approved`).
 
 B vagy C, a próba szerint; meleg példány nem kell.
 
+### J2 · 2026-11-05 20:1x UTC
+
+**Ágens:** A próba szerint a Hosting visszatartja a folyamot (öt, másodpercenként írt sor egyszerre érkezett 5,2 s-nál), ezért C: az app fél másodpercenként lekérdezi a haladást.
+
+**Ember:**
+
+> Nem tetszik a poll
+
+**Ágens:** B2: a folyam közvetlenül a Cloud Run saját címéről jön, a Hostingot kikerülve; az app a Hostingon át rövid életű jegyet kér, azzal nyitja a folyamot. Vagy A: Firestore-figyelő, mint az oktat-ai. Javaslat: B2.
+
+**Ember:**
+
+> B2 esetén rewrite sincs? A hülye Cloud run URL megy?
+
+**Ágens:** Igen, ennél a hívásnál nincs rewrite; a cím csak a háttérkérésben látszik, később saját domainre tehető.
+
+**Ember:**
+
+> Mehet B2
+
+B2; a lekérdezés elvetve.
+
 ## Kérdések és válaszok
 
 ### K1 · 2026-11-05 19:36 UTC

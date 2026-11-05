@@ -5,7 +5,7 @@ title: 'A reply arrives as it is written, with its steps'
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/streamed-reply/conversation.md · SZ1", ".kotta/changes/streamed-reply/conversation.md · SZ2", ".kotta/changes/streamed-reply/conversation.md · J1"]
+  sources: [".kotta/changes/streamed-reply/conversation.md · J2", ".kotta/changes/streamed-reply/conversation.md · SZ1", ".kotta/changes/streamed-reply/conversation.md · SZ2", ".kotta/changes/streamed-reply/conversation.md · J1"]
   quote: "A folyó válasz, a látható lépések és a Leállítás gomb."
   inferred: "The step wording, what happens to the steps afterwards and the Stop semantics are the assistant's proposal, modelled on the oktat-ai chat (status, growing text, a list of steps)."
 ---
@@ -21,7 +21,7 @@ The owner wants the conversation to feel like Claude or ChatGPT (SZ1), and named
 
 ## Scope
 
-The conversation sheet and the "What should I eat now?" sheet. The reply reaches the phone by the app asking for its progress while it is written, because Firebase Hosting holds a streamed response back until it ends (J1, the probe).
+The conversation sheet and the "What should I eat now?" sheet. The reply streams to the phone straight from the service, past Firebase Hosting, which holds a streamed response back until it ends (J1, J2, the probe).
 
 ## Open decisions
 
