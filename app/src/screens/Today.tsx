@@ -30,7 +30,7 @@ import { isLang, useT, type Lang, type Texts } from "../i18n";
 import { dayFraction } from "../pace";
 import { nextShown, partOf, type Drawn } from "../plate";
 import { BUILD, isNewer, onComeBack, publishedBuild } from "../update";
-import { canSendAgain, intentOf, photoTurns, startSide, switchShown, type Side } from "../dock";
+import { canSendAgain, fittingUsuals, intentOf, photoTurns, startSide, switchShown, type Side } from "../dock";
 import { blocksOf } from "../rich";
 import { applyLine, emptyLive, stepLabel, stepSummary, type Live, type Step, type StepWords, type StreamLine } from "../stream";
 import { cacheGet, cacheSet } from "../cache";
@@ -157,8 +157,8 @@ const hm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The dock's text field, the photos waiting beside it (up to four: one meal can take several) and Send. */
-function Composer({ t, running, placeholder, onSend, onFocus, onDraft, onStop, autoFocus = false, focusSignal = 0 }:
-  { t: Texts; running: boolean; placeholder: string; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; onDraft?: (typing: boolean) => void; onStop?: () => void; autoFocus?: boolean; focusSignal?: number }) {
+function Composer({ t, running, placeholder, onSend, onFocus, onDraft, onStop, autoFocus = false, focusSignal = 0, allowEmpty = false }:
+  { t: Texts; running: boolean; placeholder: string; allowEmpty?: boolean; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; onDraft?: (typing: boolean) => void; onStop?: () => void; autoFocus?: boolean; focusSignal?: number }) {
   const input = useRef<TextInput>(null);
   useEffect(() => { if (focusSignal) input.current?.focus(); }, [focusSignal]);
   const [tray, setTray] = useState<Photo[]>([]);
@@ -168,7 +168,8 @@ function Composer({ t, running, placeholder, onSend, onFocus, onDraft, onStop, a
   // EX-01m6ph6e4bcenyjywdahg41g4r: the camera button offers a photo now or one from the gallery, so a meal can be logged afterwards.
   const [menu, setMenu] = useState(false);
   const camera = async (from: PhotoSource) => { setMenu(false); const p = await takePhoto(from); if (p) setTray((x) => [...x, p].slice(0, 4)); };
-  const canSend = (draft.trim().length > 0 || tray.length > 0) && !running;
+  // EX-01m6pv411c3hpg00qkrp2tm4z6: on "Ennék" Send works with an empty field and asks what to eat now.
+  const canSend = (draft.trim().length > 0 || tray.length > 0 || allowEmpty) && !running;
   const send = () => { if (!canSend) return; onSend(draft.trim(), tray); setTray([]); setDraft(""); };
   return (
     <View style={{ gap: 8 }}>
@@ -256,7 +257,8 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   };
   // BR-01m6ph6dgw3qxzxjjy1sh3t0yz: the dock's switch, on the side used last; its one-line explanation is shown the first time only.
   const [side, setSide] = useState<Side>(() => startSide(cacheGet("dockSide")));
-  const pickSide = (s: Side) => { setSide(s); cacheSet("dockSide", s); };
+  const [tryUsual, setTryUsual] = useState<string | null>(null);
+  const pickSide = (s: Side) => { setSide(s); setTryUsual(null); cacheSet("dockSide", s); };
   const [hint] = useState(() => !cacheGet<boolean>("sideHintSeen"));
   useEffect(() => { if (hint && ready) cacheSet("sideHintSeen", true); }, [hint, ready]);
   const [armed, setArmed] = useState(false);
@@ -508,6 +510,12 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
     }
     return null;
   })() : null;
+  // EX-01m6pvfvzzq4vs1pfhdczn9kx4: on "Ennék" the usual foods that fit now; the first tap previews one on the plate, the second logs it.
+  const fitting = day && ready && withSwitch && side === "would" ? fittingUsuals(usuals, {
+    calories: day.goals.calories - day.eaten.calories, protein: day.goals.protein - day.eaten.protein, carbs: day.goals.carbs - day.eaten.carbs, fat: day.goals.fat - day.eaten.fat,
+  }, day.goals) : [];
+  const trying = mode === "home" ? fitting.find((u) => u.name === tryUsual) ?? null : null;
+  const tapFitting = (u: Usual) => { if (tryUsual === u.name) { setTryUsual(null); logUsual(u); } else { setTryUsual(u.name); setHighlight(null); } };
 
   // ---- the bar above the dock: a failure first, then the chosen entry, then what was just logged or changed ----
   const failed = pending.find((p) => p.status === "failed");
@@ -581,7 +589,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
         <>
           <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "center", gap: 2, paddingTop: 8, paddingHorizontal: 14 }}>
             <Plate parts={view.parts} kcal={{ eaten: day.eaten.calories, goal: day.goals.calories }} selected={metric} highlight={highlight} size={plateSize}
-              preview={pickedOption ? { p: pickedOption.protein, c: pickedOption.carbs, f: pickedOption.fat ?? 0 } : null}
+              preview={pickedOption ? { p: pickedOption.protein, c: pickedOption.carbs, f: pickedOption.fat ?? 0 } : trying ? { p: trying.protein, c: trying.carbs, f: trying.fat } : null}
               onSelect={select} labels={{ p: t.nameP, c: t.nameC, f: t.nameF }} />
             <Glass part={view.parts.w} width={Math.max(46, Math.round(plateSize * 0.24))} selected={metric === "w"} dim={metric !== "kcal" && metric !== "w"} highlight={highlight} onSelect={() => select("w")} label={t.nameW} />
           </View>
@@ -630,11 +638,11 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
           chips={!ready || mode === "talk"
             ? replies.map((r) => <Chip key={r} label={r} onPress={() => send(r, [])} />)
             : side === "would" && withSwitch
-              ? [<Chip key="now" ui="utensils" label={day && day.minutes < 10 * 60 && !shown.some((e) => e.kind === "meal") ? t.whatNowBreakfast : t.whatNow} onPress={openWhatNow} />]
+              ? fitting.map((u) => <Chip key={`fit-${u.name}`} label={shortName(u.name)} selected={tryUsual === u.name} onPress={() => tapFitting(u)} />)
               : usuals.slice(0, 6).map((u) => <Chip key={`${u.kind}-${u.name}`} icon={u.kind === "water" ? "water" : undefined} label={u.kind === "water" ? `${u.ml} ml` : shortName(u.name)} onPress={() => logUsual(u)} />)}
           onSend={(x, p) => {
             const intent = intentOf(withSwitch, side);
-            if (intent === "would") { openWhatNow(); send(x, p, t.whatNow, "would"); return; }
+            if (intent === "would") { setTryUsual(null); openWhatNow(); if (x || p.length) send(x, p, t.whatNow, "would"); return; }
             send(x, p, "", intent); if (ready) setMode("talk");
           }}
           onFocus={() => { if (ready) { setArmed(mode === "home" || armed); setMode("talk"); setHighlight(null); } }} />
@@ -661,7 +669,7 @@ function Dock({ bar, chips, t, running, onSend, onFocus, onDraft, onStop, focusS
         {side ? <SideSwitch side={side} onSide={onSide} t={t} /> : null}
         {side && hint ? <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, textAlign: "center" }}>{t.sideHint}</Text> : null}
         {chips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 14 }} style={{ marginHorizontal: -14 }}>{chips}</ScrollView> : null}
-        <Composer t={t} running={running} placeholder={placeholder} onSend={onSend} onFocus={onFocus} onDraft={onDraft} onStop={onStop} focusSignal={focusSignal} />
+        <Composer t={t} running={running} placeholder={placeholder} onSend={onSend} onFocus={onFocus} onDraft={onDraft} onStop={onStop} focusSignal={focusSignal} allowEmpty={side === "would"} />
       </View>
     </>
   );

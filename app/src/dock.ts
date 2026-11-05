@@ -22,3 +22,29 @@ export const photoTurns = (users: number[]): Set<number> => new Set(users.slice(
 
 /** A failed reply offers "Újra" unless sending again cannot help (the daily limit). */
 export const canSendAgain = (code: string | undefined): boolean => code !== "daily_limit";
+
+/** What is left of today, per goal: the calories and each macro's grams still to eat. */
+export interface Left { calories: number; protein: number; carbs: number; fat: number }
+type Macro = "protein" | "carbs" | "fat";
+export const ENNEK_CHIPS = 4;
+
+/** The macro furthest behind, measured against its own goal; none when every macro is met. */
+export function largestGap(left: Left, goals: Left): Macro | null {
+  const ms: Macro[] = ["protein", "carbs", "fat"];
+  const share = (m: Macro) => (goals[m] > 0 ? Math.max(0, left[m]) / goals[m] : 0);
+  const best = ms.reduce((a, b) => (share(b) > share(a) ? b : a));
+  return share(best) > 0 ? best : null;
+}
+
+/** EX-01m6pvfvzzq4vs1pfhdczn9kx4 (Ennék offers the usual foods that fit now): up to four usual foods within the calories left,
+ * the one that closes most of the largest gap first, worked out here without a model call; none when none fits
+ * (EX-01m6pvfw80s18pn0szqydw2dn7). Water is not a food to suggest. */
+export function fittingUsuals<U extends { kind: "meal" | "water"; kcal: number; protein: number; carbs: number; fat: number; count: number }>(
+  usuals: U[], left: Left, goals: Left): U[] {
+  const gap = largestGap(left, goals);
+  const closes = (u: U) => (gap ? Math.min(u[gap], Math.max(0, left[gap])) : 0);
+  return usuals
+    .filter((u) => u.kind === "meal" && u.kcal > 0 && u.kcal <= left.calories)
+    .sort((a, b) => closes(b) - closes(a) || b.count - a.count)
+    .slice(0, ENNEK_CHIPS);
+}
