@@ -22,4 +22,4 @@ The assistant answers.
 
 ## Then
 
-First a line "Megnézem a képet" appears, then "Beírom: ropa vieja, fél adag", each ticked when done; the entry's card shows as soon as it was logged; then the reply's text appears word by word under them.
+First a line "Megnézem a képet" appears, then "Beírom: ropa vieja, fél adag", each ticked when done; the entry's card shows as soon as it was logged; then the reply's text grows under them as it arrives from the model, with no extra pacing.
