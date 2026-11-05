@@ -632,3 +632,50 @@ describe("the chat is kept during the test", () => {
     expect((await talk(t, cookie, { message: "Szia" })).status).toBe(200);
   });
 });
+
+// US-01m3s789qmvs4jx8e93nb2j61n (Record what was suggested and what was chosen).
+describe("what was suggested and what was chosen", () => {
+  async function signedIn() {
+    const t = makeTestApp({ now: () => NOW });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    return { t, cookie };
+  }
+  const shown = [
+    { rank: 2, name: "Wholegrain sandwich", kcal: 430, carbs: 48, protein: 24, fat: 12 },
+    { rank: 1, name: "Chicken with rice", kcal: 560, carbs: 62, protein: 38, fat: 9 },
+    { rank: 3, name: "Salad", kcal: 310, carbs: 12, protein: 26, fat: 20 },
+  ];
+
+  // EX-01m3s789wxqpqankpfp30newfx (Choosing a suggestion is recorded next to what was shown).
+  it("keeps the options in their order, the choice and the time, with no photo, and counts it as followed", async () => {
+    const { t, cookie } = await signedIn();
+    expect((await t.http.post("/api/app/choice").set("cookie", cookie).send({ options: shown, chosenRank: 2 })).status).toBe(403);
+    const r = await t.http.post("/api/app/choice").set("cookie", cookie).set(HEADER).send({ options: shown, chosenRank: 2 });
+    expect(r.body).toEqual({ ok: true });
+    const [rec] = await t.store.listChoices("sub-tester", 10);
+    expect(rec!.options.map((o) => o.name)).toEqual(["Chicken with rice", "Wholegrain sandwich", "Salad"]);
+    expect(rec).toMatchObject({ chosenRank: 2, followed: true, at: NOW, expireAt: NOW + 90 * 24 * 3600 * 1000 });
+    expect(Object.keys(rec!).sort()).toEqual(["at", "chosenRank", "expireAt", "followed", "id", "options", "userId"]);
+  });
+
+  it("records a sheet closed without a choice as not followed, and refuses a malformed record", async () => {
+    const { t, cookie } = await signedIn();
+    await t.http.post("/api/app/choice").set("cookie", cookie).set(HEADER).send({ options: shown, chosenRank: null });
+    expect((await t.store.listChoices("sub-tester", 10))[0]).toMatchObject({ chosenRank: null, followed: false });
+    expect((await t.http.post("/api/app/choice").set("cookie", cookie).set(HEADER).send({ options: [], chosenRank: 1 })).status).toBe(400);
+    expect((await t.http.post("/api/app/choice").set(HEADER).send({ options: shown, chosenRank: 1 })).status).toBe(401);
+  });
+
+  it("is emptied with the whole history and with delete-my-data, for that person only", async () => {
+    const { t, cookie } = await signedIn();
+    await t.http.post("/api/app/choice").set("cookie", cookie).set(HEADER).send({ options: shown, chosenRank: 1 });
+    await t.store.putChoice({ id: "x", userId: "someone-else", at: NOW, options: shown, chosenRank: 1, followed: true, expireAt: NOW + 1 });
+    await t.http.post("/api/app/entries/delete-all").set("cookie", cookie).set(HEADER).send({});
+    expect(await t.store.listChoices("sub-tester", 10)).toEqual([]);
+    await t.http.post("/api/app/choice").set("cookie", cookie).set(HEADER).send({ options: shown, chosenRank: 1 });
+    await t.store.deleteUserData("sub-tester");
+    expect(await t.store.listChoices("sub-tester", 10)).toEqual([]);
+    expect(await t.store.listChoices("someone-else", 10)).toHaveLength(1);
+  });
+});

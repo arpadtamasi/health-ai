@@ -307,8 +307,25 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   const connect = () => { if (Platform.OS === "web") window.location.href = connectHealthUrl; else void Linking.openURL(connectHealthUrl); };
   const select = (m: Shown) => setMetric((cur) => nextShown(cur, m));
   const openWhatNow = () => { setMode("whatnow"); setSheetFrom(messages.length); setPicked(null); setHighlight(null); };
+  // US-01m3s789qmvs4jx8e93nb2j61n (Record what was suggested and what was chosen): each answer of the sheet is recorded once, with
+  // the option that was logged, or with none when the sheet is closed without one (EX-01m3s789wxqpqankpfp30newfx).
+  const recorded = useRef(new Set<string>());
+  const sheetAnswer = (): { id: string; options: Option[] } | null => {
+    for (let i = messages.length - 1; i >= sheetFrom && i >= 0; i--) {
+      const part = messages[i]!.content.find((p) => p.type === "tool-call" && p.toolName === "show_options");
+      if (part) return { id: messages[i]!.id, options: (part.result as Option[] | undefined) ?? [] };
+    }
+    return null;
+  };
+  const record = (chosenRank: number | null) => {
+    const a = sheetAnswer();
+    if (!a || !a.options.length || recorded.current.has(a.id)) return;
+    recorded.current.add(a.id);
+    void backend.choice(a.options, chosenRank).catch(() => undefined);
+  };
   const tapOption = (o: Option) => {
     if (picked !== o.rank) { setPicked(o.rank); return; }
+    record(o.rank);
     setPicked(null); setMode("home"); choose(o);
   };
 
@@ -433,7 +450,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
 
           {mode === "whatnow" ? (
             <WhatNow t={t} messages={messages} from={sheetFrom} running={running} picked={picked} onTap={tapOption}
-              onClose={() => { setMode("home"); setPicked(null); }} onSend={(x, p) => send(x, p, messages.length === sheetFrom ? t.whatNow : "")} />
+              onClose={() => { record(null); setMode("home"); setPicked(null); }} onSend={(x, p) => send(x, p, messages.length === sheetFrom ? t.whatNow : "")} />
           ) : (
             <>
               <View style={{ flex: 1, minHeight: 16 }} />

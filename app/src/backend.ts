@@ -17,6 +17,8 @@ export interface Backend {
   updateEntry(patch: EntryPatch): Promise<DayEntry>;
   deleteEntries(ids: string[]): Promise<void>;
   deleteAll(): Promise<void>;
+  /** US-01m3s789qmvs4jx8e93nb2j61n: records what the sheet showed and which option was logged (null when none was). */
+  choice(options: Option[], chosenRank: number | null): Promise<void>;
 }
 
 export const realBackend: Backend = {
@@ -33,6 +35,9 @@ export const realBackend: Backend = {
   updateEntry: async (patch) => (await api.updateEntry(patch)).entry,
   deleteEntries: async (ids) => { await api.deleteEntries(ids); },
   deleteAll: async () => { await api.deleteAll(); },
+  choice: async (options, chosenRank) => {
+    await api.choice({ options: options.map((o) => ({ rank: o.rank, name: o.name, kcal: o.kcal, carbs: o.carbs, protein: o.protein, ...(o.fat !== undefined ? { fat: o.fat } : {}) })), chosenRank });
+  },
 };
 
 /**

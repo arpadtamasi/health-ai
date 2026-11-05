@@ -110,6 +110,8 @@ export const api = {
   deleteEntries: (ids: string[]) => call<{ deleted: number }>("POST", "/entries/delete", { ids }),
   deleteAll: () => call<{ deleted: number }>("POST", "/entries/delete-all", {}),
   unlog: (id: string) => call<{ ok: true }>("POST", "/unlog", { id }),
+  // US-01m3s789qmvs4jx8e93nb2j61n: what "What should I eat now?" showed and which option was logged (null: none).
+  choice: (body: { options: { rank: number; name: string; kcal: number; carbs: number; protein: number; fat?: number }[]; chosenRank: number | null }) => call<{ ok: true }>("POST", "/choice", body),
   entriesToday: () => call<{ entries: DayEntry[] }>("GET", "/entries/today"),
   updateEntry: (patch: EntryPatch) => call<{ entry: DayEntry }>("POST", "/entries/update", patch),
   chat: (input: { message: string; history: ChatTurn[]; images?: { mediaType: "image/jpeg" | "image/png" | "image/webp"; dataBase64: string }[] }) => call<ChatReply>("POST", "/chat", input),

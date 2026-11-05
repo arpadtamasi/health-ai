@@ -1,7 +1,7 @@
 import { Firestore, Timestamp, type CollectionReference, type DocumentData } from "@google-cloud/firestore";
 import { AUTH_CODE_TTL_MS, AUTH_REQUEST_TTL_MS, RECONNECT_LINK_TTL_SECONDS } from "../auth/tokens.js";
 import type {
-  AllowEntry, AppPrefs, AppSettings, ChatRecord, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, ChatRecord, ChoiceRecord, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -30,10 +30,12 @@ export const COLLECTIONS = {
 
 /** The chat messages of a person, a subcollection of the user document. */
 export const CHAT_COLLECTION = "chat";
+/** What "What should I eat now?" showed and what was chosen (US-01m3s789qmvs4jx8e93nb2j61n), a subcollection of the user document. */
+export const CHOICES_COLLECTION = "choices";
 
 export const TTL_COLLECTIONS = [
   COLLECTIONS.authRequests, COLLECTIONS.authCodes, COLLECTIONS.refreshTokens, COLLECTIONS.reconnectNonces,
-  COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.tokenUsage, CHAT_COLLECTION,
+  COLLECTIONS.feedback, COLLECTIONS.intents, COLLECTIONS.tokenUsage, CHAT_COLLECTION, CHOICES_COLLECTION,
 ] as const;
 
 /** Collections whose documents carry a `userId`; `deleteUserData` empties them for one user. */
@@ -178,6 +180,20 @@ export class FirestoreStore implements Store {
     return snaps.size;
   }
 
+  private choices(userId: string) { return this.col(COLLECTIONS.users).doc(userId).collection(CHOICES_COLLECTION); }
+  async putChoice(r: ChoiceRecord) { await this.choices(r.userId).doc(r.id).set({ ...r, expireAt: expireAt(r.expireAt) }); }
+  async listChoices(userId: string, limit: number) {
+    const snaps = await this.choices(userId).orderBy("at", "desc").limit(limit).get();
+    return snaps.docs.map((d) => { const x = d.data(); return { ...x, expireAt: (x["expireAt"] as Timestamp).toMillis() } as ChoiceRecord; }).reverse();
+  }
+  async deleteAllChoices(userId: string) {
+    const snaps = await this.choices(userId).get();
+    const writer = this.db.bulkWriter();
+    for (const d of snaps.docs) void writer.delete(d.ref);
+    await writer.close();
+    return snaps.size;
+  }
+
   async getAppPrefs(userId: string) { return this.get<AppPrefs>(COLLECTIONS.appPrefs, userId); }
   async putAppPrefs(p: AppPrefs) { await this.col(COLLECTIONS.appPrefs).doc(p.userId).set(p); }
 
@@ -203,6 +219,7 @@ export class FirestoreStore implements Store {
     }
     for (const d of (await this.entries(userId).get()).docs) void writer.delete(d.ref);
     for (const d of (await this.chat(userId).get()).docs) void writer.delete(d.ref);
+    for (const d of (await this.choices(userId).get()).docs) void writer.delete(d.ref);
     void writer.delete(this.col(COLLECTIONS.users).doc(userId));
     await writer.close();
   }
