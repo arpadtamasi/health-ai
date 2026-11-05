@@ -1,20 +1,20 @@
 ---
 id: US-01m3y1prs26ph5khvjnjsn0wx2
 form: user-story
-title: "See today's entries in the thread"
+title: "See today's entries under the plate"
 actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
-  level: stated
-  decided_by: human
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
-  quote: "nem megy a fotó meg az egész kicsit clunky; tervezd át az appot; a beszélgetéseimből akarom megtakarítani, amit lehet"
-  inferred: null
+  level: partly-inferred
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/archive/2026-10-02-app-one-flow/conversation.md · SZ1", ".kotta/changes/home-plate-and-glass/conversation.md · J2"]
+  quote: "1 igen"
+  inferred: "The row and the highlight are the assistant's design in the preview."
 ---
-# See today's entries in the thread
+# See today's entries under the plate
 
 ## Story
 
-As a phone user, I want everything I logged today to appear as cards in the same thread as my conversation, in time order, so that I can check what the app has without opening Google Health.
+As a phone user, I want everything I logged today in a row under the plate, in time order, and a tap on one to show its layer on the plate, so that I can check what the app has without opening Google Health.
 
 ## Value
 
@@ -22,4 +22,6 @@ The owner sent screenshots of Google Health to check the app's entries ("3 tojá
 
 ## Notes
 
-Each card shows the name, the calories, the macros and the time; an entry that came from Google Health only (for example from the Claude connector) is shown too. Cards of earlier hours scroll up under the header.
+Each entry shows a dot in the colour of its main macro, the time, a short name and its calories (or the amount of the macro chosen). An entry that came from Google Health only (for example from the Claude connector) is shown too. Tapping an entry opens its edit as before.
+
+This replaces the cards in one thread with the conversation; the conversation is on a sheet (J2).

@@ -6,9 +6,9 @@ subjects: [US-01m3rvr6am99nrrbycxfw4r6v4, BR-01m3y1prykkz2yqtf6g5fgz0ne]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/archive/2026-10-02-app-one-flow/conversation.md · SZ1"]
   quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home."
+  inferred: "The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home; reworked for the plate."
 ---
 # A photo of a plate is logged at once and the portion can be changed
 
@@ -22,4 +22,4 @@ They send the photo with no text.
 
 ## Then
 
-One estimate card is logged with the items and their amounts; changing the rice amount on the card changes the entry and the day's totals.
+One estimate is logged with the items and their amounts and the bar above the dock offers Edit; changing the rice amount in the edit changes the entry, the plate and the day's totals.

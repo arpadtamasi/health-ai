@@ -6,9 +6,9 @@ subjects: [US-01m3w51bzh8h6t8npn6k80r782]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2"]
   quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant; reworked for the one-screen home."
+  inferred: "Reworked for the plate: the new layer and the undo bar are the assistant's design."
 ---
 # The dock offers the usual items, the camera and the text field on the home
 
@@ -18,8 +18,8 @@ The person is on the home.
 
 ## When
 
-They look at the bottom of the screen.
+They tap the Cappuccino chip in the dock.
 
 ## Then
 
-The dock shows the usual items and a water chip as chips, the camera button and the text field, and tapping a chip logs at once without leaving the home.
+It is logged at once without leaving the home: its layer grows on the plate, it joins today's entries, and a short bar above the dock offers Undo.

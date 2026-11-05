@@ -1,16 +1,16 @@
 ---
 id: EX-01m3y1pv379hwqmt3jfsqz9p9v
 form: example
-title: "The hero is dark when the day is closed"
-subjects: [BR-01m3y1ps4jpv3g7r0njzjpe13f]
+title: "When the day is closed the line says the day is done"
+subjects: [BR-01m6m4323nzt0ma6qf6j5a0yxa]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2"]
   quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant."
+  inferred: "Reworked from the dark hero; the numbers and the wording are sample values chosen by the assistant."
 ---
-# The hero is dark when the day is closed
+# When the day is closed the line says the day is done
 
 ## Given
 
@@ -22,4 +22,4 @@ The person opens the app.
 
 ## Then
 
-The hero is dark and says the day is done, with one line for tomorrow.
+The line under the plate says the day is done, with a tick, and one line for tomorrow.

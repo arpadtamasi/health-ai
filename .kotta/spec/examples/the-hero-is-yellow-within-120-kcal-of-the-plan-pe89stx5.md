@@ -1,16 +1,16 @@
 ---
 id: EX-01m3y1ptvks1k8pxkzpe89stx5
 form: example
-title: "The hero is yellow within 120 kcal of the plan"
-subjects: [BR-01m3y1ps4jpv3g7r0njzjpe13f]
+title: "Within 120 kcal of the plan the line says on the plan"
+subjects: [BR-01m6m4323nzt0ma6qf6j5a0yxa]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2"]
   quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant."
+  inferred: "Reworked from the yellow hero; the numbers are sample values chosen by the assistant."
 ---
-# The hero is yellow within 120 kcal of the plan
+# Within 120 kcal of the plan the line says on the plan
 
 ## Given
 
@@ -22,4 +22,4 @@ The person opens the app.
 
 ## Then
 
-The hero is yellow and says they are on the plan.
+The line under the plate says they are on the plan, with the mark for on the plan.

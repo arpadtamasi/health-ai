@@ -5,10 +5,10 @@ title: "Typing with the keyboard open keeps a one-line status"
 subjects: [US-01m3w51bs6krjxa2rgb86qkft7]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
-  quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant."
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J1"]
+  quote: "4 lehet"
+  inferred: "The owner answered 'lehet' (maybe) and asked to see it; the bar's content is the assistant's design in the preview."
 ---
 # Typing with the keyboard open keeps a one-line status
 
@@ -22,4 +22,4 @@ The screen is redrawn.
 
 ## Then
 
-The hero is one line with the figure and the time, and the thread and the dock stay visible above the keyboard.
+The plate folds into one line with a small plate, the mark, the sentence, the calories and the time; the conversation and the text field stay visible above the keyboard, and tapping the line brings back the plate.

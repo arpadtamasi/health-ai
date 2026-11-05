@@ -6,7 +6,7 @@ actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
   level: stated
   decided_by: human
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/archive/2026-10-02-app-one-flow/conversation.md · SZ1"]
   quote: "nem megy a fotó meg az egész kicsit clunky; tervezd át az appot; a beszélgetéseimből akarom megtakarítani, amit lehet"
   inferred: null
 ---
@@ -22,6 +22,6 @@ Logging is the most frequent action. The owner's own week was mostly the same fe
 
 ## Notes
 
-The chips come from the history, as before: the most frequent items of the last 30 days, and the water chip only once water was logged. A chip logs at once and the card in the thread has Edit and Undo. Chips are at least 44 px tall.
+The chips come from the history, as before: the most frequent items of the last 30 days, and the water chip only once water was logged. A chip logs at once: its layer grows on the plate, it joins today's entries, and a short bar above the dock offers Undo (this change replaces the card in the thread). Chips are at least 44 px tall.
 
 The Log button of the earlier Status screen is gone: the text field and the camera are always there.

@@ -1,5 +1,5 @@
 import type {
-  AllowEntry, AppPrefs, AppSettings, ChatRecord, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
+  AllowEntry, AppPrefs, AppSettings, ChatRecord, ChoiceRecord, Entry, AuthCode, AuthRequest, ClientRecord, FeedbackRecord, Grant, IntentRecord, ReconnectNonce, RefreshToken, Store,
   TimeRange, User,
 } from "./types.js";
 
@@ -20,6 +20,7 @@ export class MemoryStore implements Store {
   readonly appPrefs = new Map<string, AppPrefs>();
   readonly entries = new Map<string, Entry>();
   readonly chat = new Map<string, ChatRecord>();
+  readonly choices = new Map<string, ChoiceRecord>();
 
   allow(email: string, owner = false): void {
     this.allowList.set(email.toLowerCase(), { email: email.toLowerCase(), owner });
@@ -109,6 +110,16 @@ export class MemoryStore implements Store {
     return gone.length;
   }
 
+  async putChoice(r: ChoiceRecord) { this.choices.set(`${r.userId}|${r.id}`, r); }
+  async listChoices(userId: string, limit: number) {
+    return [...this.choices.values()].filter((r) => r.userId === userId).sort((a, b) => a.at - b.at || a.id.localeCompare(b.id)).slice(-limit);
+  }
+  async deleteAllChoices(userId: string) {
+    const gone = [...this.choices.keys()].filter((k) => k.startsWith(`${userId}|`));
+    for (const k of gone) this.choices.delete(k);
+    return gone.length;
+  }
+
   async getAppPrefs(userId: string) { return this.appPrefs.get(userId); }
   async putAppPrefs(p: AppPrefs) { this.appPrefs.set(p.userId, p); }
   async getTokenUsage(userId: string, day: string) { return this.tokenUsage.get(`${userId}|${day}`) ?? 0; }
@@ -124,6 +135,7 @@ export class MemoryStore implements Store {
     this.appPrefs.delete(userId);
     for (const k of [...this.entries.keys()]) if (k.startsWith(`${userId}|`)) this.entries.delete(k);
     for (const k of [...this.chat.keys()]) if (k.startsWith(`${userId}|`)) this.chat.delete(k);
+    for (const k of [...this.choices.keys()]) if (k.startsWith(`${userId}|`)) this.choices.delete(k);
     for (const k of [...this.tokenUsage.keys()]) if (k.startsWith(`${userId}|`)) this.tokenUsage.delete(k);
     this.users.delete(userId);
     for (const [k, g] of this.grants) if (g.userId === userId) this.grants.delete(k);

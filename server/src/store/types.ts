@@ -173,6 +173,23 @@ export interface ChatRecord {
   expireAt: number;
 }
 
+/**
+ * US-01m3s789qmvs4jx8e93nb2j61n (Record what was suggested and what was chosen): one answer of "What should I eat now?" with
+ * what the person then chose. The options are kept in the order they were shown; `chosenRank` is null when the sheet was closed
+ * without logging one of them ("something else"). Never holds a photo. Expires with the chat.
+ */
+export interface ChoiceRecord {
+  id: string;
+  userId: string;
+  at: number;
+  options: { rank: number; name: string; kcal: number; carbs: number; protein: number; fat?: number }[];
+  chosenRank: number | null;
+  /** The choice was one of the suggestions. */
+  followed: boolean;
+  /** Firestore TTL field. */
+  expireAt: number;
+}
+
 /** A half-open time range [from, to) in epoch milliseconds. */
 export interface TimeRange {
   from: number;
@@ -240,6 +257,11 @@ export interface Store {
   /** The latest messages of one person, oldest first. */
   listChat(userId: string, limit: number): Promise<ChatRecord[]>;
   deleteAllChat(userId: string): Promise<number>;
+
+  putChoice(record: ChoiceRecord): Promise<void>;
+  /** The latest records of one person, oldest first. */
+  listChoices(userId: string, limit: number): Promise<ChoiceRecord[]>;
+  deleteAllChoices(userId: string): Promise<number>;
 
   /** Model tokens used by one user on one local day (the daily limit counts these). */
   getTokenUsage(userId: string, day: string): Promise<number>;

@@ -34,5 +34,6 @@ export function mockBackend(): Backend {
     },
     deleteEntries: (ids) => { list = list.filter((e) => !ids.includes(e.id)); return Promise.resolve(); },
     deleteAll: () => { list = []; return Promise.resolve(); },
+    choice: () => Promise.resolve(),
   };
 }

@@ -1,6 +1,7 @@
 // The app's browser API under /api/app/*: US-01m3rvr64zrzczabckjf6crb2z (pace), US-01m3rwa0cvrtcapqk0k3h6mqvc (what to eat),
 // US-01m3rw2bqxkqp6v1hg9g02t1zr (chat onboarding and settings), US-01m3rvr6g951cs1s9p1czxvmhp (log a meal), water and the history.
 // Every request carries the session cookie; requests that change anything also need the custom header, as CSRF protection.
+import { randomUUID } from "node:crypto";
 import { Router, type Request, type RequestHandler } from "express";
 import express from "express";
 import { z } from "zod";
@@ -69,6 +70,14 @@ const chatBody = z.object({
 
 const whatNowBody = z.object({ optionsText: z.string().max(2000).optional(), image: image.optional() })
   .refine((b) => b.optionsText || b.image, "Give a photo or a list of options.");
+
+const choiceBody = z.object({
+  options: z.array(z.object({
+    rank: z.number().int().min(0).max(20), name: z.string().trim().min(1).max(200),
+    kcal: z.number().min(0).max(5000), carbs: z.number().min(0).max(1000), protein: z.number().min(0).max(1000), fat: z.number().min(0).max(1000).optional(),
+  })).min(1).max(10),
+  chosenRank: z.number().int().min(0).max(20).nullable(),
+});
 
 /** How long the test keeps the chat: 90 days, like the testers' feedback. */
 export const CHAT_RETENTION_MS = 90 * 24 * 3600 * 1000;
@@ -287,7 +296,27 @@ export function appApiRouter(deps: AppApiDeps): Router {
     const userId = uid(req);
     const deleted = await (await entriesOf(userId)).removeAll();
     await deps.store.deleteAllChat(userId);
+    await deps.store.deleteAllChoices(userId);
     res.json({ deleted });
+  });
+
+  // US-01m3s789qmvs4jx8e93nb2j61n (Record what was suggested and what was chosen): the app sends what the sheet showed and which
+  // option was logged (null when it was closed without one). Kept as long as the chat, deleted with the whole history.
+  router.post("/choice", async (req, res) => {
+    const userId = uid(req);
+    const body = choiceBody.safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({ error: "invalid_request", detail: body.error.issues.map((i) => i.message) });
+      return;
+    }
+    const at = deps.now();
+    const options = [...body.data.options].sort((a, b) => a.rank - b.rank).map(({ fat, ...o }) => (fat === undefined ? o : { ...o, fat }));
+    const { chosenRank } = body.data;
+    await deps.store.putChoice({
+      id: randomUUID(), userId, at, options, chosenRank,
+      followed: chosenRank !== null && options.some((o) => o.rank === chosenRank), expireAt: at + CHAT_RETENTION_MS,
+    });
+    res.json({ ok: true });
   });
 
   // US-01m3rw2bqxkqp6v1hg9g02t1zr: the app's chat. The client keeps the conversation and sends it back each time.
