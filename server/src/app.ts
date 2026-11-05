@@ -62,6 +62,18 @@ export function createApp(deps: AppDeps): App {
     res.json({ status: "ok" });
   });
 
+  // A temporary probe: does Firebase Hosting pass a streamed response through to the browser as it is written, or only at the
+  // end? Five lines, one a second; the deploy's smoke check times their arrival through Hosting. Removed once that is known.
+  app.get("/api/probe/stream", async (_req, res) => {
+    res.set({ "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-cache, no-transform", "x-accel-buffering": "no" });
+    res.flushHeaders();
+    for (let i = 1; i <= 5; i++) {
+      res.write(`${JSON.stringify({ i, at: Date.now() })}\n`);
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    res.end();
+  });
+
   // IF-01m3eb1dc1ps80f3fbg3ve5dv3 (OAuth discovery metadata) and IF-01m3eb1dn2x3v6146zd227h8br (Client registration endpoint).
   app.use(
     mcpAuthRouter({

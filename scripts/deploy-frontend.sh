@@ -38,3 +38,7 @@ curl -fsS "${PUBLIC_URL}/" | grep -q "<div id=\"root\"" && echo "app ok"
 [ "$(curl -fsS "${PUBLIC_URL}/version.json")" = "{\"build\":\"$BUILD\"}" ] && echo "version ok"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "${PUBLIC_URL}/api/app/me")" = "401" ] && echo "api ok"
 [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST "${PUBLIC_URL}/mcp")" = "401" ] && echo "mcp ok"
+# Temporary: does Hosting stream? Each line is printed with the second it arrived; spread over ~5 s = streamed, all at once = buffered.
+echo "== Stream probe through Hosting"
+curl -sN --max-time 20 "${PUBLIC_URL}/api/probe/stream" \
+  | python3 -c 'import sys, time; t = time.time(); [print(f"{time.time() - t:5.2f} s  {l.strip()}", flush=True) for l in sys.stdin]' || true
