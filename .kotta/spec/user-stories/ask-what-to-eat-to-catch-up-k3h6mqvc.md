@@ -4,17 +4,17 @@ form: user-story
 title: "Ask what to eat to catch up"
 actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
-  level: stated
-  decided_by: human
-  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · Why", ".kotta/changes/mobile-app-daily-balance/conversation.md · P15", ".kotta/changes/mobile-app-daily-balance/conversation.md · P16", ".kotta/changes/mobile-app-daily-balance/conversation.md · P18"]
+  level: partly-inferred
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/home-plate-and-glass/conversation.md · J3", ".kotta/changes/archive/2026-10-02-mobile-app-daily-balance/proposal.md · Why", ".kotta/changes/archive/2026-10-02-mobile-app-daily-balance/conversation.md · P15", ".kotta/changes/archive/2026-10-02-mobile-app-daily-balance/conversation.md · P16", ".kotta/changes/archive/2026-10-02-mobile-app-daily-balance/conversation.md · P18"]
   quote: "olyan kérdés lenne, hogy mit egyek (chatben amúgy)"
-  inferred: "The reading that the answer should use the biggest macro gap is mine; the owner named carbs as today's gap and the question 'what should I eat'."
+  inferred: "The reading that the answer should use the biggest macro gap is mine; the owner named carbs as today's gap and the question 'what should I eat'. The sheet under the plate and the preview on the plate were proposed by the assistant and answered 'igen' (J2)."
 ---
 # Ask what to eat to catch up
 
 ## Story
 
-As a phone user, I want to ask the chat "what should I eat?" (with a photo of the fridge, a menu or anything) and get three ranked options as cards in the chat that I tap to choose, so that I do not have to work out the macros myself.
+As a phone user, I want a "What should I eat now?" button under the plate (with a photo of the fridge, a menu or anything) that gives me three ranked options on a sheet, and the one I pick drawn on the plate as a dashed layer before I eat it, so that I do not have to work out the macros myself and I see where it would take me.
 
 ## Value
 
@@ -22,13 +22,12 @@ It turns the pace screen into a next step: the answer names the gap, and propose
 
 ## Notes
 
-Screenshot: ![Answer in the chat](screens/chat-12-answer.png)
+Preview: the "Terített asztal" artifact of this change. The sheet starts under the row of figures, so the plate stays visible above it. Each option shows the food, its calories and one line of reason. Asking "what should I eat?" in the text field opens the same sheet. "Something else" is written or said in the text field.
 
-Each card shows the food, its calories, carbs and protein and, for the first, the reason. Tapping a card chooses it and logs it, with an Undo; "Something else" is written or said in the chat. There is no separate "I chose" button ("minek a choose 1, ha rá is klikkelhetek az 1-re?").
 
 ## Decided by the owner
 
-- Tapping a card is the choice; it also logs the meal with an Undo (my reading of the owner's request, to confirm).
+- A tap on an option previews it on the plate, and a second tap on the same option logs it, with an Undo; there is no separate button ("Ok a b", which keeps the earlier "minek a choose 1, ha rá is klikkelhetek az 1-re?").
 - Suggestions are not limited to foods logged before: the user can show what is in front of them with a photo of the fridge, of a menu, or of anything ("fotó a hűtőről, étlapról, bármi"); logged usuals are one more source.
 - A constraints list (allergies, dislikes) exists, is respected by every suggestion, and can be set in the chat ("4 igen az szuper beállítás chatben").
 

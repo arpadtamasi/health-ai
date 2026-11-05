@@ -6,9 +6,9 @@ subjects: [BR-01m3y1prykkz2yqtf6g5fgz0ne, US-01m3rvr6am99nrrbycxfw4r6v4]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/archive/2026-10-02-app-one-flow/conversation.md · SZ1"]
   quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant."
+  inferred: "The numbers and the wording are sample values chosen by the assistant; reworked for the plate."
 ---
 # A photo of a label is read, not estimated
 
@@ -22,4 +22,4 @@ They send the photo with no text.
 
 ## Then
 
-The yoghurt is logged with the label's numbers and is not marked as an estimate; the card shows Edit and Undo.
+The yoghurt is logged with the label's numbers and is not marked as an estimate; the bar above the dock offers Edit and Undo.

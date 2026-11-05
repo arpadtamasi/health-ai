@@ -5,23 +5,23 @@ title: "See where I am against the day's pace"
 actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
-  quote: null
-  inferred: "The chart and the bar grammar come from the assistant's redesign and its critique, which the owner asked for (\"béna az öt karika, tudsz kreatív lenni?\"); the earlier decisions on goals are kept."
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · SZ1", ".kotta/changes/home-plate-and-glass/conversation.md · J1"]
+  quote: "Az infografika legyen egy stilizált tányér mellette egy pohár."
+  inferred: "Filling by area, the plan arc and the spill are the assistant's design; the time chart's removal and the equal thirds were answered 'igen'."
 ---
 # See where I am against the day's pace
 
 ## Story
 
-As a phone user, I want the top of the home to show one number and one picture of my pace (what I ate against the plan for this time of day, and the gap between them) and a bar for each of protein, carbs, fat and water, so that I know at a glance what I am short of.
+As a phone user, I want the top of the home to be a plate cut into thirds for protein, carbs and fat and a glass for water, each filling as I log, with a mark where the plan stands now, so that I see at a glance what I am short of.
 
 ## Value
 
-The first view answers "what am I behind on right now", not only "what is left". The owner's example: "ma épp szénhidráttal vagyok lemaradva".
+The first view answers "what am I behind on right now". The owner's example: "ma épp szénhidráttal vagyok lemaradva".
 
 ## Notes
 
-The picture is a chart from 7:00 to 22:00: the plan is a dashed diagonal, what was eaten is a staircase with a dot for every meal, the area between them is the gap, and a line marks now. Minimum bars (protein, carbs, water) say how much is still to go, with a tick where the plan stands now and a hatched part for the lag; the fat bar is a limit: it says how much is left of the cap. Calories are the default subject of the hero; see "Choose what the home shows".
+See "The plate fills each third by area, one layer per entry" and "Each macro has its own colour, and words state the situation". The plan is the goal spread evenly over 7:00 to 22:00, as before. The chart of the day (plan diagonal and staircase) is gone: the plate's dashed arc and the glass's dashed line show the pace.
 
 Carbs and protein goals start from a default split of the calorie goal, and the activity does not raise the day's allowance (both as decided earlier).

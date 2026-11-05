@@ -7,7 +7,7 @@ accepted: ["unimplemented: the record of suggestions and choices is not built ye
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · What changes", "docs/designs/mobile-app-what-now.md · Recommended Approach"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J3", ".kotta/changes/archive/2026-10-02-mobile-app-daily-balance/proposal.md · What changes", "docs/designs/mobile-app-what-now.md · Recommended Approach"]
   quote: null
   inferred: "Proposed by an independent cold read of the office-hours session and accepted into the design document; the owner has not asked for it in these words."
 ---
@@ -23,4 +23,4 @@ The whole idea rests on the answer changing a real choice; without this record t
 
 ## Notes
 
-The answer is shown as option cards in the chat; tapping a card is the choice, and "Something else" is written or said in the chat. The record holds the options shown, the suggestions in order, the choice and the time. It holds no photo. The design document sets the retention (90 days) and the gate that reads it.
+The answer is shown as options on a sheet under the plate; the second tap on an option, the one that logs it, is the choice, and "Something else" is written or said in the text field. The record holds the options shown, the suggestions in order, the choice and the time. It holds no photo. The design document sets the retention (90 days) and the gate that reads it.

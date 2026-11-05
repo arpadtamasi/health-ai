@@ -1,16 +1,16 @@
 ---
 id: EX-01m3y1pthj3qcq57gf9km40rqw
 form: example
-title: "The hero is red when the calories are 200 under the plan"
-subjects: [BR-01m3y1ps4jpv3g7r0njzjpe13f]
+title: "The line says how far under the plan, and nothing turns red"
+subjects: [BR-01m6m4323nzt0ma6qf6j5a0yxa]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
-  quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant."
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/home-plate-and-glass/conversation.md · SZ4"]
+  quote: "2 igen"
+  inferred: "Reworked from the red hero; the numbers are sample values chosen by the assistant."
 ---
-# The hero is red when the calories are 200 under the plan
+# The line says how far under the plan, and nothing turns red
 
 ## Given
 
@@ -22,4 +22,4 @@ The person opens the app.
 
 ## Then
 
-The hero is red and says 200 kcal under the plan.
+The line under the plate says 200 kcal under the plan, with the mark for under the plan; the thirds keep their own colours and no part of the home turns red.

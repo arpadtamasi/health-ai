@@ -6,15 +6,15 @@ actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/archive/2026-10-02-app-one-flow/conversation.md · SZ1"]
   quote: null
-  inferred: "The need is read from the owner's logs; the edit sheet is the assistant's design."
+  inferred: "The need is read from the owner's logs; the edit sheet is the assistant's design; the entry row and the bar are the assistant's design for the plate."
 ---
 # Correct a logged meal
 
 ## Story
 
-As a phone user, I want to change an entry I already logged (an amount, an ingredient, the time, the meal type), by tapping Edit on its card or by telling the assistant ("more milk", "it was lunch"), so that the entry is changed and no new one is added.
+As a phone user, I want to change an entry I already logged (an amount, an ingredient, the time, the meal type), by tapping the entry under the plate (or Edit on the bar right after logging) or by telling the assistant ("more milk", "it was lunch"), so that the entry is changed and no new one is added.
 
 ## Value
 

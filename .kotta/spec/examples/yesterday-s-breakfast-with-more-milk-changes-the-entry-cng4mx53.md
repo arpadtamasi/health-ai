@@ -6,9 +6,9 @@ subjects: [US-01m3rvr6vsnzps8jrdz05gja1y]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/app-one-flow/conversation.md · SZ1"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/archive/2026-10-02-app-one-flow/conversation.md · SZ1"]
   quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant."
+  inferred: "The numbers and the wording are sample values chosen by the assistant; reworked for the plate."
 ---
 # Yesterday's breakfast with more milk changes the entry
 
@@ -22,4 +22,4 @@ They write "more milk".
 
 ## Then
 
-The same entry now says 250 g of milk and 415 kcal, the card says what changed, and no second entry exists.
+The same entry now says 250 g of milk and 415 kcal, the bar above the dock says what changed, and no second entry exists.

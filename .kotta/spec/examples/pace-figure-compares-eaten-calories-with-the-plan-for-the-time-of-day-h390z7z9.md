@@ -6,9 +6,9 @@ subjects: [US-01m3rvr64zrzczabckjf6crb2z]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: [".kotta/changes/mobile-app-daily-balance/proposal.md · What changes"]
+  sources: [".kotta/changes/archive/2026-10-02-mobile-app-daily-balance/proposal.md · What changes", ".kotta/changes/home-plate-and-glass/conversation.md · SZ4"]
   quote: null
-  inferred: "The concrete numbers are sample values chosen for the mockups, not the owner's data."
+  inferred: "The concrete numbers are sample values chosen for the mockups, not the owner's data; reworked for the plate."
 ---
 # Pace figure compares eaten calories with the plan for the time of day
 
@@ -22,4 +22,4 @@ The app shows the first screen.
 
 ## Then
 
-The main figure reads 209 kcal under pace (the plan for 14:20 is 929, eaten 720), with 1,180 kcal left today; protein and water so far are shown beneath it.
+The line under the plate reads 210 kcal under the plan (the plan for 14:20 is 929, eaten 720, rounded to tens), and the centre of the plate reads 720 of 1,900 kcal.

@@ -6,9 +6,9 @@ subjects: [US-01m3s789qmvs4jx8e93nb2j61n]
 provenance:
   level: partly-inferred
   decided_by: agent-decided
-  sources: ["docs/designs/mobile-app-what-now.md · Success Criteria"]
+  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J3", "docs/designs/mobile-app-what-now.md · Success Criteria"]
   quote: null
-  inferred: "Sample options and numbers are mine."
+  inferred: "Sample options and numbers are mine; the two taps follow the owner's choice (b)."
 ---
 # Choosing a suggestion is recorded next to what was shown
 
@@ -18,7 +18,7 @@ The "What now?" answer showed three options in this order: chicken with rice, a 
 
 ## When
 
-The user taps the sandwich card.
+The user taps the sandwich once to preview it on the plate and once more to log it.
 
 ## Then
 
