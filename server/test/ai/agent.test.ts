@@ -1,7 +1,7 @@
 // US-01m3rw2bqxkqp6v1hg9g02t1zr (Ask and log through a small chat): the chat is an AI conversation with tools.
 import { describe, expect, it } from "vitest";
-import { runAgent, type AgentEnv } from "../../src/ai/agent.js";
-import type { Block, ConverseRequest, ConverseResponse, ModelClient } from "../../src/ai/model.js";
+import { runAgent, stepOf, type AgentEnv, type StreamEvent } from "../../src/ai/agent.js";
+import type { Block, ConverseOptions, ConverseRequest, ConverseResponse, ModelClient } from "../../src/ai/model.js";
 import type { DayState } from "../../src/ai/types.js";
 
 const state: DayState = {
@@ -326,5 +326,77 @@ describe("the chat agent", () => {
     const m3 = scripted(say("x"));
     await runAgent(deps(m3), env(), { history: [], message: "szia" });
     expect(text(m3)).toBe("szia");
+  });
+  // BR-01m6pmf9avbbgd373z1jcvvaqw (A reply arrives as it is written, with its steps): a model that writes its text through onText.
+  const streaming = (...replies: ConverseResponse[]) => {
+    const requests: ConverseRequest[] = [];
+    const m: ModelClient & { requests: ConverseRequest[]; onCall?: (n: number, opts?: ConverseOptions) => void } = {
+      requests,
+      converse: (req, opts) => {
+        requests.push(req);
+        m.onCall?.(requests.length, opts);
+        if (opts?.signal?.aborted) return Promise.reject(new Error("aborted"));
+        const r = replies[Math.min(requests.length - 1, replies.length - 1)]!;
+        for (const b of r.content) if (b.type === "text") opts?.onText?.(b.text);
+        return Promise.resolve(r);
+      },
+    };
+    return m;
+  };
+
+  // EX-01m6pmf9repmym9yf87emkrjph, QA-01m6pmf9hz17nxcj3tedpxmbyr and EX-01m6pnhv4v91k77sfz14pka5ka: the photo's step goes out before the
+  // model is called (so it can show within 1.5 s), and the card
+  // goes out as soon as it is logged, before the reply's text.
+  it("streams a photo reply: the photo step first, the log as a step and a card, then the text", async () => {
+    const seen: StreamEvent[] = [];
+    const m = streaming(call("t1", "log_meal", { name: "Ropa vieja, fél adag", kcal: 480, carbs: 41, protein: 34, fat: 18 }), say("Beírtam fél adagot."));
+    let firstCallSaw = 0;
+    m.onCall = (n) => { if (n === 1) firstCallSaw = seen.length; };
+    const image = { mediaType: "image/jpeg" as const, dataBase64: "AAAA" };
+    await runAgent(deps(m), env(), { history: [], message: "kb. a felét ettem meg", images: [image], emit: (e) => seen.push(e) });
+    expect(firstCallSaw).toBe(1);
+    expect(seen[0]).toEqual({ type: "step", id: "photo", tool: "photo", state: "start" });
+    const kinds = seen.map((e) => (e.type === "step" ? `${e.tool}:${e.state}` : e.type === "event" ? `event:${e.event.type}` : e.type));
+    expect(kinds).toEqual(["photo:start", "photo:done", "log_meal:start", "event:logged", "log_meal:done", "delta"]);
+    expect(seen.find((e) => e.type === "step" && e.tool === "log_meal")).toMatchObject({ detail: "Ropa vieja, fél adag" });
+  });
+
+  it("takes back a claim of having logged that it drops, and sets turns apart", async () => {
+    const seen: StreamEvent[] = [];
+    const m = streaming(say("Felírtam két tojást."), call("t1", "log_meal", { name: "Két tojás", kcal: 155, carbs: 1, protein: 13, fat: 11 }), say("Kész."));
+    await runAgent(deps(m), env(), { history: [], message: "két tojás", emit: (e) => seen.push(e) });
+    expect(seen).toContainEqual({ type: "text_set", text: "" });
+    const after = seen.slice(seen.findIndex((e) => e.type === "text_set") + 1).filter((e) => e.type === "delta").map((e) => (e as { text: string }).text).join("");
+    expect(after).toBe("Kész.");
+  });
+
+  // EX-01m6pmfa63nj89cdaa8jn68ceq (Stop before anything was logged logs nothing).
+  it("logs nothing when Stop comes before the tool runs", async () => {
+    const ctl = new AbortController();
+    const e = env();
+    const m = streaming(call("t1", "log_meal", { name: "Két tojás", kcal: 155, carbs: 1, protein: 13, fat: 11 }), say("x"));
+    m.onCall = () => ctl.abort();
+    const r = await runAgent(deps(m), e, { history: [], message: "két tojás", signal: ctl.signal });
+    expect(e.logged).toEqual([]);
+    expect(r.stopped).toBe(true);
+  });
+
+  // EX-01m6pmf9zhdr5wntczz8ncfdrj (Stop keeps what was already logged).
+  it("keeps what was logged and written when Stop comes during the next turn", async () => {
+    const ctl = new AbortController();
+    const e = env();
+    const m = streaming(call("t1", "log_meal", { name: "Két tojás", kcal: 155, carbs: 1, protein: 13, fat: 11 }), say("Vacsorára…"));
+    m.onCall = (n, opts) => { if (n === 2) { opts?.onText?.("Vacsorára javaslom"); ctl.abort(); } };
+    const r = await runAgent(deps(m), e, { history: [], message: "két tojás", signal: ctl.signal });
+    expect(e.logged).toHaveLength(1);
+    expect(r.events.map((x) => x.type)).toEqual(["logged", "text"]);
+    expect(r.stopped).toBe(true);
+  });
+
+  it("shows a step for the tools a person would call a step, and none for the rest", () => {
+    expect(stepOf("log_water", { ml: 250 })).toEqual({ tool: "log_water", detail: "250 ml" });
+    expect(stepOf("get_today", {})).toEqual({ tool: "get_today" });
+    expect(stepOf("quick_replies", {})).toBeUndefined();
+    expect(stepOf("ask", { question: "?" })).toBeUndefined();
   });
 });

@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { AiModel, ConverseResponse } from "../../src/ai/model.js";
 import { addDays, dayBounds, localClock, nextDate, sumHydration, sumNutrition } from "../../src/app-api/today.js";
-import { makeTestApp, READ_SCOPES, type TestApp } from "../helpers.js";
+import { makeTestApp, PUBLIC_URL, READ_SCOPES, type TestApp } from "../helpers.js";
 
 const NOW = Date.parse("2026-09-30T12:20:00Z"); // 14:20 in Budapest (UTC+2)
 const HEADER = { "x-health-ai": "1" } as const;
@@ -677,5 +677,44 @@ describe("what was suggested and what was chosen", () => {
     await t.store.deleteUserData("sub-tester");
     expect(await t.store.listChoices("sub-tester", 10)).toEqual([]);
     expect(await t.store.listChoices("someone-else", 10)).toHaveLength(1);
+  });
+});
+
+// BR-01m6pmf9avbbgd373z1jcvvaqw (A reply arrives as it is written, with its steps): the streamed chat at the service's own address.
+describe("the streamed chat", () => {
+  it("takes a ticket from the session, and streams the reply as lines, the card before the text, then the whole reply", async () => {
+    const model = agentModel(toolCall("log_meal", { name: "Két tojás", kcal: 155, carbs: 1, protein: 13, fat: 11 }), reply("Beírtam."));
+    const t = makeTestApp({ now: () => NOW, ai: { model, modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    await t.http.put("/api/app/settings").set("cookie", cookie).set(HEADER).send(settings);
+    const ticket = (await t.http.post("/api/app/chat/ticket").set("cookie", cookie).set(HEADER).send({})).body.ticket as string;
+    expect(typeof ticket).toBe("string");
+    const r = await t.http.post("/api/stream/chat").set("authorization", `Bearer ${ticket}`).send({ message: "két tojás", intent: "ate" });
+    expect(r.status).toBe(200);
+    expect(r.headers["content-type"]).toContain("application/x-ndjson");
+    const lines = r.text.trim().split("\n").map((l) => JSON.parse(l) as { type: string; tool?: string; state?: string; event?: { type: string }; reply?: { events: { type: string }[] } });
+    expect(lines.map((l) => (l.type === "step" ? `${l.tool}:${l.state}` : l.type === "event" ? `event:${l.event!.type}` : l.type))).toEqual(["log_meal:start", "event:logged", "log_meal:done", "done"]);
+    expect(lines.at(-1)!.reply!.events.map((e) => e.type)).toEqual(["logged", "text"]);
+  });
+
+  it("refuses a missing or wrong ticket, and a session cookie in its place", async () => {
+    const t = makeTestApp({ now: () => NOW, ai: { model: agentModel(reply("x")), modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    expect((await t.http.post("/api/stream/chat").send({ message: "hi" })).status).toBe(401);
+    expect((await t.http.post("/api/stream/chat").set("authorization", "Bearer nonsense").send({ message: "hi" })).status).toBe(401);
+    const session = cookie.split("=")[1]!.split(";")[0]!;
+    expect((await t.http.post("/api/stream/chat").set("authorization", `Bearer ${session}`).send({ message: "hi" })).status).toBe(401);
+  });
+
+  it("answers the browser's preflight for the app's own origin only", async () => {
+    const t = makeTestApp({ now: () => NOW });
+    const own = PUBLIC_URL.origin;
+    const ok = await t.http.options("/api/stream/chat").set("origin", own).set("access-control-request-method", "POST");
+    expect(ok.status).toBe(204);
+    expect(ok.headers["access-control-allow-origin"]).toBe(own);
+    const other = await t.http.options("/api/stream/chat").set("origin", "https://evil.example").set("access-control-request-method", "POST");
+    expect(other.headers["access-control-allow-origin"]).toBeUndefined();
   });
 });

@@ -51,9 +51,17 @@ export interface ConverseResponse {
   usage: Usage;
 }
 
+/** BR-01m6pmf9avbbgd373z1jcvvaqw (A reply arrives as it is written, with its steps): the text as it comes, and a way to stop. */
+export interface ConverseOptions {
+  /** Called with each piece of text as the model writes it. */
+  onText?: (delta: string) => void;
+  /** Stops the model's turn (the person tapped Stop, or the connection closed). */
+  signal?: AbortSignal;
+}
+
 export interface ModelClient {
   /** One model turn with several tools available and free text allowed. */
-  converse(req: ConverseRequest): Promise<ConverseResponse>;
+  converse(req: ConverseRequest, opts?: ConverseOptions): Promise<ConverseResponse>;
 }
 
 /** What the app needs from the model provider: one-shot structured calls and the multi-turn agent. */
@@ -87,7 +95,7 @@ export class AnthropicModelClient implements ModelClient, ToolCaller {
     return { toolInput: block.input, usage: { inputTokens: res.usage.input_tokens, outputTokens: res.usage.output_tokens } };
   }
 
-  async converse(req: ConverseRequest): Promise<ConverseResponse> {
+  async converse(req: ConverseRequest, opts: ConverseOptions = {}): Promise<ConverseResponse> {
     const toParam = (b: Block): Anthropic.Messages.ContentBlockParam => {
       switch (b.type) {
         case "text": return { type: "text", text: b.text };
@@ -96,14 +104,24 @@ export class AnthropicModelClient implements ModelClient, ToolCaller {
         case "tool_result": return { type: "tool_result", tool_use_id: b.toolUseId, content: b.content };
       }
     };
-    const res = await this.client.messages.create({
+    const params = {
       model: req.model,
       max_tokens: req.maxTokens,
       system: req.system,
       tools: req.tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.inputSchema as Anthropic.Messages.Tool.InputSchema })),
       ...(req.forceTool ? { tool_choice: { type: "any" as const } } : {}),
       messages: req.turns.map((t) => ({ role: t.role, content: t.content.map(toParam) })),
-    });
+    };
+    // With a listener the turn is streamed: its text reaches the person as the model writes it.
+    let res: Anthropic.Messages.Message;
+    if (opts.onText) {
+      const stream = this.client.messages.stream(params, opts.signal ? { signal: opts.signal } : undefined);
+      const onText = opts.onText;
+      stream.on("text", (delta) => onText(delta));
+      res = await stream.finalMessage();
+    } else {
+      res = await this.client.messages.create(params, opts.signal ? { signal: opts.signal } : undefined);
+    }
     const content: Block[] = [];
     for (const b of res.content) {
       if (b.type === "text") content.push({ type: "text", text: b.text });

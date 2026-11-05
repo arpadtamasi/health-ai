@@ -7,7 +7,7 @@
 // no chart of the day, and the dock is visible without scrolling. The options of "What should I eat now?" are on a sheet under the figures, so that the plate shows
 // the picked one above it (EX-01m6m4332s0zwsvq9103fp9ff2). The chat is assistant-ui's local runtime with our own adapter.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppState, FlatList, Image, Linking, Platform, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from "react-native";
+import { ActivityIndicator, AppState, FlatList, Image, Linking, Platform, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from "react-native";
 import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState, useLocalRuntime, type ChatModelAdapter, type ChatModelRunResult } from "@assistant-ui/react-native";
 import { ApiError, connectHealthUrl, warmUp, type ChatEvent, type DayEntry, type DayState, type EntryPatch, type Usual } from "../api/client";
 import { backend } from "../backend";
@@ -32,6 +32,7 @@ import { nextShown, partOf, type Drawn } from "../plate";
 import { BUILD, isNewer, onComeBack, publishedBuild } from "../update";
 import { canSendAgain, intentOf, photoTurns, startSide, switchShown, type Side } from "../dock";
 import { blocksOf } from "../rich";
+import { applyLine, emptyLive, stepLabel, stepSummary, type Live, type Step, type StepWords, type StreamLine } from "../stream";
 import { cacheGet, cacheSet } from "../cache";
 import { takePhoto, type Photo, type PhotoSource } from "../photo";
 import { tokens as T } from "../theme/tokens";
@@ -42,14 +43,16 @@ import { Splash } from "./SignInScreen";
 const c = T.color;
 
 /** The adapter lives outside React, so the current texts, the language switch and the event sink reach it through this box. */
-const box: { t: Texts | null; setLang: (l: Lang) => void; onEvents: (events: ChatEvent[]) => void } = { t: null, setLang: () => undefined, onEvents: () => undefined };
+const box: { t: Texts | null; setLang: (l: Lang) => void; onEvents: (events: ChatEvent[]) => void; onLogged: () => void } = { t: null, setLang: () => undefined, onEvents: () => undefined, onLogged: () => undefined };
 
-interface Meta { replies?: string[]; needsConsent?: boolean; onboarded?: boolean; failedPhoto?: boolean; failed?: boolean; retry?: boolean; intent?: Side }
+interface Meta { replies?: string[]; needsConsent?: boolean; onboarded?: boolean; failedPhoto?: boolean; failed?: boolean; retry?: boolean; intent?: Side; stopped?: boolean }
 type Img = { mediaType: "image/jpeg"; dataBase64: string };
 
 /** Our /api/app/chat as an assistant-ui model: events become message parts, the rest rides along as metadata. */
 const adapter: ChatModelAdapter = {
-  async run({ messages }) {
+  // BR-01m6pmf9avbbgd373z1jcvvaqw (A reply arrives as it is written, with its steps): each line of the streamed reply redraws the
+  // message: its steps, the cards it made, its text so far. Stop aborts the stream and keeps what was done.
+  async *run({ messages, abortSignal }) {
     const last = messages[messages.length - 1];
     const text = last?.content.filter((p) => p.type === "text").map((p) => (p as { text: string }).text).join(" ") ?? "";
     const imagesOf = (m: { content: readonly { type: string }[] }): Img[] => (m.content.filter((p) => p.type === "image") as unknown as { image: string }[])
@@ -64,18 +67,42 @@ const adapter: ChatModelAdapter = {
       const pics = withPhotos.has(i) ? imagesOf(m) : [];
       return tx ? [{ role: m.role === "user" ? ("user" as const) : ("assistant" as const), text: tx, ...(pics.length ? { images: pics } : {}) }] : [];
     });
+    let live = emptyLive();
+    let fresh = false;
+    let wake: (() => void) | null = null;
+    const onLine = (l: StreamLine) => {
+      live = applyLine(live, l);
+      fresh = true;
+      if (l.type === "event" && (l.event.type === "logged" || l.event.type === "logged_water" || l.event.type === "updated")) box.onLogged();
+      wake?.();
+    };
+    let r: Awaited<ReturnType<typeof backend.chatStream>> | undefined;
+    let failure: unknown;
+    let finished = false;
+    const work = backend.chatStream({ message: text || box.t!.photoQuestion, history, ...(images.length ? { images } : {}), ...(intent ? { intent } : {}) }, onLine, abortSignal)
+      .then((x) => { r = x; }, (e: unknown) => { failure = e; })
+      .finally(() => { finished = true; wake?.(); });
+    while (!finished) {
+      if (!fresh) { await new Promise<void>((res) => { wake = res; }); wake = null; continue; }
+      fresh = false;
+      yield { content: liveParts(live, false) };
+    }
+    await work;
     try {
-      const r = await backend.chat({ message: text || box.t!.photoQuestion, history, ...(images.length ? { images } : {}), ...(intent ? { intent } : {}) });
-      const parts = partsOf(r.events);
+      if (!r) throw failure;
+      const steps = live.steps.length ? [stepsPart(live.steps, true)] : [];
+      const parts = [...steps, ...partsOf(r.events)];
       if (isLang(r.language)) box.setLang(r.language);
       box.onEvents(r.events);
       const replies = [...r.events].reverse().find((e): e is Extract<ChatEvent, { type: "replies" }> => e.type === "replies")?.replies;
-      return { content: parts.length ? parts : [{ type: "text" as const, text: "…" }], metadata: { custom: { replies, needsConsent: r.needsConsent, onboarded: r.onboarded } satisfies Meta } };
+      yield { content: parts.length ? parts : [{ type: "text" as const, text: "…" }], metadata: { custom: { replies, needsConsent: r.needsConsent, onboarded: r.onboarded } satisfies Meta } };
     } catch (e) {
+      // EX-01m6pmf9zhdr5wntczz8ncfdrj: Stop keeps what was written and logged.
+      if (abortSignal.aborted || (e instanceof ApiError && e.code === "stopped")) { yield { content: liveParts(live, true), metadata: { custom: { stopped: true } satisfies Meta } }; return; }
       const tx = box.t!;
       const msg = e instanceof ApiError && e.code === "timeout" ? tx.errTimeout : e instanceof ApiError && e.code === "daily_limit" ? tx.errDailyLimit : e instanceof ApiError && e.code === "ai_unavailable" ? tx.errUnavailable : images.length ? tx.photoFailed : tx.errGeneric;
       // EX-01m6ph6eh98wgvrjw6gyy2r9tr: a message that did not go out says so, and "Újra" sends it again; nothing is sent by itself.
-      return { content: [{ type: "text" as const, text: msg }], metadata: { custom: { failedPhoto: images.length > 0, failed: true, retry: canSendAgain(e instanceof ApiError ? e.code : undefined) } satisfies Meta } };
+      yield { content: [{ type: "text" as const, text: msg }], metadata: { custom: { failedPhoto: images.length > 0, failed: true, retry: canSendAgain(e instanceof ApiError ? e.code : undefined) } satisfies Meta } };
     }
   },
 };
@@ -96,6 +123,21 @@ function partsOf(events: ChatEvent[]): Part0[] {
 }
 interface LoggedInfo { id: string; name: string; kcal: number; ml?: number }
 
+/** The steps of a reply as one message part: a list while it is written, one quiet line once it is done. */
+const stepsPart = (steps: Step[], done: boolean): Part0 => ({ type: "tool-call", toolCallId: "steps", toolName: "steps", args: {}, argsText: "{}", result: { steps, done } });
+/** The reply while it is written: its steps, the cards it made so far, its text so far. */
+function liveParts(live: Live, done: boolean): Part0[] {
+  return [
+    ...(live.steps.length ? [stepsPart(live.steps, done)] : []),
+    ...partsOf(live.events.filter((e) => e.type !== "text") as unknown as ChatEvent[]),
+    ...(live.text ? [{ type: "text" as const, text: live.text }] : []),
+  ];
+}
+const stepWords = (t: Texts): StepWords => ({
+  photo: t.stepPhoto, today: t.stepToday, log: t.stepLog, water: t.stepWater, options: t.stepOptions, update: t.stepUpdate,
+  entries: t.stepEntries, delete: t.stepDelete, settings: t.stepSettings, estimate: t.stepEstimate, other: t.stepOther,
+});
+
 const bubble = (user: boolean): ViewStyle => ({
   alignSelf: user ? ("flex-end" as const) : ("flex-start" as const), maxWidth: "86%" as const, paddingVertical: 10, paddingHorizontal: 14,
   backgroundColor: user ? c.strong : c.surface, borderWidth: user ? 0 : 1, borderColor: c.outline,
@@ -115,8 +157,8 @@ const hm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The dock's text field, the photos waiting beside it (up to four: one meal can take several) and Send. */
-function Composer({ t, running, placeholder, onSend, onFocus, onDraft, autoFocus = false, focusSignal = 0 }:
-  { t: Texts; running: boolean; placeholder: string; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; onDraft?: (typing: boolean) => void; autoFocus?: boolean; focusSignal?: number }) {
+function Composer({ t, running, placeholder, onSend, onFocus, onDraft, onStop, autoFocus = false, focusSignal = 0 }:
+  { t: Texts; running: boolean; placeholder: string; onSend: (text: string, photos: Photo[]) => void; onFocus?: () => void; onDraft?: (typing: boolean) => void; onStop?: () => void; autoFocus?: boolean; focusSignal?: number }) {
   const input = useRef<TextInput>(null);
   useEffect(() => { if (focusSignal) input.current?.focus(); }, [focusSignal]);
   const [tray, setTray] = useState<Photo[]>([]);
@@ -158,7 +200,13 @@ function Composer({ t, running, placeholder, onSend, onFocus, onDraft, autoFocus
           autoFocus={autoFocus} onFocus={() => { onFocus?.(); warmUp(); }}
           onKeyPress={(e) => { const k = e.nativeEvent as unknown as { key: string; shiftKey?: boolean }; if (Platform.OS === "web" && k.key === "Enter" && !k.shiftKey) { (e as unknown as { preventDefault?: () => void }).preventDefault?.(); send(); } }}
           style={[{ flex: 1, backgroundColor: c.surfaceLow, borderWidth: 1, borderColor: c.outline, borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11, minHeight: 44, maxHeight: 120, fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurface }, Platform.OS === "web" ? ({ outlineStyle: "none" } as object) : null]} />
-        {canSend ? (
+        {/* EX-01m6pmf9zhdr5wntczz8ncfdrj: while a reply is written, Stop stands in place of Send. */}
+        {running && onStop ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={t.stop} onPress={onStop}
+            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.strong, alignItems: "center", justifyContent: "center" }}>
+            <View style={{ width: 13, height: 13, borderRadius: 2, backgroundColor: c.onStrong }} />
+          </Pressable>
+        ) : canSend ? (
           <Pressable accessibilityRole="button" accessibilityLabel={t.send} onPress={send}
             style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: "center", justifyContent: "center" }}>
             <UiIcon name="arrow-up" size={20} color={c.onPrimary} />
@@ -236,6 +284,8 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
   // (EX-01m3y1psnt7qhveb7gcng4mx53).
   const loadRef = useRef(load);
   loadRef.current = load;
+  // A card made while the reply is written gets its entry (macros, Edit, Undo) at once, not after the reply (BR-01m6pmf9avbbgd373z1jcvvaqw).
+  useEffect(() => { box.onLogged = () => void loadRef.current(); }, []);
   useEffect(() => {
     box.onEvents = (events) => {
       for (const e of events) {
@@ -425,6 +475,11 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
         if (p.type === "text" && p.text && !user && meta?.failed) out.push({ key, time: time + i, node: <NotSent reason={p.text} retry={meta.retry !== false && !running} t={t} onRetry={() => aui.thread().message({ id: m.id }).reload()} /> });
         else if (p.type === "text" && p.text && !user) out.push({ key, time: time + i, node: <RichText text={p.text} /> });
         else if (p.type === "text" && p.text && !(user && p.text === t.photoQuestion && m.content.some((q) => q.type === "image"))) out.push({ key, time: time + i, node: <View style={bubble(user)}><Text style={{ fontFamily: T.face.body, fontSize: T.font.body, lineHeight: 23, color: c.onStrong }}>{p.text}</Text></View> });
+        else if (p.type === "tool-call" && p.toolName === "steps") {
+          const st = p.result as { steps: Step[]; done: boolean };
+          // A reply that is no longer written (done, or stopped) shows its steps folded.
+          out.push({ key, time: time + i, node: <Steps steps={st.steps} done={st.done || !(running && mi === messages.length - 1)} t={t} /> });
+        }
         else if (p.type === "tool-call" && p.toolName === "logged") {
           const info = p.result as LoggedInfo;
           const entry = shown.find((e) => e.id === info.id);
@@ -434,7 +489,8 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
       });
       if (m.metadata?.custom?.failedPhoto) out.push({ key: `f-${m.id}`, time: time + 500, node: <View style={{ flexDirection: "row", gap: 8 }}><Chip label={t.describe} onPress={() => setFocusSignal((n) => n + 1)} /></View> });
     });
-    if (running) out.push({ key: "thinking", time: Number.MAX_SAFE_INTEGER, node: <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.thinking}</Text> });
+    const lastMsg = messages[messages.length - 1];
+    if (running && (!lastMsg || lastMsg.role === "user" || lastMsg.content.length === 0)) out.push({ key: "thinking", time: Number.MAX_SAFE_INTEGER, node: <Text style={{ fontFamily: T.face.body, fontSize: T.font.body, color: c.onSurfaceVariant }}>{t.thinking}</Text> });
     return out.sort((a, b) => a.time - b.time);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, ready, t, running, scheme, shown, undone]);
@@ -550,7 +606,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
 
           {mode === "whatnow" ? (
             <WhatNow t={t} messages={messages} from={sheetFrom} running={running} picked={picked} onTap={tapOption}
-              onClose={() => { record(null); setMode("home"); setPicked(null); }} onSend={(x, p) => send(x, p, messages.length === sheetFrom ? t.whatNow : "", "would")} />
+              onClose={() => { record(null); setMode("home"); setPicked(null); }} onSend={(x, p) => send(x, p, messages.length === sheetFrom ? t.whatNow : "", "would")} onStop={() => aui.thread().cancelRun()} />
           ) : (
             <>
               <View style={{ flex: 1, minHeight: 16 }} />
@@ -572,7 +628,7 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
       ) : null}
       {mode !== "whatnow" || !ready ? (
         <Dock bar={mode === "talk" && highlight ? null : bar} t={t} running={running} focusSignal={focusSignal} onDraft={onDraft}
-          side={withSwitch ? side : null} onSide={pickSide} hint={hint}
+          side={withSwitch ? side : null} onSide={pickSide} hint={hint} onStop={() => aui.thread().cancelRun()}
           placeholder={withSwitch ? (side === "would" ? t.placeholderWould : t.placeholderAte) : t.placeholder}
           chips={!ready || mode === "talk"
             ? replies.map((r) => <Chip key={r} label={r} onPress={() => send(r, [])} />)
@@ -598,9 +654,9 @@ function Inner({ onboarded, healthConnected, onSignedOut }: TodayProps) {
  * history, so the first in the morning is often yesterday's breakfast (EX-01m3y1pv8jmdbqay69dw1xzwcx). In the conversation they are
  * the assistant's quick replies. One dock serves both, so the field keeps its focus when the plate folds.
  */
-function Dock({ bar, chips, t, running, onSend, onFocus, onDraft, focusSignal, side, onSide, hint, placeholder }:
+function Dock({ bar, chips, t, running, onSend, onFocus, onDraft, onStop, focusSignal, side, onSide, hint, placeholder }:
   { bar: { text: string; error?: boolean; actions: BarAction[] } | null; chips: React.ReactNode[]; t: Texts; running: boolean; onSend: (text: string, photos: Photo[]) => void; onFocus: () => void; onDraft: (typing: boolean) => void; focusSignal: number;
-    side: Side | null; onSide: (s: Side) => void; hint: boolean; placeholder: string }) {
+    side: Side | null; onSide: (s: Side) => void; hint: boolean; placeholder: string; onStop: () => void }) {
   return (
     <>
       {bar ? <ActionBar {...bar} /> : null}
@@ -608,7 +664,7 @@ function Dock({ bar, chips, t, running, onSend, onFocus, onDraft, focusSignal, s
         {side ? <SideSwitch side={side} onSide={onSide} t={t} /> : null}
         {side && hint ? <Text style={{ fontFamily: T.face.body, fontSize: 12.5, color: c.onSurfaceVariant, textAlign: "center" }}>{t.sideHint}</Text> : null}
         {chips.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 14 }} style={{ marginHorizontal: -14 }}>{chips}</ScrollView> : null}
-        <Composer t={t} running={running} placeholder={placeholder} onSend={onSend} onFocus={onFocus} onDraft={onDraft} focusSignal={focusSignal} />
+        <Composer t={t} running={running} placeholder={placeholder} onSend={onSend} onFocus={onFocus} onDraft={onDraft} onStop={onStop} focusSignal={focusSignal} />
       </View>
     </>
   );
@@ -624,6 +680,33 @@ function RichText({ text }: { text: string }) {
         ? <Text key={i} style={base}>{spans(b.spans)}</Text>
         : <View key={i} style={{ flexDirection: "row", gap: 8, paddingLeft: 4 }}><Text style={{ ...base, color: c.onSurfaceVariant }}>{b.mark}</Text><Text style={{ ...base, flex: 1 }}>{spans(b.spans)}</Text></View>)}
     </View>
+  );
+}
+
+/** BR-01m6pmf9avbbgd373z1jcvvaqw: the steps of a reply, each ticked when done; once the reply is done they fold into one quiet line
+ * that opens on a tap (EX-01m6pmf9repmym9yf87emkrjph). */
+function Steps({ steps, done, t }: { steps: Step[]; done: boolean; t: Texts }) {
+  const [open, setOpen] = useState(false);
+  const w = stepWords(t);
+  const meta = { fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant } as const;
+  if (done && !open) {
+    return (
+      <Pressable accessibilityRole="button" accessibilityLabel={t.stepsOpen} onPress={() => setOpen(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 32 }}>
+        <UiIcon name="check" size={14} color={c.good} />
+        <Text numberOfLines={1} style={{ ...meta, flex: 1 }}>{stepSummary(w, steps)}</Text>
+        <UiIcon name="chevron" size={14} color={c.onSurfaceVariant} />
+      </Pressable>
+    );
+  }
+  return (
+    <Pressable disabled={!done} onPress={() => setOpen(false)} accessibilityLiveRegion="polite" style={{ gap: 4 }}>
+      {steps.map((s) => (
+        <View key={s.id} style={{ flexDirection: "row", alignItems: "center", gap: 8, minHeight: 22 }}>
+          {s.done ? <UiIcon name="check" size={14} color={c.good} /> : <ActivityIndicator size="small" color={c.onSurfaceVariant} style={{ transform: [{ scale: 0.7 }], width: 14, height: 14 }} />}
+          <Text style={{ ...meta, color: s.done ? c.onSurfaceVariant : c.onSurface }}>{stepLabel(w, s)}</Text>
+        </View>
+      ))}
+    </Pressable>
   );
 }
 
@@ -713,8 +796,8 @@ function FoldedPlate({ parts, line, kcal, goal, minutes, t, onOpen }:
  * "What should I eat now?" on a sheet under the figures: what the assistant asks or answers, its options, and the field to answer.
  * EX-01m3rwa0je7dfzm48e1f496wnr: the answer names the gap and proposes foods for it; the chosen one is previewed on the plate.
  */
-function WhatNow({ t, messages, from, running, picked, onTap, onClose, onSend }:
-  { t: Texts; messages: { content: Part[]; role: string }[]; from: number; running: boolean; picked: number | null; onTap: (o: Option) => void; onClose: () => void; onSend: (text: string, photos: Photo[]) => void }) {
+function WhatNow({ t, messages, from, running, picked, onTap, onClose, onSend, onStop }:
+  { t: Texts; messages: { content: Part[]; role: string }[]; from: number; running: boolean; picked: number | null; onTap: (o: Option) => void; onClose: () => void; onSend: (text: string, photos: Photo[]) => void; onStop: () => void }) {
   const since = messages.slice(from);
   const lastAssistant = [...since].reverse().find((m) => m.role !== "user");
   const said = lastAssistant?.content.filter((p) => p.type === "text" && p.text).map((p) => p.text).join(" ") ?? "";
@@ -728,7 +811,7 @@ function WhatNow({ t, messages, from, running, picked, onTap, onClose, onSend }:
       </View>
       <Text style={{ fontFamily: T.face.body, fontSize: 14, color: c.onSurfaceVariant }}>{running ? t.thinking : said || t.whatNowHint}</Text>
       <View style={{ flex: 1 }}>{options.length ? <Suggestions options={options} picked={picked} onTap={onTap} t={t} /> : null}</View>
-      {options.length ? null : <Composer t={t} running={running} placeholder={t.whatNowHint} onSend={onSend} />}
+      {options.length ? null : <Composer t={t} running={running} placeholder={t.whatNowHint} onSend={onSend} onStop={onStop} />}
     </View>
   );
 }

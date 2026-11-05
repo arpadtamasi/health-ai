@@ -13,7 +13,7 @@ export function mockBackend(): Backend {
   let list: DayEntry[] = [...seed];
   let seq = 0;
   const sum = (k: "kcal" | "carbs" | "protein" | "fat") => list.reduce((a, e) => a + e[k], 0);
-  return {
+  const backend: Backend = {
     me: () => Promise.resolve({ email: "sample@example.com", onboarded: true, language: null, healthConnected: true }),
     state: () => Promise.resolve({
       goals: { calories: goals.calories, carbs: goals.carbs, protein: goals.protein, fat: goals.fat }, window: goals.window, constraints: [],
@@ -27,6 +27,22 @@ export function mockBackend(): Backend {
       const id = `sample-${++seq}`;
       list = [...list, { id, kind: "meal", name: "Ropa vieja, rizs, saláta", kcal: 480, carbs: 41, protein: 34, fat: 18, at: Date.now(), source: "photo", estimate: true, ingredients: [] }];
       return Promise.resolve({ events: [{ type: "logged", name: "Ropa vieja, rizs, saláta", kcal: 480, id }, { type: "text", text: "**Beírtam fél adagot.** Ezzel 1140 kcal-nál jársz, fehérjéből még 91 g hiányzik. Vacsorára:\n- túró tojással\n- csirkemell rizzsel" }], needsConsent: false, onboarded: true, language: null });
+    },
+    // Sample steps and text, paced as a model would send them, so that the streamed reply can be seen without one.
+    chatStream: async (input, onLine, signal) => {
+      const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const check = () => { if (signal?.aborted) throw new ApiError(0, "stopped", {}); };
+      if (/hiba/i.test(input.message)) { await wait(400); throw new ApiError(0, "network", null); }
+      const would = input.intent === "would" || /egyek|eat\b/i.test(input.message);
+      if (input.images?.length) { onLine({ type: "step", id: "photo", tool: "photo", state: "start" }); await wait(700); check(); onLine({ type: "step", id: "photo", tool: "photo", state: "done" }); }
+      onLine({ type: "step", id: "s1", tool: "get_today", state: "start" }); await wait(400); check(); onLine({ type: "step", id: "s1", tool: "get_today", state: "done" });
+      const reply = await backend.chat(input);
+      for (const e of reply.events) {
+        if (e.type === "logged") { onLine({ type: "step", id: "s2", tool: "log_meal", detail: e.name, state: "start" }); await wait(500); check(); onLine({ type: "event", event: e }); onLine({ type: "step", id: "s2", tool: "log_meal", detail: e.name, state: "done" }); }
+        else if (e.type === "options") { onLine({ type: "step", id: "s2", tool: "suggest_options", state: "start" }); await wait(600); check(); onLine({ type: "event", event: e as never }); onLine({ type: "step", id: "s2", tool: "suggest_options", state: "done" }); }
+      }
+      for (const e of reply.events) if (e.type === "text") for (const w of e.text.split(/(?<= )/)) { await wait(would ? 20 : 60); check(); onLine({ type: "delta", text: w }); }
+      return reply;
     },
     consent: () => Promise.resolve(),
     chatHistory: () => Promise.resolve([]),
@@ -44,4 +60,5 @@ export function mockBackend(): Backend {
     deleteAll: () => { list = []; return Promise.resolve(); },
     choice: () => Promise.resolve(),
   };
+  return backend;
 }

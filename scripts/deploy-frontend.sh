@@ -20,8 +20,12 @@ echo "== App (app/, Expo web export into site/dist)"
 # BR-01m6p2r4vmgte1n2wkwjx0q28w: the build is stamped into the bundle and into /version.json next to the page; the app compares the two
 # when it comes back to the front and loads the newer one. The page, version.json and the manifest are served uncached (firebase.json).
 BUILD="$(git -C "$ROOT" rev-parse --short=12 HEAD 2>/dev/null || date +%s)-$(date +%s)"
+# BR-01m6pmf9avbbgd373z1jcvvaqw: Firebase Hosting holds a streamed response back until it ends, so the app streams the chat straight
+# from the Cloud Run service's own address. Without it (no gcloud) the app asks for the whole reply through Hosting, as before.
+STREAM_BASE="${STREAM_BASE:-$(gcloud run services describe "${SERVICE:-health-ai}" --project "$PROJECT_ID" --region "${REGION:-europe-west1}" --format 'value(status.url)' 2>/dev/null || true)}"
+echo "Stream base: ${STREAM_BASE:-none}"
 APP_OUT="$(mktemp -d)"
-(cd "$ROOT/app" && npm ci && CI=1 EXPO_PUBLIC_MOCK= EXPO_PUBLIC_BUILD="$BUILD" npx expo export --clear --platform web --output-dir "$APP_OUT")
+(cd "$ROOT/app" && npm ci && CI=1 EXPO_PUBLIC_MOCK= EXPO_PUBLIC_BUILD="$BUILD" EXPO_PUBLIC_STREAM_BASE="$STREAM_BASE" npx expo export --clear --platform web --output-dir "$APP_OUT")
 printf '{"build":"%s"}\n' "$BUILD" > "$APP_OUT/version.json"
 rm -f "$ROOT/site/dist/index.html"   # the old landing page; the app's signed-out screen replaces it
 cp -R "$APP_OUT"/. "$ROOT/site/dist/"
@@ -38,7 +42,7 @@ curl -fsS "${PUBLIC_URL}/" | grep -q "<div id=\"root\"" && echo "app ok"
 [ "$(curl -fsS "${PUBLIC_URL}/version.json")" = "{\"build\":\"$BUILD\"}" ] && echo "version ok"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "${PUBLIC_URL}/api/app/me")" = "401" ] && echo "api ok"
 [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST "${PUBLIC_URL}/mcp")" = "401" ] && echo "mcp ok"
-# Temporary: does Hosting stream? Each line is printed with the second it arrived; spread over ~5 s = streamed, all at once = buffered.
-echo "== Stream probe through Hosting"
-curl -sN --max-time 20 "${PUBLIC_URL}/api/probe/stream" \
-  | python3 -c 'import sys, time; t = time.time(); [print(f"{time.time() - t:5.2f} s  {l.strip()}", flush=True) for l in sys.stdin]' || true
+# BR-01m6pmf9avbbgd373z1jcvvaqw: the streamed chat answers the app's own origin at the service's address.
+if [ -n "$STREAM_BASE" ]; then
+  [ "$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS -H "origin: ${PUBLIC_URL%/}" -H 'access-control-request-method: POST' "${STREAM_BASE}/api/stream/chat")" = "204" ] && echo "stream ok"
+fi

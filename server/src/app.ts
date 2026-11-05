@@ -6,7 +6,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { Sealer } from "./crypto/sealer.js";
 import type { GoogleOAuth } from "./google/oauth.js";
 import type { Store } from "./store/types.js";
-import { appApiRouter } from "./app-api/routes.js";
+import { appApiRouter, chatStreamRouter } from "./app-api/routes.js";
 import { Sessions } from "./app-api/session.js";
 import type { AiModel } from "./ai/model.js";
 import { GoogleAccess } from "./auth/google-access.js";
@@ -62,17 +62,6 @@ export function createApp(deps: AppDeps): App {
     res.json({ status: "ok" });
   });
 
-  // A temporary probe: does Firebase Hosting pass a streamed response through to the browser as it is written, or only at the
-  // end? Five lines, one a second; the deploy's smoke check times their arrival through Hosting. Removed once that is known.
-  app.get("/api/probe/stream", async (_req, res) => {
-    res.set({ "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-cache, no-transform", "x-accel-buffering": "no" });
-    res.flushHeaders();
-    for (let i = 1; i <= 5; i++) {
-      res.write(`${JSON.stringify({ i, at: Date.now() })}\n`);
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-    res.end();
-  });
 
   // IF-01m3eb1dc1ps80f3fbg3ve5dv3 (OAuth discovery metadata) and IF-01m3eb1dn2x3v6146zd227h8br (Client registration endpoint).
   app.use(
@@ -94,6 +83,16 @@ export function createApp(deps: AppDeps): App {
       onGoogleTokenReplaced: (userId) => googleAccess.forget(userId),
     }),
   );
+
+  // BR-01m6pmf9avbbgd373z1jcvvaqw: the streamed chat, called at the service's own address with a ticket, from the app's origin only.
+  app.use("/api/stream", chatStreamRouter({
+    store: deps.store,
+    sessions,
+    healthFor: async (userId) => ((await googleAccess.connected(userId)) ? new HealthApi(() => googleAccess.accessToken(userId), deps.healthFetch) : undefined),
+    ...(deps.ai ? { ai: deps.ai } : {}),
+    now,
+    allowedOrigin: deps.publicUrl.origin,
+  }));
 
   // The app's browser API (US-01m3rvr64zrzczabckjf6crb2z, US-01m3rwa0cvrtcapqk0k3h6mqvc): session cookie, never the MCP token.
   app.use("/api/app", appApiRouter({

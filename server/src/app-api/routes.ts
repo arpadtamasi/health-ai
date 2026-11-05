@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { Router, type Request, type RequestHandler } from "express";
 import express from "express";
 import { z } from "zod";
-import { runAgent } from "../ai/agent.js";
+import { runAgent, type StreamEvent } from "../ai/agent.js";
 import { dayKey, TokenBudget, type UsageStore } from "../ai/budget.js";
 import type { AiModel } from "../ai/model.js";
 import { whatNow } from "../ai/whatNow.js";
@@ -91,6 +91,78 @@ function usageStoreOf(store: Store, now: () => number): UsageStore {
     get: (userId, day) => store.getTokenUsage(userId, day),
     add: (userId, day, tokens) => store.addTokenUsage(userId, day, tokens, now() + TOKEN_USAGE_TTL_MS),
   };
+}
+
+export interface ChatReplyBody { events: unknown[]; needsConsent: boolean; onboarded: boolean; language: string | null; stopped?: boolean }
+type ChatOutcome = { ok: true; reply: ChatReplyBody } | { ok: false; status: number; body: Record<string, unknown> };
+
+/** One turn of the app's chat, whole or streamed: checks, the agent, the stored conversation and the day's budget. */
+async function runChat(deps: AppApiDeps, userId: string, raw: unknown, opts: { emit?: (e: StreamEvent) => void; signal?: AbortSignal } = {}): Promise<ChatOutcome> {
+  const body = chatBody.safeParse(raw);
+  if (!body.success) return { ok: false, status: 400, body: { error: "invalid_request", detail: body.error.issues.map((i) => i.message) } };
+  if (!deps.ai) return { ok: false, status: 503, body: { error: "ai_unavailable" } };
+  const entries = new Entries({ store: deps.store, userId, now: deps.now, health: await deps.healthFor(userId) });
+  const dk = dayKey(new Date(deps.now()), await entries.timeZone());
+  const budget = new TokenBudget(usageStoreOf(deps.store, deps.now), deps.ai.dailyTokenLimit);
+  const left = await budget.check(userId, dk);
+  if (!left.allowed) return { ok: false, status: 429, body: { error: "daily_limit", used: left.used, limit: left.limit } };
+  const env = makeAgentEnv({ store: deps.store, entries, model: deps.ai.model, modelName: deps.ai.modelName, userId, now: deps.now });
+  const result = await runAgent({ model: deps.ai.model, modelName: deps.ai.modelName }, env, {
+    history: body.data.history, message: body.data.message, images: [...(body.data.images ?? []), ...(body.data.image ? [body.data.image] : [])],
+    ...(body.data.intent ? { intent: body.data.intent } : {}),
+    ...(opts.emit ? { emit: opts.emit } : {}), ...(opts.signal ? { signal: opts.signal } : {}),
+  });
+  // BR "The chat is kept during the test": the person's message and the assistant's answer are stored (text and events, never the
+  // photos), expire after the retention period, and go with the person's data when they delete it. A failed save never fails the chat.
+  try {
+    const at = deps.now();
+    const nImages = (body.data.images?.length ?? 0) + (body.data.image ? 1 : 0);
+    const expireAt = at + CHAT_RETENTION_MS;
+    await deps.store.putChat({ id: `${at}-1u`, userId, at, role: "user", text: body.data.message, ...(nImages ? { images: nImages } : {}), expireAt });
+    await deps.store.putChat({ id: `${at}-2a`, userId, at: at + 1, role: "assistant", events: result.events, usage: result.usage, expireAt });
+  } catch { /* the chat itself went through */ }
+  await budget.record(userId, dk, {
+    inputTokens: result.usage.inputTokens + env.extraUsage.inputTokens,
+    outputTokens: result.usage.outputTokens + env.extraUsage.outputTokens,
+  });
+  const settings = await deps.store.getAppSettings(userId);
+  const prefs = await deps.store.getAppPrefs(userId);
+  return { ok: true, reply: { events: result.events, needsConsent: settings !== undefined && settings.consentAt === undefined, onboarded: settings?.onboardedAt !== undefined, language: prefs?.language ?? null, ...(result.stopped ? { stopped: true } : {}) } };
+}
+
+/**
+ * BR-01m6pmf9avbbgd373z1jcvvaqw (A reply arrives as it is written, with its steps): the chat, streamed as one JSON object a line,
+ * at the service's own address (Firebase Hosting holds a stream back until it ends). It takes the ticket from /chat/ticket, allows
+ * only the app's own origin, and stops the reply when the app closes the connection (Stop).
+ */
+export function chatStreamRouter(deps: AppApiDeps & { allowedOrigin: string }): Router {
+  const router = Router();
+  router.use((req, res, next) => {
+    if (req.headers.origin === deps.allowedOrigin) {
+      res.set({ "access-control-allow-origin": deps.allowedOrigin, vary: "origin", "access-control-allow-headers": "authorization, content-type", "access-control-allow-methods": "POST", "access-control-max-age": "600" });
+    }
+    if (req.method === "OPTIONS") { res.status(204).end(); return; }
+    next();
+  });
+  router.use(express.json({ limit: "8mb" }));
+  router.post("/chat", async (req, res) => {
+    const auth = req.headers.authorization ?? "";
+    const userId = auth.startsWith("Bearer ") ? await deps.sessions.verifyTicket(auth.slice(7)) : undefined;
+    if (!userId) { res.status(401).json({ error: "not_signed_in" }); return; }
+    const ctl = new AbortController();
+    res.on("close", () => { if (!res.writableEnded) ctl.abort(); });
+    res.status(200).set({ "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-cache, no-transform", "x-accel-buffering": "no" });
+    res.flushHeaders();
+    const line = (o: unknown) => { if (!res.writableEnded) res.write(`${JSON.stringify(o)}\n`); };
+    try {
+      const r = await runChat(deps, userId, req.body, { emit: line, signal: ctl.signal });
+      line(r.ok ? { type: "done", reply: r.reply } : { type: "error", status: r.status, ...r.body });
+    } catch {
+      line({ type: "error", status: 500, error: "failed" });
+    }
+    res.end();
+  });
+  return router;
 }
 
 export function appApiRouter(deps: AppApiDeps): Router {
@@ -322,45 +394,13 @@ export function appApiRouter(deps: AppApiDeps): Router {
 
   // US-01m3rw2bqxkqp6v1hg9g02t1zr: the app's chat. The client keeps the conversation and sends it back each time.
   router.post("/chat", async (req, res) => {
-    const userId = uid(req);
-    const body = chatBody.safeParse(req.body);
-    if (!body.success) {
-      res.status(400).json({ error: "invalid_request", detail: body.error.issues.map((i) => i.message) });
-      return;
-    }
-    if (!deps.ai) {
-      res.status(503).json({ error: "ai_unavailable" });
-      return;
-    }
-    const entries = await entriesOf(userId);
-    const dk = dayKey(new Date(deps.now()), await entries.timeZone());
-    const budget = new TokenBudget(usageStoreOf(deps.store, deps.now), deps.ai.dailyTokenLimit);
-    const left = await budget.check(userId, dk);
-    if (!left.allowed) {
-      res.status(429).json({ error: "daily_limit", used: left.used, limit: left.limit });
-      return;
-    }
-    const env = makeAgentEnv({ store: deps.store, entries, model: deps.ai.model, modelName: deps.ai.modelName, userId, now: deps.now });
-    const result = await runAgent({ model: deps.ai.model, modelName: deps.ai.modelName }, env, {
-      history: body.data.history, message: body.data.message, images: [...(body.data.images ?? []), ...(body.data.image ? [body.data.image] : [])],
-      ...(body.data.intent ? { intent: body.data.intent } : {}),
-    });
-    // BR "The chat is kept during the test": the person's message and the assistant's answer are stored (text and events, never the
-    // photos), expire after the retention period, and go with the person's data when they delete it. A failed save never fails the chat.
-    try {
-      const at = deps.now();
-      const nImages = (body.data.images?.length ?? 0) + (body.data.image ? 1 : 0);
-      const expireAt = at + CHAT_RETENTION_MS;
-      await deps.store.putChat({ id: `${at}-1u`, userId, at, role: "user", text: body.data.message, ...(nImages ? { images: nImages } : {}), expireAt });
-      await deps.store.putChat({ id: `${at}-2a`, userId, at: at + 1, role: "assistant", events: result.events, usage: result.usage, expireAt });
-    } catch { /* the chat itself went through */ }
-    await budget.record(userId, dk, {
-      inputTokens: result.usage.inputTokens + env.extraUsage.inputTokens,
-      outputTokens: result.usage.outputTokens + env.extraUsage.outputTokens,
-    });
-    const settings = await deps.store.getAppSettings(userId);
-    const prefs = await deps.store.getAppPrefs(userId);
-    res.json({ events: result.events, needsConsent: settings !== undefined && settings.consentAt === undefined, onboarded: settings?.onboardedAt !== undefined, language: prefs?.language ?? null });
+    const r = await runChat(deps, uid(req), req.body);
+    if (r.ok) res.json(r.reply); else res.status(r.status).json(r.body);
+  });
+
+  // BR-01m6pmf9avbbgd373z1jcvvaqw: the ticket for one streamed reply (the stream itself is chatStreamRouter, at the service's address).
+  router.post("/chat/ticket", async (req, res) => {
+    res.json({ ticket: await deps.sessions.ticket(uid(req)) });
   });
 
   // The conversation so far, so that reopening the app (or another device) shows it again.
