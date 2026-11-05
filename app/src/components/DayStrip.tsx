@@ -15,8 +15,8 @@ const hm = (m: number) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0
 /** The part of a long entry name before its first bracket or comma, so that a chip stays a chip. */
 export const shortName = (n: string) => (n.split(/ \(|, | \+ /)[0] ?? n).trim().slice(0, 24);
 
-export function DayStrip({ entries, timeZone, metric, highlight, status, onTap, t }:
-  { entries: DayEntry[]; timeZone: string; metric: Drawn | "kcal"; highlight: string | null; status: Record<string, "pending" | "failed">; onTap: (e: DayEntry) => void; t: Texts }) {
+export function DayStrip({ entries, timeZone, metric, highlight, status, onTap, t, bare = false }:
+  { entries: DayEntry[]; timeZone: string; metric: Drawn | "kcal"; highlight: string | null; status: Record<string, "pending" | "failed">; onTap: (e: DayEntry) => void; t: Texts; bare?: boolean }) {
   const c = T.color;
   const ref = useRef<ScrollView>(null);
   useEffect(() => { const id = setTimeout(() => ref.current?.scrollToEnd({ animated: false }), 60); return () => clearTimeout(id); }, [entries.length]);
@@ -28,10 +28,13 @@ export function DayStrip({ entries, timeZone, metric, highlight, status, onTap, 
   };
   return (
     <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingHorizontal: 20 }}>
-        <Text style={{ fontFamily: T.face.displaySemi, fontSize: 16, color: c.onSurface }}>{t.todayHead}</Text>
-        {entries.length ? <Text style={{ fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant, ...T.numeric }}>{t.todayCount(meals, waters)}</Text> : null}
-      </View>
+      {/* A very short screen keeps the entries and gives the heading's line to the plate and the dock. */}
+      {bare ? null : (
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingHorizontal: 20 }}>
+          <Text style={{ fontFamily: T.face.displaySemi, fontSize: T.font.body, color: c.onSurface }}>{t.todayHead}</Text>
+          {entries.length ? <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, ...T.numeric }}>{t.todayCount(meals, waters)}</Text> : null}
+        </View>
+      )}
       <ScrollView ref={ref} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 16 }}>
         {entries.length ? entries.map((e) => {
           const s = status[e.id];
@@ -39,17 +42,17 @@ export function DayStrip({ entries, timeZone, metric, highlight, status, onTap, 
           return (
             <Pressable key={e.id} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${hm(minutesOf(e.at, timeZone))} ${e.kind === "water" ? t.waterLabel : e.name}, ${amount(e)}`}
               disabled={s === "pending"} onPress={() => onTap(e)}
-              style={{ flexDirection: "row", alignItems: "center", gap: 7, minHeight: 40, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1.5,
+              style={{ flexDirection: "row", alignItems: "center", gap: 7, minHeight: 44, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1.5,
                 borderColor: s === "failed" ? c.error : on ? c.ink : c.outline, backgroundColor: c.surface, opacity: s === "pending" ? 0.55 : 1 }}>
               <View style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: colorOf(mainOf(e)), borderWidth: 1, borderColor: c.grainEdge }} />
-              <Text style={{ fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant, ...T.numeric }}>{hm(minutesOf(e.at, timeZone))}</Text>
-              <Text numberOfLines={1} style={{ fontFamily: T.face.body, fontSize: 13, color: c.onSurface }}>{e.kind === "water" ? t.waterLabel : shortName(e.name)}</Text>
-              <Text style={{ fontFamily: T.face.bold, fontSize: 13, color: c.onSurface, ...T.numeric }}>{s === "pending" ? "…" : amount(e)}</Text>
+              <Text style={{ ...T.type.micro, color: c.onSurfaceVariant, ...T.numeric }}>{hm(minutesOf(e.at, timeZone))}</Text>
+              <Text numberOfLines={1} style={{ ...T.type.micro, color: c.onSurface }}>{e.kind === "water" ? t.waterLabel : shortName(e.name)}</Text>
+              <Text style={{ fontFamily: T.face.bold, fontSize: T.font.micro, color: c.onSurface, ...T.numeric }}>{s === "pending" ? "…" : amount(e)}</Text>
             </Pressable>
           );
         }) : (
-          <View style={{ minHeight: 40, justifyContent: "center", paddingHorizontal: 12, borderRadius: 12, borderWidth: 1.5, borderStyle: "dashed", borderColor: c.outline }}>
-            <Text style={{ fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant }}>{t.todayEmpty}</Text>
+          <View style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: 12, borderRadius: 12, borderWidth: 1.5, borderStyle: "dashed", borderColor: c.outline }}>
+            <Text style={{ ...T.type.micro, color: c.onSurfaceVariant }}>{t.todayEmpty}</Text>
           </View>
         )}
       </ScrollView>

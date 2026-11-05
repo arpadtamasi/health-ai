@@ -94,9 +94,16 @@ function PlateView({ parts, kcal, selected, highlight, preview, size, onSelect, 
   const fmt = (n: number) => Math.round(n).toLocaleString("hu-HU");
   const inThird = selected === "p" || selected === "c" || selected === "f";
   const hubBig = inThird ? `${Math.round(parts[selected].eaten)} g` : fmt(kcal.eaten);
-  const hubSmall = inThird ? `/ ${parts[selected].goal} g` : `/ ${fmt(kcal.goal)} kcal`;
+  // The hub's words keep a readable size on screen (20 px and 11 px) whatever the plate's size: on a small plate the hub grows
+  // around them, and the unit is left to the line under the plate.
+  const u = 268 / size;
+  const fBig = Math.max(hubBig.length > 4 ? 15 : 17, 20 * u), fSmall = Math.max(8.5, 11 * u);
+  const hubSmall = inThird ? `/ ${parts[selected].goal} g` : size < 240 ? `/ ${fmt(kcal.goal)}` : `/ ${fmt(kcal.goal)} kcal`;
+  // Wide enough for its longest line (about half an em per character) and tall enough for both lines.
+  const hubR = Math.max(HUB - 3, (Math.max(hubSmall.length * 0.53 * fSmall, hubBig.length * 0.6 * fBig)) / 2 + 4, 0.55 * (fBig + fSmall) + 4);
+  const bigBase = CY - (0.72 * fBig + fSmall) / 2 + 0.72 * fBig;
   return (
-    <Svg width={size} height={size} viewBox="-14 -14 268 268" accessibilityLabel={`${hubBig} ${hubSmall}`}>
+    <Svg width={size} height={size} viewBox="-14 -14 268 268" accessibilityLabel={inThird ? `${hubBig} ${hubSmall}` : `${hubBig} / ${fmt(kcal.goal)} kcal`}>
       <Defs>
         <RadialGradient id={`rim${uid}`} cx="45%" cy="40%" r="65%"><Stop offset="0" stopColor={c.stone} /><Stop offset="1" stopColor={c.stone2} /></RadialGradient>
         <RadialGradient id={`well${uid}`} cx="50%" cy="50%" r="55%"><Stop offset="0.7" stopColor={c.stoneWell} /><Stop offset="1" stopColor={c.stone2} /></RadialGradient>
@@ -128,13 +135,13 @@ function PlateView({ parts, kcal, selected, highlight, preview, size, onSelect, 
           <Line x1={x0 + 1.5} y1={y0 + 2} x2={x + 1.5} y2={y + 2} stroke={c.stoneShadow} strokeWidth={mini ? 10 : 7} strokeLinecap="round" />
           <Line x1={x0} y1={y0} x2={x} y2={y} stroke={c.stoneRidge} strokeWidth={mini ? 10 : 7} strokeLinecap="round" />
         </G>); })}
-      <Circle cx={CX + 1} cy={CY + 2} r={HUB - 3} fill={c.stoneShadow} />
-      <Circle cx={CX} cy={CY} r={HUB - 3} fill={c.stoneRidge} stroke={selected === "kcal" && !mini ? c.stoneInk : "transparent"} strokeWidth={2}
+      <Circle cx={CX + 1} cy={CY + 2} r={mini ? HUB - 3 : hubR} fill={c.stoneShadow} />
+      <Circle cx={CX} cy={CY} r={mini ? HUB - 3 : hubR} fill={c.stoneRidge} stroke={selected === "kcal" && !mini ? c.stoneInk : "transparent"} strokeWidth={2}
         {...(!mini && onSelect ? { onPress: () => onSelect("kcal") } : {})} />
       {mini ? null : (
         <>
-          <SvgText x={CX} y={CY + 3} textAnchor="middle" fontFamily={T.face.display} fontSize={hubBig.length > 4 ? 15 : 17} fill={c.stoneInk}>{hubBig}</SvgText>
-          <SvgText x={CX} y={CY + 15} textAnchor="middle" fontFamily={T.face.semi} fontSize={8.5} fill={c.stoneMuted}>{hubSmall}</SvgText>
+          <SvgText x={CX} y={bigBase} textAnchor="middle" fontFamily={T.face.display} fontSize={fBig} fill={c.stoneInk}>{hubBig}</SvgText>
+          <SvgText x={CX} y={bigBase + fSmall + 1} textAnchor="middle" fontFamily={T.face.semi} fontSize={fSmall} fill={c.stoneMuted}>{hubSmall}</SvgText>
         </>
       )}
     </Svg>

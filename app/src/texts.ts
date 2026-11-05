@@ -112,7 +112,7 @@ const en = {
   sideHint: "I ate: I log it. I'd eat: I suggest something.",
   placeholderAte: "What did you eat? Write it or take a photo…",
   placeholderWould: "What do you fancy? Or photograph what you have…",
-  photoNow: "Take a photo", photoGallery: "From the gallery", fridgeChip: "Photo of the fridge",
+  photoNow: "Take a photo", photoGallery: "From the gallery",
   notSent: "Not sent", sendAgain: "Send again", undone: "Undone", editEntry: "Edit",
   // BR-01m6pmf9avbbgd373z1jcvvaqw: the steps of a reply, as they happen.
   stepPhoto: "Looking at the photo", stepToday: "Reading today", stepLog: (d?: string) => (d ? `Logging: ${d}` : "Logging"),
@@ -234,7 +234,7 @@ const hu: typeof en = {
   sideHint: "Ettem: beírom. Ennék: ajánlok valamit.",
   placeholderAte: "Mit ettél? Írd vagy fotózd…",
   placeholderWould: "Mire vágysz? Vagy fotózd le, mi van itthon…",
-  photoNow: "Fénykép most", photoGallery: "A galériából", fridgeChip: "Fotó a hűtőről",
+  photoNow: "Fénykép most", photoGallery: "A galériából",
   notSent: "Nem ment el", sendAgain: "Újra", undone: "Visszavonva", editEntry: "Szerkesztés",
   // BR-01m6pmf9avbbgd373z1jcvvaqw: the steps of a reply, as they happen.
   stepPhoto: "Megnézem a képet", stepToday: "Megnézem a mai napot", stepLog: (d?: string) => (d ? `Beírom: ${d}` : "Beírom"),

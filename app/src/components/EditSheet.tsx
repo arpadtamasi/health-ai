@@ -7,7 +7,7 @@ import { minutesOf } from "../day";
 import type { Texts } from "../i18n";
 import type { EntryPatch } from "../api/client";
 import { tokens as T } from "../theme/tokens";
-import { Button, Chip } from "./ui";
+import { Button, Chip, RoundButton } from "./ui";
 
 const c = T.color;
 const TYPES = ["BREAKFAST", "LUNCH", "SNACK", "DINNER"] as const;
@@ -39,15 +39,15 @@ export function EditSheet({ entry, timeZone, t, onSave, onDelete, onClose }:
             <Text style={{ fontFamily: T.face.display, fontSize: T.font.title, letterSpacing: -0.4, color: c.onSurface }}>{t.editTitle}</Text>
             <Text style={{ fontFamily: T.face.display, fontSize: T.font.card, color: c.onSurface, ...T.numeric }}>{scale(entry.kcal, f)} kcal</Text>
           </View>
-          <Text style={{ fontFamily: T.face.body, fontSize: T.font.meta, color: c.onSurfaceVariant, ...T.numeric }}>{t.macroLine(scale(entry.protein, f), scale(entry.carbs, f), scale(entry.fat, f))}</Text>
+          <Text style={{ ...T.type.meta, color: c.onSurfaceVariant, ...T.numeric }}>{t.macroLine(scale(entry.protein, f), scale(entry.carbs, f), scale(entry.fat, f))}</Text>
           <Row label={t.editName}>
             <TextInput value={name} onChangeText={setName} accessibilityLabel={t.editName} style={{ flex: 1, textAlign: "right", fontFamily: T.face.semi, fontSize: T.font.body, color: c.onSurface, minHeight: 36 }} />
           </Row>
           <Row label={t.editPortion}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <Round label="−" onPress={() => step(-10)} />
+              <Round label={`${t.editPortion} −10%`} icon="minus" onPress={() => step(-10)} />
               <Text style={{ fontFamily: T.face.bold, fontSize: T.font.body, color: c.onSurface, minWidth: 52, textAlign: "center" }}>{pct}%</Text>
-              <Round label="+" onPress={() => step(10)} />
+              <Round label={`${t.editPortion} +10%`} icon="plus" onPress={() => step(10)} />
             </View>
           </Row>
           <Row label={t.editTime}>
@@ -78,11 +78,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function Round({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress}
-      style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.outline, alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ fontFamily: T.face.bold, fontSize: T.font.title, color: c.onSurface }}>{label}</Text>
-    </Pressable>
-  );
+/** The steppers draw their minus and plus (no typed characters), in the shared round control. */
+function Round({ label, icon, onPress }: { label: string; icon: "minus" | "plus"; onPress: () => void }) {
+  return <RoundButton label={label} tone="quiet" icon={icon} onPress={onPress} />;
 }

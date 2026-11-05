@@ -367,10 +367,11 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 - **Line** (Gabarito 600, 19px, 24px line, -0.2px, tabular): the sentence under the plate. Its sub-line is Meta in Muted Ink.
 - **Card** (Gabarito 800, 17px): a card's name, the kcal on the edit sheet.
 - **Section** (Gabarito 600, 16px): "Ma eddig" over the day strip, the line in the folded plate.
+- **Micro** (Figtree, 13px): the smallest role (legend, figures' names, the switch's one-time line, card macros, steps); nothing smaller is set, except inside the plate's hub, which is sized on screen.
 - **Body** (Figtree 400, 16px, 23px line in bubbles): the conversation, inputs, edit-sheet labels. **Button** is Figtree 600 at the same size.
 - **Meta** (Figtree 400, 14px): chips, notes, the action bar (500 for the message, 700 underlined for its actions).
 - **Figure** (Figtree 700, 13px, tabular): figure values, day-entry amounts; Figtree 400-600 at 13px for times, the date, counts and reasons; 12.5px 600 for figure names.
-- **Micro** (Figtree 500, 12px): small notes on the server pages.
+- **Server micro** (Figtree 500, 12px): small notes on the server pages only.
 - **Hub** (Gabarito 800, 20px, 18px past four characters; Figtree 600 9.5px for "/ goal"): the calories in the plate's centre, drawn in SVG units of the 256-unit plate.
 
 ### Named Rules
@@ -383,14 +384,14 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 One screen, portrait, built at 390px wide and capped at 480px for sheets and server pages. The home stacks top to bottom without scrolling:
 
 1. **Top bar** (min 48px, 18px sides): the date and the clock in Muted Ink (Figtree 600, 13px), and a 40px round conversation button.
-2. **Plate and glass**, bottom-aligned, 2px apart: the plate is `clamp(200px, width - 108px, 300px)`, the glass 70px wide.
+2. **Plate and glass**, bottom-aligned, 2px apart: the plate gets the height left once the top bar, the line block, today's entries and the dock are measured, between 110px (96px under 600px of height) and 300px, never wider than the width minus 108px; the glass is a quarter of the plate wide (at least 46px). The hub grows on a small plate so that its figure stays 20px and its goal 11px on screen ("/ 2100" without the unit under 240px).
 3. **The line** (20px sides): the 22px mark beside the Line text and its sub-line, 8px apart.
 4. **Figures row** (12px sides, 4px gaps): protein, carbs, fat, water in four equal columns.
 5. A flexible spacer (min 16px), so the lower block sits on the dock.
 6. **"Ma eddig"** heading and a horizontal strip of day entries (6px gaps, 16px inset), scrolled to the newest.
-7. **Action bar** when something was just done, then the **dock**: the "Ettem · Ennék" switch, its one-line explanation the first time only, the chips (usual items on "Ettem", "Mit egyek most?" and "Fotó a hűtőről" on "Ennék") and the composer. After the eating window the switch is hidden and the dock stays on "Ettem".
+7. **Action bar** when something was just done, then the **dock**: the "Ettem · Ennék" switch, its one-line explanation the first time only, the chips (usual items on "Ettem", "Mit egyek most?" on "Ennék"; a photo on "Ennék" goes through the camera button, which is the one photo entry) and the composer. After the eating window the switch is hidden and the dock stays on "Ettem".
 
-Conversation mode folds the plate into one 56px line at the top and gives the rest to the thread. The thread reads like a chat app: the person's messages in Own Message bubbles, the assistant's replies across the width without a bubble (bold and lists rendered), every entry it logged as a Ceramic card with the name, the amount, three macro dots and Edit and Undo chips (struck through and dimmed once undone), and a message that did not go out marked "Nem ment el" in Warn with a green "Újra". While a reply is written, its steps sit above it as 13px Muted Ink lines, each with a small spinner that turns into a Good Green tick; the text grows under them as it arrives; a card shows as soon as its step ends; and a 44px Strong circle with a white square (Stop) stands in place of Send. A finished or stopped reply folds its steps into one quiet line, tick, the step labels joined by " · ", a chevron, that opens on a tap. The what-now sheet rises from under the figures so the plate stays visible above it with the picked option previewed.
+Conversation mode folds the plate into one 56px line at the top and gives the rest to the thread. The thread reads like a chat app: the person's messages in Own Message bubbles, the assistant's replies across the width without a bubble (bold and lists rendered), every entry it logged as a Ceramic card with the name, the amount, three macro dots and Edit and Undo chips (struck through and dimmed once undone), and a message that did not go out marked "Nem ment el" in Warn with a green "Újra" (its reason only when it says more than "try again"). While a reply is written, its steps sit above it as 13px Muted Ink lines, each with a small spinner that turns into a Good Green tick; the text grows under them as it arrives; a card shows as soon as its step ends; and a 44px Strong circle with a white square (Stop) stands in place of Send. A finished or stopped reply folds its steps into one quiet line, tick, the step labels joined by " · ", a chevron, that opens on a tap. The what-now sheet rises from under the figures so the plate stays visible above it with the picked option previewed.
 
 Spacing runs on a 4px base (4, 8, 12, 16, 20, 24px); 6, 10 and 14px appear as in-between gaps and insets. Touch targets are at least 44px; buttons and bars 48px.
 
@@ -416,6 +417,8 @@ Soft, ceramic corners and true circles. The plate and its hub are circles; third
 - **Primary:** Deep Table Green with white Figtree 600 16px. Disabled at 50% opacity.
 - **Text:** transparent with green label.
 - **"Ettem · Ennék" switch:** one Ceramic Low pill with a Hairline, two equal halves 38px tall; the chosen half is filled Deep Table Green with white Figtree 700 14.5px, the other is Muted Ink on the pill. It replaces the earlier outlined "Mit egyek most?" button; that label lives on as the first chip of the "Ennék" side and reads "breakfast" before 10:00 with no meal logged.
+- **Touch:** every control is at least 44px in its smaller dimension (the conversation toggle and sheet close are 44px circles, day entries and the switch halves 44px tall). Below 700px of height the line block tightens (8px instead of 12px); below 600px the "Ma eddig" heading and the switch's one-time line give their space to the dock.
+- **Shared pieces** (`app/src/components/ui.tsx`, `theme/tokens.ts`): `RoundButton` is every 44px round control (primary green, strong for Stop, quiet ceramic with a hairline for the conversation toggle and the portion steppers, whose minus and plus are drawn icons); `cardStyle()` is the ceramic card on the cloth (logged entry, notice, folded plate); `T.type.body | meta | micro | microStrong | label` are the type roles as ready styles, and no screen sets a raw font size.
 - **Round actions:** 44px green circles for camera and Send (Send appears only when there is something to send); a 40px Ceramic circle with a Hairline for the conversation toggle and the sheet close.
 
 ### Chips

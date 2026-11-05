@@ -64,10 +64,18 @@ export const tokens = {
   space: { xs: 4, s: 8, m: 12, l: 16, xl: 20, xxl: 24 },
   /**
    * The type roles of the app, and the only sizes it uses: `title` sheet titles and the wordmark; `line` the sentence under the plate;
-   * `card` names on a card; `body` the conversation, inputs and buttons; `meta` figures, chips and notes; `micro` small labels.
-   * `display` is the landing page's headline only.
+   * `card` names on a card; `label` names in a list or on a switch; `body` the conversation, inputs and buttons; `meta` notes and
+   * chips; `micro` small labels, the floor. `display` is the landing page's headline only.
    */
-  font: { micro: 12, meta: 14, body: 16, card: 17, line: 19, title: 20, display: 40 },
+  font: { micro: 13, meta: 14, label: 15, body: 16, card: 17, line: 19, title: 20, display: 40 },
+  /** The roles as ready styles (face and size together); colour stays with the caller, because the palette switches in place. */
+  type: {
+    body: { fontFamily: "Figtree_400Regular", fontSize: 16, lineHeight: 23 },
+    meta: { fontFamily: "Figtree_400Regular", fontSize: 14 },
+    micro: { fontFamily: "Figtree_400Regular", fontSize: 13 },
+    microStrong: { fontFamily: "Figtree_600SemiBold", fontSize: 13 },
+    label: { fontFamily: "Figtree_700Bold", fontSize: 15 },
+  },
   /** Figures line up in columns and do not jitter when they change. */
   numeric: { fontVariant: ["tabular-nums"] as "tabular-nums"[] },
   /** Loaded in App.tsx (expo-font); the names are the ones the @expo-google-fonts packages register. */
