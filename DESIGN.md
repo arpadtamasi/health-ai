@@ -371,7 +371,7 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 - **Body** (Figtree 400, 16px, 23px line in bubbles): the conversation, inputs, edit-sheet labels. **Button** is Figtree 600 at the same size.
 - **Meta** (Figtree 400, 14px): chips, notes, the action bar (500 for the message, 700 underlined for its actions).
 - **Figure** (Figtree 700, 13px, tabular): figure values, day-entry amounts; Figtree 400-600 at 13px for times, the date, counts and reasons; 12.5px 600 for figure names.
-- **Micro** (Figtree 500, 12px): small notes on the server pages.
+- **Server micro** (Figtree 500, 12px): small notes on the server pages only.
 - **Hub** (Gabarito 800, 20px, 18px past four characters; Figtree 600 9.5px for "/ goal"): the calories in the plate's centre, drawn in SVG units of the 256-unit plate.
 
 ### Named Rules
