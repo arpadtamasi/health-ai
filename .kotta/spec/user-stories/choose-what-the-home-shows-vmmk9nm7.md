@@ -5,16 +5,16 @@ title: "Choose what the home shows"
 actor: [A-01m3rvr5z4n6ny0qnm5mm438zp]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/archive/2026-10-02-app-one-flow/conversation.md · P5", ".kotta/changes/home-plate-and-glass/conversation.md · J2"]
-  quote: "válthatom, hogy melyiket mutatja? ráklikkelek a fehérjére és az kerül oda?"
-  inferred: "Moving the choice from the bars to the plate's thirds is the assistant's design in the preview."
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/no-figures/conversation.md · J1"]
+  quote: "számsor A"
+  inferred: "Only the row of figures is taken out; the rest of the node is as accepted."
 ---
 # Choose what the home shows
 
 ## Story
 
-As a phone user, I want to tap a third of the plate, the glass, or a figure in the row and have the line under the plate and the centre of the plate show that instead of the calories (and tap it again, or the centre, to go back), so that I can follow the number I care about today.
+As a phone user, I want to tap a third of the plate or the glass and have the line under the plate and the centre of the plate show that instead of the calories (and tap it again, or the centre, to go back), so that I can follow the number I care about today.
 
 ## Value
 
