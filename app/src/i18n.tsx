@@ -1,6 +1,6 @@
 // The app's own texts in the languages it speaks. The chat answers in the person's language by itself; when it saves a language
 // (the first time they write in Hungarian, say) the app switches too. Until one is saved, the phone's language decides.
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { Platform } from "react-native";
 import { TEXTS, type Lang, type Texts } from "./texts";
 
@@ -20,6 +20,8 @@ export function isLang(x: unknown): x is Lang {
 const LangContext = createContext<{ lang: Lang; t: Texts; setLang: (l: Lang) => void }>({ lang: "en", t: TEXTS.en, setLang: () => undefined });
 
 export function LangProvider({ lang, setLang, children }: { lang: Lang; setLang: (l: Lang) => void; children: ReactNode }) {
+  // The page says which language it is in, so that a screen reader reads Hungarian with a Hungarian voice.
+  useEffect(() => { if (typeof document !== "undefined") document.documentElement.lang = lang; }, [lang]);
   return <LangContext.Provider value={{ lang, t: TEXTS[lang], setLang }}>{children}</LangContext.Provider>;
 }
 

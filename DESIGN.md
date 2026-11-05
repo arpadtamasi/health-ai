@@ -367,6 +367,7 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 - **Line** (Gabarito 600, 19px, 24px line, -0.2px, tabular): the sentence under the plate. Its sub-line is Meta in Muted Ink.
 - **Card** (Gabarito 800, 17px): a card's name, the kcal on the edit sheet.
 - **Section** (Gabarito 600, 16px): "Ma eddig" over the day strip, the line in the folded plate.
+- **Micro** (Figtree, 13px): the smallest role (legend, figures' names, the switch's one-time line, card macros, steps); nothing smaller is set, except inside the plate's hub, which is sized on screen.
 - **Body** (Figtree 400, 16px, 23px line in bubbles): the conversation, inputs, edit-sheet labels. **Button** is Figtree 600 at the same size.
 - **Meta** (Figtree 400, 14px): chips, notes, the action bar (500 for the message, 700 underlined for its actions).
 - **Figure** (Figtree 700, 13px, tabular): figure values, day-entry amounts; Figtree 400-600 at 13px for times, the date, counts and reasons; 12.5px 600 for figure names.
@@ -383,7 +384,7 @@ State ink only ever accompanies a word or a shape; it never colours a macro's ow
 One screen, portrait, built at 390px wide and capped at 480px for sheets and server pages. The home stacks top to bottom without scrolling:
 
 1. **Top bar** (min 48px, 18px sides): the date and the clock in Muted Ink (Figtree 600, 13px), and a 40px round conversation button.
-2. **Plate and glass**, bottom-aligned, 2px apart: the plate is `clamp(200px, width - 108px, 300px)`, the glass 70px wide.
+2. **Plate and glass**, bottom-aligned, 2px apart: the plate gets the height left once the top bar, the line block, today's entries and the dock are measured, between 110px (96px under 600px of height) and 300px, never wider than the width minus 108px; the glass is a quarter of the plate wide (at least 46px). The hub grows on a small plate so that its figure stays 20px and its goal 11px on screen ("/ 2100" without the unit under 240px).
 3. **The line** (20px sides): the 22px mark beside the Line text and its sub-line, 8px apart.
 4. **Figures row** (12px sides, 4px gaps): protein, carbs, fat, water in four equal columns.
 5. A flexible spacer (min 16px), so the lower block sits on the dock.
@@ -416,6 +417,7 @@ Soft, ceramic corners and true circles. The plate and its hub are circles; third
 - **Primary:** Deep Table Green with white Figtree 600 16px. Disabled at 50% opacity.
 - **Text:** transparent with green label.
 - **"Ettem · Ennék" switch:** one Ceramic Low pill with a Hairline, two equal halves 38px tall; the chosen half is filled Deep Table Green with white Figtree 700 14.5px, the other is Muted Ink on the pill. It replaces the earlier outlined "Mit egyek most?" button; that label lives on as the first chip of the "Ennék" side and reads "breakfast" before 10:00 with no meal logged.
+- **Touch:** every control is at least 44px in its smaller dimension (the conversation toggle and sheet close are 44px circles, day entries and the switch halves 44px tall). Below 700px of height the line block tightens (8px instead of 12px); below 600px the "Ma eddig" heading and the switch's one-time line give their space to the dock.
 - **Round actions:** 44px green circles for camera and Send (Send appears only when there is something to send); a 40px Ceramic circle with a Hairline for the conversation toggle and the sheet close.
 
 ### Chips

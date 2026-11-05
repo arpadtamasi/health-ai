@@ -67,7 +67,7 @@ export const tokens = {
    * `card` names on a card; `body` the conversation, inputs and buttons; `meta` figures, chips and notes; `micro` small labels.
    * `display` is the landing page's headline only.
    */
-  font: { micro: 12, meta: 14, body: 16, card: 17, line: 19, title: 20, display: 40 },
+  font: { micro: 13, meta: 14, body: 16, card: 17, line: 19, title: 20, display: 40 },
   /** Figures line up in columns and do not jitter when they change. */
   numeric: { fontVariant: ["tabular-nums"] as "tabular-nums"[] },
   /** Loaded in App.tsx (expo-font); the names are the ones the @expo-google-fonts packages register. */

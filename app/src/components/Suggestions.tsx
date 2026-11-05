@@ -22,7 +22,7 @@ export function Suggestions({ options, picked, onTap, t }: { options: Option[]; 
             <View style={{ flex: 1, gap: 1 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}>
                 <Text style={{ flex: 1, fontFamily: T.face.bold, fontSize: 15, color: c.onSurface }}>{o.name}</Text>
-                <Text style={{ fontFamily: T.face.bold, fontSize: 15, color: c.onSurface, ...T.numeric }}>{o.kcal} kcal</Text>
+                <Text style={{ fontFamily: T.face.semi, fontSize: 15, color: c.onSurfaceVariant, ...T.numeric }}>{o.kcal} kcal</Text>
               </View>
               {o.reason ? <Text style={{ fontFamily: T.face.body, fontSize: 13, color: c.onSurfaceVariant }}>{o.reason}</Text> : null}
               {on ? <Text style={{ fontFamily: T.face.semi, fontSize: 13, color: c.primary, marginTop: 2 }}>{t.pickAgain}</Text> : null}
