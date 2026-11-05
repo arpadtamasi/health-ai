@@ -1,0 +1,44 @@
+change: grains-on-the-plate
+approved_by: Tamási Árpád
+approved_at: 2026-11-05T13:55:13.760Z
+approval_basis: sha256:958dc73b1c33b320666d546445c1b5737e06bc243402c15e3ad1d8962c76f30a
+replaced:
+  BR-01m6m4323nzt0ma6qf6j5a0yxa: sha256:02191ce4692d6fa2c56ddce14fb0f8c139b8963fee20fb21ea1a43dbc661d647
+  BR-01m6m432cqp8fkhggthg8a6720: sha256:4c74e90194da65fc4b12e2dee700b8672f009edbaa6530b201c2ae73ef37f996
+  EX-01m6m432r02t0w6ex4nb3ga68e: sha256:9de8f38d730647274578cef27ebccfe9d8533027d0bf9ac15a87c55b67c48fb4
+  EX-01m6m4349m8hepns4mjyz1at22: sha256:4bd059312469b420f59a83a16a453313f86ea8dfbb0eff7905d30c03805e862f
+  EX-01m3y1ptc4mfsg0c8vbcjm3w2z: sha256:be6b7dbac3ad0dbd972baf2b9dbdb471d058954c46225ee89ee9c50a1e95dad4
+  EX-01m3y1pv379hwqmt3jfsqz9p9v: sha256:571d36eddbdb2a3a613ab5a1b7fc5fd7850055396f90a1d08238f9fa5fe91076
+  US-01m3rvr64zrzczabckjf6crb2z: sha256:48338900441f921ad2c8b566cff76cfe34bcd76d3bcd7dbfc7d91b26ab1929fb
+approved:
+  added:
+    - id: BR-01m6nzdyz40bdbmtbn9ffze1v5
+      title: Going over a goal is shown, never praised
+    - id: BR-01m6nzdz57xbc4k501gg85aytx
+      title: In the evening the line says what still fits
+    - id: EX-01m6nzdzz3r239egz1c4s68a98
+      title: After the eating window What should I eat now is gone
+    - id: EX-01m6nzdzran5ypw802pjhjvnaj
+      title: At 21:40 the line says what still fits
+    - id: EX-01m6nzdzb7rnfv9p4wf8rpdk03
+      title: Calories over the goal say how far over, not done
+    - id: EX-01m6nze05k4np1swbj179esg8j
+      title: Each third holds its own food
+    - id: EX-01m6nzdzhdf1nz6r7t99vznk9w
+      title: Rice over the carb goal spills onto the rim and the table
+  changed:
+    - id: BR-01m6m4323nzt0ma6qf6j5a0yxa
+      title: Each macro has its own colour, and words state the situation
+    - id: BR-01m6m432cqp8fkhggthg8a6720
+      title: Each third of the plate fills with its own food, one portion per entry
+    - id: EX-01m6m432r02t0w6ex4nb3ga68e
+      title: Fat over the cap spills onto the rim of the plate
+    - id: EX-01m6m4349m8hepns4mjyz1at22
+      title: Half of the protein goal fills half of the protein third
+    - id: EX-01m3y1ptc4mfsg0c8vbcjm3w2z
+      title: The fat third shows the cap
+    - id: EX-01m3y1pv379hwqmt3jfsqz9p9v
+      title: When the day is closed the line says the day is done
+    - id: US-01m3rvr64zrzczabckjf6crb2z
+      title: See where I am against the day's pace
+  removed: []
