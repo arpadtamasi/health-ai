@@ -5,7 +5,7 @@ title: Ennék offers the usual foods that fit now
 subjects: [BR-01m6ph6dgw3qxzxjjy1sh3t0yz, US-01m3rwa0cvrtcapqk0k3h6mqvc]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources: [".kotta/changes/ennek-no-chip/conversation.md · J1"]
   quote: "A"
   inferred: "The numbers and the four-chip limit are the assistant's."

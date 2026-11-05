@@ -1,0 +1,30 @@
+change: ennek-no-chip
+approved_by: Tamási Árpád
+approved_at: 2026-11-05T22:36:45.992Z
+approval_basis: sha256:e1c6c59267a59bd7122eb86c72ae4778cdb058c179faded094cf90eed5cbf34e
+replaced:
+  BR-01m6ph6dgw3qxzxjjy1sh3t0yz: sha256:26eb0b1cdb37a367a00cc596ee903f4a6c54a70a44497c6c3eb83126649a1649
+  EX-01m6m4332s0zwsvq9103fp9ff2: sha256:106eeb6ff6d6e794c035dcaff1a6f8f6eb4ae05301a65e587a171bb74080b98c
+  EX-01m6ph6dxygfrqwe2y2raq04vm: sha256:52386b60a1e0db3a6dd73fc2993e4dad618ca2dc6c56812bed62f25ff7c73892
+  EX-01m3rwa0je7dfzm48e1f496wnr: sha256:78ceee5505c2f5e943374e118f2d748b9797636658f6c79e53e65b6ec9aceec0
+  EX-01m3ssfx5e99rb6mfjgz4z1j4d: sha256:1a5133a2f107bf40dea47140b4ca2f7a894f207fccee27578204ba7ce561268d
+approved:
+  added:
+    - id: EX-01m6pvfvzzq4vs1pfhdczn9kx4
+      title: Ennék offers the usual foods that fit now
+    - id: EX-01m6pv411c3hpg00qkrp2tm4z6
+      title: Send on Ennék with an empty field asks what to eat now
+    - id: EX-01m6pvfw80s18pn0szqydw2dn7
+      title: When no usual food fits, Ennék has no chips
+  changed:
+    - id: BR-01m6ph6dgw3qxzxjjy1sh3t0yz
+      title: The dock's switch says whether a message is what was eaten or what to eat
+    - id: EX-01m6m4332s0zwsvq9103fp9ff2
+      title: Choosing a suggestion previews it on the plate
+    - id: EX-01m6ph6dxygfrqwe2y2raq04vm
+      title: Ennék asks for options on the same sheet
+    - id: EX-01m3rwa0je7dfzm48e1f496wnr
+      title: What to eat proposes carb-rich snacks when carbs are behind
+    - id: EX-01m3ssfx5e99rb6mfjgz4z1j4d
+      title: The first chat sets constraints, goal and window before any suggestion
+  removed: []

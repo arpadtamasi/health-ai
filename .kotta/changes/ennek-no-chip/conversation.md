@@ -27,3 +27,13 @@ Az ágens javaslata, a kapuhoz: chip nélkül az Ennék oldalon üres mezővel i
 **Ember:**
 
 > A
+
+## Kapu
+
+### J2 · 2026-11-05 22:2x UTC
+
+**Ágens:** Az Ennék oldalon legfeljebb négy gyakori ételed jelenik meg, amelyik most belefér a maradék kcal-ba, a legnagyobb hiányt záró elöl; első koppintás előnézet a tányéron, második beír. Ha semmi nem fér bele, nincs chip. A „Mit egyek most?” chip megszűnik, üres mezővel is működik a Küldés. Jóváhagyod?
+
+**Ember:**
+
+> Igen

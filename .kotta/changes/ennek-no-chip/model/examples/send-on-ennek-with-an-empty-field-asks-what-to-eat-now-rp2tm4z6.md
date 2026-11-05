@@ -5,7 +5,7 @@ title: Send on Ennék with an empty field asks what to eat now
 subjects: [BR-01m6ph6dgw3qxzxjjy1sh3t0yz, US-01m3rwa0cvrtcapqk0k3h6mqvc]
 provenance:
   level: inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources: [".kotta/changes/ennek-no-chip/conversation.md · SZ1"]
   quote: null
   inferred: "Sending with an empty field is the assistant's proposal, so that asking stays one tap without the chip."

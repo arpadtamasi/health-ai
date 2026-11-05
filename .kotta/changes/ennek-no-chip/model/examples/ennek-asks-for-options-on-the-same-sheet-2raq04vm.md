@@ -5,7 +5,7 @@ title: Ennék asks for options on the same sheet
 subjects: [BR-01m6ph6dgw3qxzxjjy1sh3t0yz, US-01m3rwa0cvrtcapqk0k3h6mqvc]
 provenance:
   level: inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources: [".kotta/changes/ennek-no-chip/conversation.md · SZ1", ".kotta/changes/ennek-no-chip/conversation.md · J1", ".kotta/changes/ettem-ennek/conversation.md · J1"]
   quote: null
   inferred: "The time and the wording are made up for the example."

@@ -5,7 +5,7 @@ title: 'When no usual food fits, Ennék has no chips'
 subjects: [BR-01m6ph6dgw3qxzxjjy1sh3t0yz]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources: [".kotta/changes/ennek-no-chip/conversation.md · J1"]
   quote: "A"
   inferred: "The numbers are made up for the example."
