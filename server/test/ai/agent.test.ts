@@ -288,4 +288,43 @@ describe("the chat agent", () => {
     await runAgent(deps(m2), boom, { history: [], message: "x" });
     expect(resultsOf(m2.requests[1]!)[0]).toHaveProperty("error");
   });
+  // EX-01m6ph6eawez8cc1g4kd33xszg (A question about the photo still sees the photo): a photo comes back with the next two messages.
+  it("shows a photo again with the next two messages, and not with the third", async () => {
+    const img = (d: string) => ({ mediaType: "image/jpeg" as const, dataBase64: d });
+    const history = [
+      { role: "user" as const, text: "ebéd, kb. a felét ettem meg", images: [img("LUNCH")] },
+      { role: "assistant" as const, text: "Beírtam fél adagot." },
+    ];
+    const m = scripted(say("Igen, a szósszal számoltam."));
+    await runAgent(deps(m), env(), { history, message: "és a szósz benne van?" });
+    const sent = m.requests[0]!.turns;
+    expect(sent[0]!.content.some((b) => b.type === "image")).toBe(true);
+    // two more user messages later, the lunch photo is no longer in the window
+    const later = [...history, { role: "user" as const, text: "és a rizs?" }, { role: "assistant" as const, text: "Kb. 150 g." }, { role: "user" as const, text: "ok" }, { role: "assistant" as const, text: "👍" }];
+    const m2 = scripted(say("Rendben."));
+    await runAgent(deps(m2), env(), { history: later, message: "vacsora?" });
+    expect(m2.requests[0]!.turns.flatMap((t) => t.content).some((b) => b.type === "image")).toBe(false);
+  });
+
+  it("never brings back more than four past photos", async () => {
+    const img = { mediaType: "image/jpeg" as const, dataBase64: "AAAA" };
+    const history = [{ role: "user" as const, text: "a", images: [img, img, img] }, { role: "assistant" as const, text: "b" }, { role: "user" as const, text: "c", images: [img, img, img] }, { role: "assistant" as const, text: "d" }];
+    const m = scripted(say("x"));
+    await runAgent(deps(m), env(), { history, message: "e" });
+    expect(m.requests[0]!.turns.flatMap((t) => t.content).filter((b) => b.type === "image")).toHaveLength(4);
+  });
+
+  // BR-01m6ph6dgw3qxzxjjy1sh3t0yz and BR-01m3y1prykkz2yqtf6g5fgz0ne: the side of the switch goes to the model with the message.
+  it("tells the model which side of the switch the message came from", async () => {
+    const m = scripted(say("x"));
+    await runAgent(deps(m), env(), { history: [], message: "hűtő", intent: "ate" });
+    const text = (r: typeof m) => r.requests[0]!.turns.at(-1)!.content.filter((b): b is Extract<Block, { type: "text" }> => b.type === "text").map((b) => b.text).join(" ");
+    expect(text(m)).toContain("Ajánljak belőle?");
+    const m2 = scripted(say("x"));
+    await runAgent(deps(m2), env(), { history: [], message: "vacsora, 600 kcal alatt", intent: "would" });
+    expect(text(m2)).toContain("never log_meal");
+    const m3 = scripted(say("x"));
+    await runAgent(deps(m3), env(), { history: [], message: "szia" });
+    expect(text(m3)).toBe("szia");
+  });
 });

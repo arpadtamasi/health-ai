@@ -1,0 +1,46 @@
+change: ettem-ennek
+approved_by: Tamási Árpád
+approved_at: 2026-11-05T19:03:32.918Z
+approval_basis: sha256:80e174d770de9493e48a41874bfd1ede8aba9817da4f2ef703d84d9b5d8700d9
+replaced:
+  BR-01m3y1prykkz2yqtf6g5fgz0ne: sha256:7f550c434d420965cbfd0a25e97b23d99aaaa6f401c492150d7af97a50c4e092
+  BR-01m6nzdz57xbc4k501gg85aytx: sha256:f826d42ca5e9906b0d38ce2249ad8005d8f6712810291793c7ff16663be17052
+  EX-01m6nzdzz3r239egz1c4s68a98: sha256:db9deda95c9e66e4f52e20c558bd06618ae1ea202b370b27e81674b2b4598614
+  EX-01m3w51cz41qvfw0mfa79pbphx: sha256:80cf993a394234acd260dca197709528b919a02b11c4cf3c4c09c9e2c2b17b30
+  US-01m3rwa0cvrtcapqk0k3h6mqvc: sha256:af3b0b29e363a7d2b8602b04ff5ed405f6747275ff686049605e1e4438632df2
+  US-01m3w51bs6krjxa2rgb86qkft7: sha256:a8fde318bc7d5d359243ee68d598aa906e0c4c24155e824b3dc2d2d23d6ce362
+  US-01m3w51bzh8h6t8npn6k80r782: sha256:5112df6bd296fae7212b4b116705aec3dbddd34499c5cd5978eaa6377f3bef8a
+approved:
+  added:
+    - id: BR-01m6ph6dq7aszxhxgzz4kgr8d4
+      title: The conversation keeps what happened in it
+    - id: BR-01m6ph6dgw3qxzxjjy1sh3t0yz
+      title: The dock's switch says whether a message is what was eaten or what to eat
+    - id: EX-01m6ph6e4bcenyjywdahg41g4r
+      title: A lunch photo from the gallery is logged afterwards
+    - id: EX-01m6ph6eh98wgvrjw6gyy2r9tr
+      title: A message that did not go out can be sent again
+    - id: EX-01m6ph6eawez8cc1g4kd33xszg
+      title: A question about the photo still sees the photo
+    - id: EX-01m6ph6dxygfrqwe2y2raq04vm
+      title: Ennék asks for options on the same sheet
+    - id: EX-01m6ph6ey8cbd7wre1703xhe7a
+      title: The switch explains itself the first time only
+    - id: EX-01m6ph6eqsv1wt33vqx395z7nn
+      title: What was logged stays in the conversation as a card
+  changed:
+    - id: BR-01m3y1prykkz2yqtf6g5fgz0ne
+      title: A photo logs what it shows
+    - id: BR-01m6nzdz57xbc4k501gg85aytx
+      title: In the evening the line says what still fits
+    - id: EX-01m6nzdzz3r239egz1c4s68a98
+      title: After the eating window What should I eat now is gone
+    - id: EX-01m3w51cz41qvfw0mfa79pbphx
+      title: The home shows the day as a plate and a glass
+    - id: US-01m3rwa0cvrtcapqk0k3h6mqvc
+      title: Ask what to eat to catch up
+    - id: US-01m3w51bs6krjxa2rgb86qkft7
+      title: Open on a full-screen home that shows the day
+    - id: US-01m3w51bzh8h6t8npn6k80r782
+      title: Start logging from one button on the home
+  removed: []

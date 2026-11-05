@@ -107,6 +107,13 @@ const en = {
   claudeText: "Add this address in Claude (Settings, Connectors, Add custom connector) to ask about your sleep, heart rate and activity, and to log meals in the conversation. This needs Google Health.",
   copy: "Copy",
   copied: "Copied",
+  // BR-01m6ph6dgw3qxzxjjy1sh3t0yz: the dock's switch; BR-01m6ph6dq7aszxhxgzz4kgr8d4: the conversation.
+  sideAte: "I ate", sideWould: "I'd eat", sideLabel: "Log or ask",
+  sideHint: "I ate: I log it. I'd eat: I suggest something.",
+  placeholderAte: "What did you eat? Write it or take a photo…",
+  placeholderWould: "What do you fancy? Or photograph what you have…",
+  photoNow: "Take a photo", photoGallery: "From the gallery", fridgeChip: "Photo of the fridge",
+  notSent: "Not sent", sendAgain: "Send again", undone: "Undone", editEntry: "Edit",
 };
 
 /** Hungarian case endings after a figure with its unit: "180 kcal-lal", "16 g-mal", "0,3 l-rel"; "160 g-ból"; "840 kcal-nál". */
@@ -218,6 +225,12 @@ const hu: typeof en = {
   claudeText: "Add hozzá ezt a címet a Claude-ban (Beállítások, Összekötők, Egyéni összekötő), és kérdezhetsz az alvásodról, pulzusodról, mozgásodról, az étkezéseket pedig a beszélgetésben naplózhatod. Ehhez Google Health kell.",
   copy: "Másolás",
   copied: "Másolva",
+  sideAte: "Ettem", sideWould: "Ennék", sideLabel: "Beírás vagy ajánlás",
+  sideHint: "Ettem: beírom. Ennék: ajánlok valamit.",
+  placeholderAte: "Mit ettél? Írd vagy fotózd…",
+  placeholderWould: "Mire vágysz? Vagy fotózd le, mi van itthon…",
+  photoNow: "Fénykép most", photoGallery: "A galériából", fridgeChip: "Fotó a hűtőről",
+  notSent: "Nem ment el", sendAgain: "Újra", undone: "Visszavonva", editEntry: "Szerkesztés",
 };
 
 export const TEXTS = { en, hu } as const;

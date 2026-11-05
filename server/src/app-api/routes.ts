@@ -63,9 +63,10 @@ const idsBody = z.object({ ids: z.array(z.string().min(1).max(300)).min(1).max(1
 
 const chatBody = z.object({
   message: z.string().trim().min(1).max(2000),
-  history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000) })).max(40).default([]),
+  history: z.array(z.object({ role: z.enum(["user", "assistant"]), text: z.string().max(2000), images: z.array(image).max(4).optional() })).max(40).default([]),
   image: image.optional(),
   images: z.array(image).max(4).optional(),
+  intent: z.enum(["ate", "would"]).optional(),
 });
 
 const whatNowBody = z.object({ optionsText: z.string().max(2000).optional(), image: image.optional() })
@@ -342,6 +343,7 @@ export function appApiRouter(deps: AppApiDeps): Router {
     const env = makeAgentEnv({ store: deps.store, entries, model: deps.ai.model, modelName: deps.ai.modelName, userId, now: deps.now });
     const result = await runAgent({ model: deps.ai.model, modelName: deps.ai.modelName }, env, {
       history: body.data.history, message: body.data.message, images: [...(body.data.images ?? []), ...(body.data.image ? [body.data.image] : [])],
+      ...(body.data.intent ? { intent: body.data.intent } : {}),
     });
     // BR "The chat is kept during the test": the person's message and the assistant's answer are stored (text and events, never the
     // photos), expire after the retention period, and go with the person's data when they delete it. A failed save never fails the chat.
