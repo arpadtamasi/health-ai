@@ -5,10 +5,10 @@ title: "Tapping the protein third puts protein in the line"
 subjects: [US-01m3y1prd5e73v389tvmmk9nm7]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2"]
-  quote: null
-  inferred: "The numbers and the wording are sample values chosen by the assistant; reworked for the plate."
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/no-figures/conversation.md · J1"]
+  quote: "számsor A"
+  inferred: "Only the row of figures is taken out; the rest of the node is as accepted."
 ---
 # Tapping the protein third puts protein in the line
 
@@ -18,8 +18,8 @@ It is 17:40, the calories are 200 under the plan and protein is 90 g to go.
 
 ## When
 
-The person taps the protein third of the plate, or protein in the row of figures.
+The person taps the protein third of the plate.
 
 ## Then
 
-The line says how far protein is behind the plan, the centre of the plate shows the protein grams, the other thirds and the glass fade, the entries show their protein, protein is outlined in the row, and the calories are one tap away.
+The line says how far protein is behind the plan, the centre of the plate shows the protein grams, the other thirds and the glass fade, the entries show their protein, and the calories are one tap away.

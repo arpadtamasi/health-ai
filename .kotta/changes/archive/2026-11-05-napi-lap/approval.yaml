@@ -1,0 +1,17 @@
+change: napi-lap
+approved_by: Tamási Árpád
+approved_at: 2026-11-05T23:23:54.679Z
+approval_basis: sha256:b3cb3be3cd0ed3b341ff01abe1dadd4bdc8026fd77470db780a67e8df4e71b3b
+replaced:
+  BR-01m6ph6dq7aszxhxgzz4kgr8d4: sha256:f896d5e2f7b1fccb2fd7816412cf657721a34f9254acbf8e8dbf6a9824c9e04c
+  EX-01m3y2d5jng87ap6mmb7shz36n: sha256:543198da1518b320e7ca334e334da4c19a25e396f256dfd6fd9d619a0fdd6e4e
+approved:
+  added:
+    - id: EX-01m6py99nbp6t6ctsbpzh6q29y
+      title: A new day starts a new page in the conversation
+  changed:
+    - id: BR-01m6ph6dq7aszxhxgzz4kgr8d4
+      title: The conversation keeps what happened in it
+    - id: EX-01m3y2d5jng87ap6mmb7shz36n
+      title: Reopening the app shows the conversation again
+  removed: []

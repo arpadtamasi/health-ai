@@ -5,10 +5,10 @@ title: "The last known day is shown while the server is read"
 subjects: [QA-01m3y2sn77z4s7pszem174t194]
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/home-plate-and-glass/conversation.md · J2", ".kotta/changes/archive/2026-10-02-app-one-flow/proposal.md · What changes"]
-  quote: "nem kell meleg példány, azt elfogadom, de számítson a frontend lassú reakcióra"
-  inferred: "The wording is the assistant's; reworked for the plate."
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/no-figures/conversation.md · J1"]
+  quote: "számsor A"
+  inferred: "Only the row of figures is taken out; the rest of the node is as accepted."
 ---
 # The last known day is shown while the server is read
 
@@ -22,4 +22,4 @@ The app starts.
 
 ## Then
 
-The plate, the glass, the figures and today's entries of the morning are drawn at once from the device, moved to the time of day now, and are replaced by the server's answer when it arrives; on another day the stored day is not shown.
+The plate, the glass with its litres and today's entries of the morning are drawn at once from the device, moved to the time of day now, and are replaced by the server's answer when it arrives; on another day the stored day is not shown.

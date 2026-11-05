@@ -173,3 +173,10 @@ export function contourOf(spots: Spot[], f: number, g: Geometry, t: Third): numb
   const k = Math.min(spots.length - 1, Math.round(Math.min(1, f) * spots.length));
   return Math.hypot(spots[k]!.x - mx, spots[k]!.y - my) + 2;
 }
+
+/** EX-01m6py99we6df5kcy1cnqvbd6g (The glass shows its litres under it): the water drunk and its goal, in litres with a decimal comma.
+ * There is no row of figures on the home any more (BR-01m6m4323nzt0ma6qf6j5a0yxa). */
+export const glassText = (ml: number, goalMl: number): string => {
+  const l = (x: number) => (x / 1000).toFixed(1).replace(".", ",");
+  return `${l(ml)} / ${l(goalMl)} l`;
+};

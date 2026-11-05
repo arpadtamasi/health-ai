@@ -1,0 +1,29 @@
+change: no-figures
+approved_by: Tamási Árpád
+approved_at: 2026-11-05T23:23:55.155Z
+approval_basis: sha256:a1509541c0e863b2be5cedc21c10b2fbca50473785d4e91e4a108ef62d8112af
+replaced:
+  BR-01m6m4323nzt0ma6qf6j5a0yxa: sha256:1947c1f8ae3b35d9481e7e6eab5e2d100391c001ed84b01207d70d4a7aa31443
+  EX-01m3y1pt0jf372my3204evety1: sha256:9ecd21ebe04a92b4a2ae38330cc0efa094f73c965809da7b9bec564e2f8c0c58
+  EX-01m3y1ptc4mfsg0c8vbcjm3w2z: sha256:66bbd4515436ad8977269d01b157cb166bc4aa9be83d8ed722d35a4d19631933
+  EX-01m3y2snsqw3e3th7rfs0n7r08: sha256:ac76203d2bfaad9634d6527b1a81a73337553d144cdc5938320bca3e38ab2a3c
+  US-01m3rwa0cvrtcapqk0k3h6mqvc: sha256:7652b5fa288c0c328c5bae2846bdea196793d1dfbcff9faafe1c71bc70a2a7dd
+  US-01m3y1prd5e73v389tvmmk9nm7: sha256:4300a3af6124ae430f441423e212dc97eacd3318657da347441eb669e8a99082
+approved:
+  added:
+    - id: EX-01m6py99we6df5kcy1cnqvbd6g
+      title: The glass shows its litres under it
+  changed:
+    - id: BR-01m6m4323nzt0ma6qf6j5a0yxa
+      title: Each macro has its own colour, and words state the situation
+    - id: EX-01m3y1pt0jf372my3204evety1
+      title: Tapping the protein third puts protein in the line
+    - id: EX-01m3y1ptc4mfsg0c8vbcjm3w2z
+      title: The fat third shows the cap
+    - id: EX-01m3y2snsqw3e3th7rfs0n7r08
+      title: The last known day is shown while the server is read
+    - id: US-01m3rwa0cvrtcapqk0k3h6mqvc
+      title: Ask what to eat to catch up
+    - id: US-01m3y1prd5e73v389tvmmk9nm7
+      title: Choose what the home shows
+  removed: []

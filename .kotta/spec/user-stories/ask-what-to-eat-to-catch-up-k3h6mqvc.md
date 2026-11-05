@@ -23,7 +23,7 @@ It turns the pace screen into a next step: the answer names the gap, and propose
 ## Notes
 
 The "What should I eat now?" button under the plate is replaced by the "Ennék" side of the dock's switch (J1); a message or photo sent on that side opens the same sheet. 
-Preview: the "Terített asztal" artifact of this change. The sheet starts under the row of figures, so the plate stays visible above it. Each option shows the food, its calories and one line of reason. Asking "what should I eat?" on the "Ettem" side opens the same sheet too. "Something else" is written or said in the text field.
+Preview: the "Terített asztal" artifact of this change. The sheet starts under the line and the legend, so the plate stays visible above it. Each option shows the food, its calories and one line of reason. Asking "what should I eat?" on the "Ettem" side opens the same sheet too. "Something else" is written or said in the text field.
 
 
 ## Decided by the owner
