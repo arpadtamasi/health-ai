@@ -15,16 +15,15 @@ async function shrink(file: File): Promise<Photo> {
   return { uri, base64: uri.split(",")[1]! };
 }
 
-/** "camera" opens the phone's camera; "gallery" opens the photo picker, so a meal photographed earlier can be logged afterwards
- * (EX-01m6ph6e4bcenyjywdahg41g4r). */
-export type PhotoSource = "camera" | "gallery";
+/** US-01m3rvr6am99nrrbycxfw4r6v4 (Choose food and quantity with the camera) and BR-01m6ph6dq7aszxhxgzz4kgr8d4: the file input carries no capture hint, so a phone shows its own photo menu (a photo now or one
+ * from the gallery), and a meal photographed earlier can be logged afterwards (EX-01m6ph6e4bcenyjywdahg41g4r). */
+export interface PhotoWords { now: string; gallery: string; cancel: string }
 
-export function takePhoto(from: PhotoSource = "camera"): Promise<Photo | undefined> {
+export function takePhoto(_words?: PhotoWords): Promise<Photo | undefined> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    if (from === "camera") input.setAttribute("capture", "environment");
     input.style.display = "none";
     let settled = false;
     const done = (p?: Photo) => { if (!settled) { settled = true; input.remove(); resolve(p); } };

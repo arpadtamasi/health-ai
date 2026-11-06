@@ -4,11 +4,11 @@ form: example
 title: A lunch photo from the gallery is logged afterwards
 subjects: [BR-01m6ph6dq7aszxhxgzz4kgr8d4, US-01m3w51bzh8h6t8npn6k80r782, BR-01m3y1prykkz2yqtf6g5fgz0ne]
 provenance:
-  level: inferred
-  decided_by: agent-decided
-  sources: [".kotta/changes/ettem-ennek/conversation.md · J2"]
-  quote: null
-  inferred: "The times and the dish are made up for the example."
+  level: partly-inferred
+  decided_by: agent-proposed-human-approved
+  sources: [".kotta/changes/camera-system-sheet/conversation.md · J1"]
+  quote: "A"
+  inferred: "Only the way the gallery is chosen changes; the rest is as accepted."
 ---
 # A lunch photo from the gallery is logged afterwards
 
@@ -18,7 +18,7 @@ The person took a photo of their lunch at 13:10 with the phone's camera and did 
 
 ## When
 
-They tap the camera button, choose "A galériából" and pick the lunch photo.
+They tap the camera button, choose the photo library in the phone's own menu and pick the lunch photo.
 
 ## Then
 

@@ -22,6 +22,6 @@ In the owner's logs about one message in four was a photo with no text, almost a
 
 ## Notes
 
-The camera button opens the system camera (on the web, a file input that opens the camera on a phone); the picture is scaled to 1280 px before it is sent. Several photos can go in one message (a scale and a package). What the photo shows decides what happens: see "A photo logs what it shows".
+The camera button opens the phone's own photo menu, a photo now or one from the gallery (on the web, a file input without a capture hint, which shows that menu on a phone); the picture is scaled to 1280 px before it is sent. Several photos can go in one message (a scale and a package). What the photo shows decides what happens: see "A photo logs what it shows".
 
 Photos stay on the phone and are not stored by us, as decided earlier.

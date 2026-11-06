@@ -34,7 +34,7 @@ import { canSendAgain, fittingUsuals, intentOf, photoTurns, startSide, switchSho
 import { blocksOf } from "../rich";
 import { applyLine, emptyLive, stepLabel, stepSummary, type Live, type Step, type StepWords, type StreamLine } from "../stream";
 import { cacheGet, cacheSet } from "../cache";
-import { takePhoto, type Photo, type PhotoSource } from "../photo";
+import { takePhoto, type Photo } from "../photo";
 import { tokens as T } from "../theme/tokens";
 import { useScheme } from "../theme/scheme";
 import { netStatus, subscribe } from "../net";
@@ -169,9 +169,8 @@ function Composer({ t, running, placeholder, onSend, onFocus, onDraft, onStop, a
   const [draft, setDraft] = useState("");
   const typing = draft.trim().length > 0 || tray.length > 0;
   useEffect(() => { onDraft?.(typing); }, [typing, onDraft]);
-  // EX-01m6ph6e4bcenyjywdahg41g4r: the camera button offers a photo now or one from the gallery, so a meal can be logged afterwards.
-  const [menu, setMenu] = useState(false);
-  const camera = async (from: PhotoSource) => { setMenu(false); const p = await takePhoto(from); if (p) setTray((x) => [...x, p].slice(0, 4)); };
+  // EX-01m6ph6e4bcenyjywdahg41g4r: the camera button opens the phone's own photo menu (a photo now or one from the gallery).
+  const camera = async () => { const p = await takePhoto({ now: t.photoNow, gallery: t.photoGallery, cancel: t.cancel }); if (p) setTray((x) => [...x, p].slice(0, 4)); };
   // EX-01m6pv411c3hpg00qkrp2tm4z6: on "Ennék" Send works with an empty field and asks what to eat now.
   const canSend = (draft.trim().length > 0 || tray.length > 0 || allowEmpty) && !running;
   const send = () => { if (!canSend) return; onSend(draft.trim(), tray); setTray([]); setDraft(""); };
@@ -190,14 +189,8 @@ function Composer({ t, running, placeholder, onSend, onFocus, onDraft, onStop, a
           ))}
         </View>
       ) : null}
-      {menu ? (
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <Chip ui="camera" label={t.photoNow} onPress={() => void camera("camera")} />
-          <Chip ui="image" label={t.photoGallery} onPress={() => void camera("gallery")} />
-        </View>
-      ) : null}
       <View style={{ flexDirection: "row", alignItems: "center", gap: T.space.s }}>
-        <RoundButton label={t.openCamera} icon="camera" expanded={menu} onPress={() => setMenu((m) => !m)} />
+        <RoundButton label={t.openCamera} icon="camera" onPress={() => void camera()} />
         <TextInput ref={input} value={draft} onChangeText={setDraft} placeholder={tray.length ? t.placeholderPhoto : placeholder} multiline placeholderTextColor={c.onSurfaceVariant}
           autoFocus={autoFocus} onFocus={() => { onFocus?.(); warmUp(); }}
           onKeyPress={(e) => { const k = e.nativeEvent as unknown as { key: string; shiftKey?: boolean }; if (Platform.OS === "web" && k.key === "Enter" && !k.shiftKey) { (e as unknown as { preventDefault?: () => void }).preventDefault?.(); send(); } }}

@@ -1,0 +1,18 @@
+change: camera-system-sheet
+approved_by: Tamási Árpád
+approved_at: 2026-11-06T09:37:37.286Z
+approval_basis: sha256:b79b4820e5a5c50f3738fe6b65e64e0c05cf7a6eeeac861cdc1c79b5b16adb17
+replaced:
+  BR-01m6ph6dq7aszxhxgzz4kgr8d4: sha256:47d74c8fd52797c76b054738641e9883ccbd46946432ad0687ffeb27b10264ce
+  EX-01m6ph6e4bcenyjywdahg41g4r: sha256:af6f61985c8aa2119f5bc2c2ff03b42df91d7e15b81ab56baec528bc41184a16
+  US-01m3rvr6am99nrrbycxfw4r6v4: sha256:4d2128126ed3f7c123bc955b95aec704e0452e0889e7a2445295019e5004b369
+approved:
+  added: []
+  changed:
+    - id: BR-01m6ph6dq7aszxhxgzz4kgr8d4
+      title: The conversation keeps what happened in it
+    - id: EX-01m6ph6e4bcenyjywdahg41g4r
+      title: A lunch photo from the gallery is logged afterwards
+    - id: US-01m3rvr6am99nrrbycxfw4r6v4
+      title: Choose food and quantity with the camera
+  removed: []
