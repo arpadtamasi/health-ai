@@ -77,7 +77,8 @@ export const FEEDBACK_KINDS = ["bug", "confusing", "too_many_calls", "missing_ca
 export interface FeedbackRecord {
   id: string;
   userId: string;
-  source: (typeof FEEDBACK_SOURCES)[number];
+  /** "app" is a failed send recorded by the app itself (BR-01m6rhz5t5b2p9n35twmgv4bkn), never sent through send_feedback. */
+  source: (typeof FEEDBACK_SOURCES)[number] | "app";
   kind: (typeof FEEDBACK_KINDS)[number];
   tools: string[];
   message: string;

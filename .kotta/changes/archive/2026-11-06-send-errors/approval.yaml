@@ -1,0 +1,13 @@
+change: send-errors
+approved_by: Tamási Árpád
+approved_at: 2026-11-06T13:50:39.806Z
+approval_basis: sha256:b1b9c42b1171e817decb9bac6d7285a8509fceba74dedc881e538eac8a65775d
+replaced: {}
+approved:
+  added:
+    - id: BR-01m6rhz5t5b2p9n35twmgv4bkn
+      title: A failed message says why, and the owner can read the failure
+    - id: EX-01m6rhz632532q600eazqvxsfe
+      title: A photo that did not reach the service is not blamed on the photo
+  changed: []
+  removed: []
