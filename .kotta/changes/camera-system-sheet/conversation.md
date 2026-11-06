@@ -19,3 +19,13 @@ Kézzel írt kivonat.
 **Ember:**
 
 > A
+
+## Kapu
+
+### J2 · 2026-11-06 00:1x UTC
+
+**Ágens:** A kamera gomb a telefon saját fotó-menüjét nyitja (iPhone: Fotótár / Fotó készítése / Fájl kiválasztása; Android: kamera vagy fájlok); a „Fotó most · Galériából” chipek megszűnnek. Jóváhagyod?
+
+**Ember:**
+
+> Igen

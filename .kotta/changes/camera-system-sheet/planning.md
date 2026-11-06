@@ -1,6 +1,6 @@
 ---
 change: camera-system-sheet
-generated_at: 2026-11-06T09:36:02.479Z
+generated_at: 2026-11-06T09:37:37.051Z
 delta_hash: sha256:b79b4820e5a5c50f3738fe6b65e64e0c05cf7a6eeeac861cdc1c79b5b16adb17
 ready_for_approval: true
 ---
