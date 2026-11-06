@@ -1,5 +1,5 @@
 // US-01m3rvr64zrzczabckjf6crb2z (pace), US-01m3rwa0cvrtcapqk0k3h6mqvc (what to eat), US-01m3rw2bqxkqp6v1hg9g02t1zr (chat onboarding and settings).
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { AiModel, ConverseResponse } from "../../src/ai/model.js";
 import { addDays, dayBounds, localClock, nextDate, sumHydration, sumNutrition } from "../../src/app-api/today.js";
 import { makeTestApp, PUBLIC_URL, READ_SCOPES, type TestApp } from "../helpers.js";
@@ -707,6 +707,21 @@ describe("the streamed chat", () => {
     const lines = r.text.trim().split("\n").map((l) => JSON.parse(l) as { type: string; tool?: string; state?: string; event?: { type: string }; reply?: { events: { type: string }[] } });
     expect(lines.map((l) => (l.type === "step" ? `${l.tool}:${l.state}` : l.type === "event" ? `event:${l.event!.type}` : l.type))).toEqual(["log_meal:start", "event:logged", "log_meal:done", "done"]);
     expect(lines.at(-1)!.reply!.events.map((e) => e.type)).toEqual(["logged", "text"]);
+  });
+
+  // BR-01m6rhz5t5b2p9n35twmgv4bkn: a failure of the model goes back with a code that names its cause, not with "failed".
+  it("names the cause when the model fails", async () => {
+    const broken = { converse: async () => { throw Object.assign(new Error("400 bad"), { status: 400, error: { type: "error", error: { type: "invalid_request_error", message: "Could not process image" } } }); } };
+    const t = makeTestApp({ now: () => NOW, ai: { model: broken as never, modelName: "m", dailyTokenLimit: 100000 } });
+    healthHandler(t);
+    const { cookie } = await appSignIn(t);
+    await t.http.put("/api/app/settings").set("cookie", cookie).set(HEADER).send(settings);
+    const ticket = (await t.http.post("/api/app/chat/ticket").set("cookie", cookie).set(HEADER).send({})).body.ticket as string;
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const r = await t.http.post("/api/stream/chat").set("authorization", `Bearer ${ticket}`).send({ message: "mi ez?", images: [{ mediaType: "image/jpeg", dataBase64: "AAAA" }] });
+    spy.mockRestore();
+    const last = JSON.parse(r.text.trim().split("\n").at(-1)!) as { type: string; status: number; error: string };
+    expect(last).toMatchObject({ type: "error", status: 500, error: "model_400_could_not_process_image" });
   });
 
   it("refuses a missing or wrong ticket, and a session cookie in its place", async () => {

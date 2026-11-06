@@ -74,7 +74,7 @@ const chatBody = z.object({
 });
 
 const clientErrorBody = z.object({
-  stage: z.enum(["ticket", "send", "reply"]), status: z.number().int().min(0).max(599), code: z.string().regex(/^[a-z0-9_]{1,40}$/), photo: z.boolean(),
+  stage: z.enum(["ticket", "send", "reply"]), status: z.number().int().min(0).max(599), code: z.string().regex(/^[a-z0-9_]{1,100}$/), photo: z.boolean(),
 });
 
 const whatNowBody = z.object({ optionsText: z.string().max(2000).optional(), image: image.optional() })
@@ -103,6 +103,18 @@ function usageStoreOf(store: Store, now: () => number): UsageStore {
 
 export interface ChatReplyBody { events: unknown[]; needsConsent: boolean; onboarded: boolean; language: string | null; stopped?: boolean }
 type ChatOutcome = { ok: true; reply: ChatReplyBody } | { ok: false; status: number; body: Record<string, unknown> };
+
+/** A failure as a short code: "model_<status>_<what the model's API said>" or "internal_<what was thrown>", lower case, at most 100
+ * characters. The API's message names the request field at fault, never the person's text. */
+export function failureCode(e: unknown): string {
+  const x = e as { status?: unknown; message?: unknown; name?: unknown; error?: { error?: { type?: unknown; message?: unknown }; type?: unknown } };
+  const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 100);
+  if (typeof x.status === "number") {
+    const what = x.error?.error?.message ?? x.error?.error?.type ?? x.error?.type ?? x.message;
+    return slug(`model_${x.status}_${typeof what === "string" ? what : ""}`) || "failed";
+  }
+  return slug(`internal_${typeof x.message === "string" ? x.message : typeof x.name === "string" ? x.name : "error"}`) || "failed";
+}
 
 /** One turn of the app's chat, whole or streamed: checks, the agent, the stored conversation and the day's budget. */
 async function runChat(deps: AppApiDeps, userId: string, raw: unknown, opts: { emit?: (e: StreamEvent) => void; signal?: AbortSignal } = {}): Promise<ChatOutcome> {
@@ -165,8 +177,11 @@ export function chatStreamRouter(deps: AppApiDeps & { allowedOrigin: string }): 
     try {
       const r = await runChat(deps, userId, req.body, { emit: line, signal: ctl.signal });
       line(r.ok ? { type: "done", reply: r.reply } : { type: "error", status: r.status, ...r.body });
-    } catch {
-      line({ type: "error", status: 500, error: "failed" });
+    } catch (e) {
+      // BR-01m6rhz5t5b2p9n35twmgv4bkn: the failure goes back with a code that names its cause, never the message's content, so the
+      // app's record says what failed; the whole error goes to the service's log.
+      console.error("stream chat failed", e);
+      line({ type: "error", status: 500, error: failureCode(e) });
     }
     res.end();
   });

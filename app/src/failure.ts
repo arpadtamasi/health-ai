@@ -19,4 +19,4 @@ export function reasonOf(status: number, code: string): Reason {
 /** The owner's record of a failed send: no text and no photo of the message. */
 export interface FailureRecord { stage: Stage; status: number; code: string; photo: boolean }
 export const recordOf = (stage: Stage, status: number, code: string, photo: boolean): FailureRecord =>
-  ({ stage, status: Math.max(0, Math.min(599, Math.round(status) || 0)), code: (code || "error").slice(0, 40), photo });
+  ({ stage, status: Math.max(0, Math.min(599, Math.round(status) || 0)), code: (code || "error").slice(0, 100), photo });
