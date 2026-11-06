@@ -4,6 +4,7 @@ import { track, withRetry, withTimeout } from "../net";
 import { lineReader, type StreamLine } from "../stream";
 import type { DayEntry } from "../day";
 import type { Option } from "../components/food";
+import type { FailureRecord, Stage } from "../failure";
 
 export type { DayEntry };
 export interface EntryPatch { id: string; name?: string; kcal?: number; carbs?: number; protein?: number; fat?: number; time?: string; mealType?: "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"; ingredients?: string[] }
@@ -48,10 +49,18 @@ export interface Usual { kind: "meal" | "water"; name: string; kcal: number; car
 export interface Me { email: string; onboarded: boolean; language: "en" | "hu" | null; healthConnected: boolean }
 
 export class ApiError extends Error {
+  /** BR-01m6rhz5t5b2p9n35twmgv4bkn: the step of a streamed chat that failed, for the owner's record. */
+  stage?: Stage;
   constructor(readonly status: number, readonly code: string, readonly body: unknown) {
     super(`API ${status} ${code}`);
   }
 }
+/** Any failure as an ApiError marked with its step; a fetch that never reached the service is "network". */
+const tagged = (e: unknown, stage: Stage): unknown => {
+  if (e instanceof ApiError) { e.stage ??= stage; return e; }
+  if (e instanceof Error && e.name === "AbortError") return e;
+  const a = new ApiError(0, "network", { message: e instanceof Error ? e.message : String(e) }); a.stage = stage; return a;
+};
 
 export const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? "";
 
@@ -113,7 +122,10 @@ export const STREAM_BASE = process.env.EXPO_PUBLIC_STREAM_BASE ?? "";
  */
 export async function chatStream(input: ChatInput, onLine: (l: StreamLine) => void, signal?: AbortSignal): Promise<ChatReply> {
   if (!STREAM_BASE || typeof TextDecoder === "undefined") return api.chat(input);
-  const { ticket } = await call<{ ticket: string }>("POST", "/chat/ticket", {});
+  let stage: Stage = "ticket";
+  let ticket: string;
+  try { ({ ticket } = await call<{ ticket: string }>("POST", "/chat/ticket", {})); } catch (e) { throw tagged(e, stage); }
+  stage = "send";
   const ctl = new AbortController();
   const stop = () => ctl.abort();
   signal?.addEventListener("abort", stop);
@@ -128,6 +140,7 @@ export async function chatStream(input: ChatInput, onLine: (l: StreamLine) => vo
       body: JSON.stringify(input),
     });
     if (!res.ok) { const j = (await res.json().catch(() => ({}))) as { error?: string }; throw new ApiError(res.status, j.error ?? "error", j); }
+    stage = "reply";
     const read = lineReader();
     const dec = new TextDecoder();
     let reply: ChatReply | undefined;
@@ -146,9 +159,9 @@ export async function chatStream(input: ChatInput, onLine: (l: StreamLine) => vo
     if (!reply) throw new ApiError(0, "network", {});
     return reply;
   } catch (e) {
-    if (timedOut) throw new ApiError(0, "timeout", {});
+    if (timedOut) throw tagged(new ApiError(0, "timeout", {}), stage);
     if (signal?.aborted) throw new ApiError(0, "stopped", {});
-    throw e;
+    throw tagged(e, stage);
   } finally {
     first();
     clearTimeout(timer);
@@ -157,6 +170,8 @@ export async function chatStream(input: ChatInput, onLine: (l: StreamLine) => vo
 }
 
 export const api = {
+  /** BR-01m6rhz5t5b2p9n35twmgv4bkn: a failed send, recorded for the owner without its content. */
+  clientError: (r: FailureRecord) => call<{ ok: true }>("POST", "/client-error", r),
   me: () => call<Me>("GET", "/me"),
   settings: () => call<{ settings: Settings | null }>("GET", "/settings"),
   saveSettings: (s: Omit<Settings, "onboardedAt"> & { consent?: boolean }) => call<{ settings: Settings }>("PUT", "/settings", s),

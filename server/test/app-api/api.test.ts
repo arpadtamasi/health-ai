@@ -729,3 +729,20 @@ describe("the streamed chat", () => {
     expect(other.headers["access-control-allow-origin"]).toBeUndefined();
   });
 });
+
+// BR-01m6rhz5t5b2p9n35twmgv4bkn / EX-01m6rhz632532q600eazqvxsfe: a failed send is recorded for the owner, without its content.
+describe("a failed send is recorded for the owner", () => {
+  it("stores the step, status, code and photo flag as feedback from the app, and refuses anything else", async () => {
+    const t = makeTestApp({ now: () => NOW });
+    healthHandler(t);
+    expect((await t.http.post("/api/app/client-error").set(HEADER).send({ stage: "send", status: 0, code: "network", photo: true })).status).toBe(401);
+    const { cookie } = await appSignIn(t);
+    const ok = await t.http.post("/api/app/client-error").set("cookie", cookie).set(HEADER).send({ stage: "send", status: 0, code: "network", photo: true });
+    expect(ok.status).toBe(200);
+    const [f] = await t.store.listFeedback({ from: NOW - 1000, to: NOW + 1000 }, 10);
+    expect(f).toMatchObject({ source: "app", kind: "bug", tools: ["chat"], message: "send failed · step send · status 0 · code network · with photo" });
+    expect(f!.expireAt - f!.createdAt).toBe(90 * 24 * 60 * 60 * 1000);
+    const bad = await t.http.post("/api/app/client-error").set("cookie", cookie).set(HEADER).send({ stage: "send", status: 0, code: "Ebéd: rántott hús", photo: false });
+    expect(bad.status).toBe(400);
+  });
+});

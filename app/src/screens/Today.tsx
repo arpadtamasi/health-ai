@@ -30,6 +30,7 @@ import { dayFraction } from "../pace";
 import { glassText, nextShown, partOf, type Drawn } from "../plate";
 import { BUILD, isNewer, onComeBack, publishedBuild } from "../update";
 import { dayOf, isNewDay, todaysTurns } from "../daypage";
+import { reasonOf, recordOf } from "../failure";
 import { canSendAgain, fittingUsuals, intentOf, photoTurns, startSide, switchShown, type Side } from "../dock";
 import { blocksOf } from "../rich";
 import { applyLine, emptyLive, stepLabel, stepSummary, type Live, type Step, type StepWords, type StreamLine } from "../stream";
@@ -104,7 +105,12 @@ const adapter: ChatModelAdapter = {
       // EX-01m6pmf9zhdr5wntczz8ncfdrj: Stop keeps what was written and logged.
       if (abortSignal.aborted || (e instanceof ApiError && e.code === "stopped")) { yield { content: liveParts(live, true), metadata: { custom: { stopped: true } satisfies Meta } }; return; }
       const tx = box.t!;
-      const msg = e instanceof ApiError && e.code === "timeout" ? tx.errTimeout : e instanceof ApiError && e.code === "daily_limit" ? tx.errDailyLimit : e instanceof ApiError && e.code === "ai_unavailable" ? tx.errUnavailable : images.length ? tx.photoFailed : tx.errGeneric;
+      // BR-01m6rhz5t5b2p9n35twmgv4bkn: the message says why it did not go out, the photo is blamed only when the service said so
+      // (EX-01m6rhz632532q600eazqvxsfe), and the owner gets a record of the failure without its text or photos.
+      const status = e instanceof ApiError ? e.status : 0, code = e instanceof ApiError ? e.code : "network";
+      const reason = reasonOf(status, code);
+      const msg = { network: tx.errNetwork, timeout: tx.errTimeout, server: tx.errServer, refused: tx.errRefused, daily_limit: tx.errDailyLimit, unavailable: tx.errUnavailable, photo: tx.photoFailed, generic: tx.errGeneric }[reason];
+      if (reason !== "daily_limit") void backend.clientError(recordOf(e instanceof ApiError ? e.stage ?? "send" : "send", status, code, images.length > 0)).catch(() => undefined);
       // EX-01m6ph6eh98wgvrjw6gyy2r9tr: a message that did not go out says so, and "Újra" sends it again; nothing is sent by itself.
       yield { content: [{ type: "text" as const, text: msg }], metadata: { custom: { failedPhoto: images.length > 0, failed: true, retry: canSendAgain(e instanceof ApiError ? e.code : undefined) } satisfies Meta } };
     }

@@ -46,6 +46,7 @@ export function mockBackend(): Backend {
     },
     consent: () => Promise.resolve(),
     chatHistory: () => Promise.resolve([]),
+    clientError: () => Promise.resolve(),
     usuals: () => Promise.resolve([{ kind: "meal" as const, name: "Cappuccino", kcal: 90, carbs: 7, protein: 5, fat: 5, count: 9 }, { kind: "water" as const, name: "250 ml", kcal: 0, carbs: 0, protein: 0, fat: 0, ml: 250, count: 6 }, { kind: "meal" as const, name: "Túró", kcal: 160, carbs: 6, protein: 22, fat: 5, count: 4 }, { kind: "meal" as const, name: "Oat bran, milk, jam", kcal: 415, carbs: 72, protein: 17, fat: 11, count: 3 }]),
     log: (o) => { const id = `sample-${++seq}`; list = [...list, { id, kind: "meal", name: o.name, kcal: o.kcal, carbs: o.carbs, protein: o.protein, fat: o.fat ?? 0, at: Date.now(), source: "button", estimate: false, ingredients: [] }]; return Promise.resolve({ id }); },
     unlog: (id) => { list = list.filter((e) => e.id !== id); return Promise.resolve(); },

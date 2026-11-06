@@ -12,6 +12,7 @@ import { whatNow } from "../ai/whatNow.js";
 import type { HealthApi } from "../health/api.js";
 import { DEFAULT_WATER_GOAL_ML, type AppSettings, type Store } from "../store/types.js";
 import { fatGoal, makeAgentEnv } from "./agentEnv.js";
+import { INSIGHT_RETENTION_MS } from "../mcp/retention.js";
 import { Entries } from "./entries.js";
 import type { Sessions } from "./session.js";
 
@@ -70,6 +71,10 @@ const chatBody = z.object({
   image: image.optional(),
   images: z.array(image).max(4).optional(),
   intent: z.enum(["ate", "would"]).optional(),
+});
+
+const clientErrorBody = z.object({
+  stage: z.enum(["ticket", "send", "reply"]), status: z.number().int().min(0).max(599), code: z.string().regex(/^[a-z0-9_]{1,40}$/), photo: z.boolean(),
 });
 
 const whatNowBody = z.object({ optionsText: z.string().max(2000).optional(), image: image.optional() })
@@ -411,6 +416,22 @@ export function appApiRouter(deps: AppApiDeps): Router {
     const limit = Math.min(200, Math.max(1, Number(req.query["limit"]) || 60));
     const records = await deps.store.listChat(uid(req), limit);
     res.json({ turns: records.map((r) => ({ role: r.role, at: r.at, ...(r.text !== undefined ? { text: r.text } : {}), ...(r.images ? { images: r.images } : {}), ...(r.events ? { events: r.events } : {}) })) });
+  });
+
+  // BR-01m6rhz5t5b2p9n35twmgv4bkn (A failed message says why, and the owner can read the failure): the app records a failed send
+  // for the owner, with its step, status, code and whether photos were attached; never the text or the photos. It is kept as
+  // feedback from the app, for 90 days, and read with list_feedback (EX-01m6rhz632532q600eazqvxsfe).
+  router.post("/client-error", async (req, res) => {
+    const body = clientErrorBody.safeParse(req.body);
+    if (!body.success) { res.status(400).json({ error: "invalid_request" }); return; }
+    const at = deps.now();
+    const { stage, status, code, photo } = body.data;
+    await deps.store.putFeedback({
+      id: randomUUID(), userId: uid(req), source: "app", kind: "bug", tools: ["chat"],
+      message: `send failed · step ${stage} · status ${status} · code ${code} · ${photo ? "with photo" : "no photo"}`,
+      createdAt: at, expireAt: at + INSIGHT_RETENTION_MS,
+    });
+    res.json({ ok: true });
   });
 
   // The notice and the consent are the person's own tap, never the model's: this ends the setup.

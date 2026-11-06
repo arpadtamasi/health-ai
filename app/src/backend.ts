@@ -2,6 +2,7 @@
 // EXPO_PUBLIC_MOCK=1 selects the sample data.
 import { api, chatStream, type ChatInput, type ChatReply, type HistoryTurn, type DayEntry, type DayState, type EntryPatch, type Me, type Usual } from "./api/client";
 import type { StreamLine } from "./stream";
+import type { FailureRecord } from "./failure";
 import type { Option } from "./components/food";
 
 export interface Backend {
@@ -12,6 +13,8 @@ export interface Backend {
   chatStream(input: ChatInput, onLine: (l: StreamLine) => void, signal?: AbortSignal): Promise<ChatReply>;
   consent(): Promise<void>;
   chatHistory(): Promise<HistoryTurn[]>;
+  /** BR-01m6rhz5t5b2p9n35twmgv4bkn */
+  clientError(r: FailureRecord): Promise<void>;
   usuals(): Promise<Usual[]>;
   log(o: Option): Promise<{ id: string | null }>;
   unlog(id: string): Promise<void>;
@@ -31,6 +34,7 @@ export const realBackend: Backend = {
   chatStream: (input, onLine, signal) => chatStream(input, onLine, signal),
   consent: async () => { await api.consent(); },
   chatHistory: async () => (await api.chatHistory()).turns,
+  clientError: async (r) => { await api.clientError(r); },
   usuals: async () => (await api.usuals()).usuals,
   log: (o) => api.log({ name: o.name, kcal: o.kcal, carbs: o.carbs, protein: o.protein, ...(o.fat !== undefined ? { fat: o.fat } : {}), ...(o.ingredients?.length ? { ingredients: o.ingredients } : {}), ...(o.rank > 0 ? { source: "photo" as const } : { source: "button" as const }) }),
   unlog: async (id) => { await api.unlog(id); },
